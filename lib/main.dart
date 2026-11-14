@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'constants/app_colors.dart';
 import 'languages/app_strings.dart';
-import 'screens/farm_info_screen.dart';
+import 'screens/new_farm_info_screen.dart';
 
 void main() {
   runApp(const MyApp());

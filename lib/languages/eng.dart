@@ -128,9 +128,57 @@ const String kDashboardAction2 =
     'Explore environmental data (climate and soil)';
 const String kDashboardAction3 = 'View personalized recommendations';
 const String kNavHome = 'Home';
+const String kNavLots = 'Lots';
 const String kNavRotations = 'Rotations';
 const String kNavCommunity = 'Community';
 const String kNavMore = 'More';
+
+// Lots Screen
+const String kLotsScreenTitle = 'Farm Lots';
+const String kLotsScreenSubtitle = 'Manage and view all registered lots on your farm.';
+const String kSearchLotsHint = 'Search lot by name...';
+const String kFilterAll = 'All';
+const String kFilterLargest = 'Largest area';
+const String kFilterSmallest = 'Smallest area';
+const String kFilterWithSubplots = 'With subplots';
+const String kFilterPriorityTitle = 'My priority is:';
+const String kRegisteredLotsTitle = 'Registered lots';
+const String kAddNewLot = 'Add new lot';
+const String kEditLot = 'Edit Lot';
+const String kDeleteLot = 'Delete Lot';
+const String kDeleteLotConfirm = 'Are you sure you want to delete this lot?';
+const String kDeleteLotWarning = 'This action cannot be undone. Any associated subplots will also be removed.';
+const String kLotNamePrompt = 'Lot Name';
+const String kLotSurfacePrompt = 'Surface Area';
+const String kLotUpdatedSuccessfully = 'Lot updated successfully!';
+const String kLotCreatedSuccessfully = 'Lot registered successfully!';
+const String kLotDeletedSuccessfully = 'Lot deleted successfully!';
+const String kNoLotsFound = 'No lots found matching your search.';
+const String kNoLotsYetSubtitle = 'Add your first lot to organize your farm crops and soil.';
+const String kSubplotsCount = 'subplots';
+const String kSubplotSingular = 'subplot';
+const String kSaveLot = 'Save Lot';
+
+// Farm Details & Edit
+const String kFarmDetailsTitle = 'Farm Details';
+const String kEditFarm = 'Edit Farm';
+const String kEditFarmInfo = 'Edit Farm Information';
+const String kFarmOverview = 'Farm Overview';
+const String kLotsAndSubplots = 'Lots & Subplots';
+const String kEnvironmentalContext = 'Environmental & Climate Data';
+const String kSaveChanges = 'Save Changes';
+const String kFarmUpdatedSuccessfully = 'Farm updated successfully!';
+const String kTotalLots = 'Total Lots';
+const String kTotalSubplots = 'Total Subplots';
+const String kNoLotsRegistered = 'No lots registered yet.';
+const String kLandAllocation = 'Land Allocation';
+const String kSoilMoisture = 'Soil Moisture';
+const String kSolarRadiation = 'Solar Radiation';
+const String kPrecipitation = 'Precipitation';
+const String kTemperature = 'Temperature';
+const String kUnallocatedSurface = 'Unallocated';
+const String kGpsSynchronized = 'GPS Synchronized';
+const String kNoFarmsFound = 'No farm data found. Please complete the initial registration.';
 
 // Language
 const String kLanguage = 'Language';

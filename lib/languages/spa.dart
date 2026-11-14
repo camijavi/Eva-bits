@@ -131,9 +131,57 @@ const String kDashboardAction2 =
     'Explorar datos del entorno (clima y suelo)';
 const String kDashboardAction3 = 'Ver recomendaciones personalizadas';
 const String kNavHome = 'Inicio';
+const String kNavLots = 'Lotes';
 const String kNavRotations = 'Rotaciones';
 const String kNavCommunity = 'Comunidad';
 const String kNavMore = 'Más';
+
+// Lots Screen
+const String kLotsScreenTitle = 'Lotes de la Finca';
+const String kLotsScreenSubtitle = 'Consulta y gestiona todos los lotes registrados en tu finca.';
+const String kSearchLotsHint = 'Buscar lote por nombre...';
+const String kFilterAll = 'Todos';
+const String kFilterLargest = 'Mayor superficie';
+const String kFilterSmallest = 'Menor superficie';
+const String kFilterWithSubplots = 'Con subparcelas';
+const String kFilterPriorityTitle = 'Mi prioridad es:';
+const String kRegisteredLotsTitle = 'Lotes registrados';
+const String kAddNewLot = 'Agregar nuevo lote';
+const String kEditLot = 'Editar Lote';
+const String kDeleteLot = 'Eliminar Lote';
+const String kDeleteLotConfirm = '¿Estás seguro de que deseas eliminar este lote?';
+const String kDeleteLotWarning = 'Esta acción no se puede deshacer. También se eliminarán las subparcelas asociadas.';
+const String kLotNamePrompt = 'Nombre del lote';
+const String kLotSurfacePrompt = 'Superficie';
+const String kLotUpdatedSuccessfully = '¡Lote actualizado con éxito!';
+const String kLotCreatedSuccessfully = '¡Lote registrado con éxito!';
+const String kLotDeletedSuccessfully = '¡Lote eliminado con éxito!';
+const String kNoLotsFound = 'No se encontraron lotes que coincidan con la búsqueda.';
+const String kNoLotsYetSubtitle = 'Agrega tu primer lote para organizar los cultivos y suelo de tu finca.';
+const String kSubplotsCount = 'subparcelas';
+const String kSubplotSingular = 'subparcela';
+const String kSaveLot = 'Guardar Lote';
+
+// Farm Details & Edit
+const String kFarmDetailsTitle = 'Detalles de la Finca';
+const String kEditFarm = 'Editar Finca';
+const String kEditFarmInfo = 'Editar Información de la Finca';
+const String kFarmOverview = 'Resumen de la Finca';
+const String kLotsAndSubplots = 'Lotes y Subparcelas';
+const String kEnvironmentalContext = 'Datos Ambientales y Clima';
+const String kSaveChanges = 'Guardar Cambios';
+const String kFarmUpdatedSuccessfully = '¡Finca actualizada con éxito!';
+const String kTotalLots = 'Total de Lotes';
+const String kTotalSubplots = 'Total de Subparcelas';
+const String kNoLotsRegistered = 'Aún no hay lotes registrados.';
+const String kLandAllocation = 'Distribución del Terreno';
+const String kSoilMoisture = 'Humedad del Suelo';
+const String kSolarRadiation = 'Radiación Solar';
+const String kPrecipitation = 'Precipitación';
+const String kTemperature = 'Temperatura';
+const String kUnallocatedSurface = 'Sin asignar';
+const String kGpsSynchronized = 'GPS Sincronizado';
+const String kNoFarmsFound = 'No se encontró información de la finca. Por favor completa el registro inicial.';
 
 // Language
 const String kLanguage = 'Idioma';

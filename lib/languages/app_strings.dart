@@ -127,9 +127,57 @@ abstract class AppStrings {
   String get kDashboardAction2;
   String get kDashboardAction3;
   String get kNavHome;
+  String get kNavLots;
   String get kNavRotations;
   String get kNavCommunity;
   String get kNavMore;
+
+  // Lots Screen
+  String get kLotsScreenTitle;
+  String get kLotsScreenSubtitle;
+  String get kSearchLotsHint;
+  String get kFilterAll;
+  String get kFilterLargest;
+  String get kFilterSmallest;
+  String get kFilterWithSubplots;
+  String get kFilterPriorityTitle;
+  String get kRegisteredLotsTitle;
+  String get kAddNewLot;
+  String get kEditLot;
+  String get kDeleteLot;
+  String get kDeleteLotConfirm;
+  String get kDeleteLotWarning;
+  String get kLotNamePrompt;
+  String get kLotSurfacePrompt;
+  String get kLotUpdatedSuccessfully;
+  String get kLotCreatedSuccessfully;
+  String get kLotDeletedSuccessfully;
+  String get kNoLotsFound;
+  String get kNoLotsYetSubtitle;
+  String get kSubplotsCount;
+  String get kSubplotSingular;
+  String get kSaveLot;
+
+  // Farm Details & Edit
+  String get kFarmDetailsTitle;
+  String get kEditFarm;
+  String get kEditFarmInfo;
+  String get kFarmOverview;
+  String get kLotsAndSubplots;
+  String get kEnvironmentalContext;
+  String get kSaveChanges;
+  String get kFarmUpdatedSuccessfully;
+  String get kTotalLots;
+  String get kTotalSubplots;
+  String get kNoLotsRegistered;
+  String get kLandAllocation;
+  String get kSoilMoisture;
+  String get kSolarRadiation;
+  String get kPrecipitation;
+  String get kTemperature;
+  String get kUnallocatedSurface;
+  String get kGpsSynchronized;
+  String get kNoFarmsFound;
 
   // Language
   String get kLanguage;
@@ -353,11 +401,103 @@ class EngStrings implements AppStrings {
   @override
   String get kNavHome => eng.kNavHome;
   @override
+  String get kNavLots => eng.kNavLots;
+  @override
   String get kNavRotations => eng.kNavRotations;
   @override
   String get kNavCommunity => eng.kNavCommunity;
   @override
   String get kNavMore => eng.kNavMore;
+
+  // Lots Screen
+  @override
+  String get kLotsScreenTitle => eng.kLotsScreenTitle;
+  @override
+  String get kLotsScreenSubtitle => eng.kLotsScreenSubtitle;
+  @override
+  String get kSearchLotsHint => eng.kSearchLotsHint;
+  @override
+  String get kFilterAll => eng.kFilterAll;
+  @override
+  String get kFilterLargest => eng.kFilterLargest;
+  @override
+  String get kFilterSmallest => eng.kFilterSmallest;
+  @override
+  String get kFilterWithSubplots => eng.kFilterWithSubplots;
+  @override
+  String get kFilterPriorityTitle => eng.kFilterPriorityTitle;
+  @override
+  String get kRegisteredLotsTitle => eng.kRegisteredLotsTitle;
+  @override
+  String get kAddNewLot => eng.kAddNewLot;
+  @override
+  String get kEditLot => eng.kEditLot;
+  @override
+  String get kDeleteLot => eng.kDeleteLot;
+  @override
+  String get kDeleteLotConfirm => eng.kDeleteLotConfirm;
+  @override
+  String get kDeleteLotWarning => eng.kDeleteLotWarning;
+  @override
+  String get kLotNamePrompt => eng.kLotNamePrompt;
+  @override
+  String get kLotSurfacePrompt => eng.kLotSurfacePrompt;
+  @override
+  String get kLotUpdatedSuccessfully => eng.kLotUpdatedSuccessfully;
+  @override
+  String get kLotCreatedSuccessfully => eng.kLotCreatedSuccessfully;
+  @override
+  String get kLotDeletedSuccessfully => eng.kLotDeletedSuccessfully;
+  @override
+  String get kNoLotsFound => eng.kNoLotsFound;
+  @override
+  String get kNoLotsYetSubtitle => eng.kNoLotsYetSubtitle;
+  @override
+  String get kSubplotsCount => eng.kSubplotsCount;
+  @override
+  String get kSubplotSingular => eng.kSubplotSingular;
+  @override
+  String get kSaveLot => eng.kSaveLot;
+
+  // Farm Details & Edit
+  @override
+  String get kFarmDetailsTitle => eng.kFarmDetailsTitle;
+  @override
+  String get kEditFarm => eng.kEditFarm;
+  @override
+  String get kEditFarmInfo => eng.kEditFarmInfo;
+  @override
+  String get kFarmOverview => eng.kFarmOverview;
+  @override
+  String get kLotsAndSubplots => eng.kLotsAndSubplots;
+  @override
+  String get kEnvironmentalContext => eng.kEnvironmentalContext;
+  @override
+  String get kSaveChanges => eng.kSaveChanges;
+  @override
+  String get kFarmUpdatedSuccessfully => eng.kFarmUpdatedSuccessfully;
+  @override
+  String get kTotalLots => eng.kTotalLots;
+  @override
+  String get kTotalSubplots => eng.kTotalSubplots;
+  @override
+  String get kNoLotsRegistered => eng.kNoLotsRegistered;
+  @override
+  String get kLandAllocation => eng.kLandAllocation;
+  @override
+  String get kSoilMoisture => eng.kSoilMoisture;
+  @override
+  String get kSolarRadiation => eng.kSolarRadiation;
+  @override
+  String get kPrecipitation => eng.kPrecipitation;
+  @override
+  String get kTemperature => eng.kTemperature;
+  @override
+  String get kUnallocatedSurface => eng.kUnallocatedSurface;
+  @override
+  String get kGpsSynchronized => eng.kGpsSynchronized;
+  @override
+  String get kNoFarmsFound => eng.kNoFarmsFound;
 
   @override
   String get kLanguage => eng.kLanguage;
@@ -583,11 +723,103 @@ class SpaStrings implements AppStrings {
   @override
   String get kNavHome => spa.kNavHome;
   @override
+  String get kNavLots => spa.kNavLots;
+  @override
   String get kNavRotations => spa.kNavRotations;
   @override
   String get kNavCommunity => spa.kNavCommunity;
   @override
   String get kNavMore => spa.kNavMore;
+
+  // Lots Screen
+  @override
+  String get kLotsScreenTitle => spa.kLotsScreenTitle;
+  @override
+  String get kLotsScreenSubtitle => spa.kLotsScreenSubtitle;
+  @override
+  String get kSearchLotsHint => spa.kSearchLotsHint;
+  @override
+  String get kFilterAll => spa.kFilterAll;
+  @override
+  String get kFilterLargest => spa.kFilterLargest;
+  @override
+  String get kFilterSmallest => spa.kFilterSmallest;
+  @override
+  String get kFilterWithSubplots => spa.kFilterWithSubplots;
+  @override
+  String get kFilterPriorityTitle => spa.kFilterPriorityTitle;
+  @override
+  String get kRegisteredLotsTitle => spa.kRegisteredLotsTitle;
+  @override
+  String get kAddNewLot => spa.kAddNewLot;
+  @override
+  String get kEditLot => spa.kEditLot;
+  @override
+  String get kDeleteLot => spa.kDeleteLot;
+  @override
+  String get kDeleteLotConfirm => spa.kDeleteLotConfirm;
+  @override
+  String get kDeleteLotWarning => spa.kDeleteLotWarning;
+  @override
+  String get kLotNamePrompt => spa.kLotNamePrompt;
+  @override
+  String get kLotSurfacePrompt => spa.kLotSurfacePrompt;
+  @override
+  String get kLotUpdatedSuccessfully => spa.kLotUpdatedSuccessfully;
+  @override
+  String get kLotCreatedSuccessfully => spa.kLotCreatedSuccessfully;
+  @override
+  String get kLotDeletedSuccessfully => spa.kLotDeletedSuccessfully;
+  @override
+  String get kNoLotsFound => spa.kNoLotsFound;
+  @override
+  String get kNoLotsYetSubtitle => spa.kNoLotsYetSubtitle;
+  @override
+  String get kSubplotsCount => spa.kSubplotsCount;
+  @override
+  String get kSubplotSingular => spa.kSubplotSingular;
+  @override
+  String get kSaveLot => spa.kSaveLot;
+
+  // Farm Details & Edit
+  @override
+  String get kFarmDetailsTitle => spa.kFarmDetailsTitle;
+  @override
+  String get kEditFarm => spa.kEditFarm;
+  @override
+  String get kEditFarmInfo => spa.kEditFarmInfo;
+  @override
+  String get kFarmOverview => spa.kFarmOverview;
+  @override
+  String get kLotsAndSubplots => spa.kLotsAndSubplots;
+  @override
+  String get kEnvironmentalContext => spa.kEnvironmentalContext;
+  @override
+  String get kSaveChanges => spa.kSaveChanges;
+  @override
+  String get kFarmUpdatedSuccessfully => spa.kFarmUpdatedSuccessfully;
+  @override
+  String get kTotalLots => spa.kTotalLots;
+  @override
+  String get kTotalSubplots => spa.kTotalSubplots;
+  @override
+  String get kNoLotsRegistered => spa.kNoLotsRegistered;
+  @override
+  String get kLandAllocation => spa.kLandAllocation;
+  @override
+  String get kSoilMoisture => spa.kSoilMoisture;
+  @override
+  String get kSolarRadiation => spa.kSolarRadiation;
+  @override
+  String get kPrecipitation => spa.kPrecipitation;
+  @override
+  String get kTemperature => spa.kTemperature;
+  @override
+  String get kUnallocatedSurface => spa.kUnallocatedSurface;
+  @override
+  String get kGpsSynchronized => spa.kGpsSynchronized;
+  @override
+  String get kNoFarmsFound => spa.kNoFarmsFound;
 
   @override
   String get kLanguage => spa.kLanguage;

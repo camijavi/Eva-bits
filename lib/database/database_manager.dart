@@ -183,6 +183,7 @@ class DatabaseManager {
   Future<int> updateFarm(Map<String, dynamic> farm) async {
     final Database db = await database;
     final farmMap = Map<String, dynamic>.from(farm);
+    farmMap.remove('lots');
     farmMap['updated_at'] = DateTime.now().toIso8601String();
 
     return await db.update(
@@ -222,6 +223,18 @@ class DatabaseManager {
     return await db.insert('lots', lot);
   }
 
+  Future<int> updateLot(Map<String, dynamic> lot) async {
+    final Database db = await database;
+    final lotMap = Map<String, dynamic>.from(lot);
+    lotMap.remove('subplots');
+    return await db.update(
+      'lots',
+      lotMap,
+      where: 'id = ?',
+      whereArgs: [lot['id']],
+    );
+  }
+
   Future<int> deleteLot(int lotId) async {
     final Database db = await database;
     return await db.delete(
@@ -229,6 +242,90 @@ class DatabaseManager {
       where: 'id = ?',
       whereArgs: [lotId],
     );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllLotsWithSubplots({int? farmId}) async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> lotsResults;
+    if (farmId != null) {
+      lotsResults = await db.query(
+        'lots',
+        where: 'farm_id = ?',
+        whereArgs: [farmId],
+        orderBy: 'id ASC',
+      );
+    } else {
+      lotsResults = await db.query('lots', orderBy: 'id ASC');
+    }
+
+    final List<Map<String, dynamic>> lotsWithSubplots = [];
+    for (final lot in lotsResults) {
+      final lotData = Map<String, dynamic>.from(lot);
+      final subplotsResults = await db.query(
+        'subplots',
+        where: 'lot_id = ?',
+        whereArgs: [lotData['id']],
+        orderBy: 'id ASC',
+      );
+      lotData['subplots'] = subplotsResults;
+      lotsWithSubplots.add(lotData);
+    }
+    return lotsWithSubplots;
+  }
+
+  Future<int> getOrCreateDefaultFarmId() async {
+    final latestFarm = await getLatestFarm();
+    if (latestFarm != null && latestFarm['id'] != null) {
+      return latestFarm['id'] as int;
+    }
+    final Database db = await database;
+    return await db.insert('farms', {
+      'name': 'Mi Finca',
+      'country': 'Nicaragua',
+      'surface_unit': 'ha',
+      'total_surface': 7.3,
+    });
+  }
+
+  Future<void> seedInitialLotsIfEmpty(int farmId) async {
+    final existingLots = await getLotsByFarm(farmId);
+    if (existingLots.isNotEmpty) return;
+
+    final Database db = await database;
+    await db.transaction((txn) async {
+      final lot1Id = await txn.insert('lots', {
+        'farm_id': farmId,
+        'name': 'Lote 1 - Norte (Maíz y Frijol)',
+        'surface': 2.5,
+      });
+      await txn.insert('subplots', {
+        'lot_id': lot1Id,
+        'name': 'Subparcela A - Maíz blanco',
+        'surface': 1.5,
+      });
+      await txn.insert('subplots', {
+        'lot_id': lot1Id,
+        'name': 'Subparcela B - Frijol rojo',
+        'surface': 1.0,
+      });
+
+      final lot2Id = await txn.insert('lots', {
+        'farm_id': farmId,
+        'name': 'Lote 2 - Sur (Frijolar)',
+        'surface': 1.8,
+      });
+      await txn.insert('subplots', {
+        'lot_id': lot2Id,
+        'name': 'Subparcela Principal',
+        'surface': 1.8,
+      });
+
+      await txn.insert('lots', {
+        'farm_id': farmId,
+        'name': 'Lote 3 - Este (Rotación Crotalaria)',
+        'surface': 3.0,
+      });
+    });
   }
 
   // ---------------------------------------------------------------------------

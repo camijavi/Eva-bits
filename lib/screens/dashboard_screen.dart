@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
+import 'farm_info.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String? farmName;
@@ -51,6 +52,7 @@ class DashboardScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildFarmSummaryCard(
+                          context,
                           s,
                           displayLocation,
                           displayFarmName,
@@ -171,6 +173,7 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildFarmSummaryCard(
+    BuildContext context,
     AppStrings s,
     String locationText,
     String farmNameText,
@@ -298,7 +301,11 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  // Mockup: No functionality
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const FarmInfoDetailScreen(),
+                    ),
+                  );
                 },
                 child: Text(
                   s.kDashboardViewDetails,
