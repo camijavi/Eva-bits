@@ -55,7 +55,10 @@ class FarmInfoScreen extends StatefulWidget {
 }
 
 class _FarmInfoScreenState extends State<FarmInfoScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _step1FormKey = GlobalKey<FormState>();
+
+  // Wizard state: 0 = Farm Info, 1 = Lots & Subplots, 2 = Summary & Ivy
+  int _currentStep = 0;
 
   // Farm General Controllers
   late final TextEditingController _farmNameController;
@@ -113,10 +116,73 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
   }
 
-  void _onLotsCountChanged(String value, AppStrings s) {
-    final parsed = int.tryParse(value);
-    if (parsed == null || parsed < 0) return;
-    _syncLotsCount(parsed, s);
+  // Quick Start Bypass: Loads Demo Farm (María - Estelí 2.5 ha) and jumps straight to Step 3
+  void _loadDemoFarm(AppStrings s) {
+    for (final lot in _lots) {
+      lot.dispose();
+    }
+    _lots.clear();
+
+    setState(() {
+      _farmNameController.text = 'Finca Las Delicias (María)';
+      _geographicZoneController.text = 'Estelí';
+      _totalSurfaceController.text = '2.5';
+      _selectedUnit = SurfaceUnit.hectares;
+
+      _lots.add(
+        LotItem(
+          nameController: TextEditingController(text: 'Lote 1 - Maíz'),
+          surfaceController: TextEditingController(text: '1.5'),
+          subplotsCountController: TextEditingController(text: '0'),
+        ),
+      );
+
+      _lots.add(
+        LotItem(
+          nameController: TextEditingController(text: 'Lote 2 - Frijol Criollo'),
+          surfaceController: TextEditingController(text: '1.0'),
+          subplotsCountController: TextEditingController(text: '0'),
+        ),
+      );
+
+      _lotsCountController.text = '2';
+      _currentStep = 2; // Jump directly to Review & Ivy
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.primary,
+        content: Text(s.kPresetLoadedMsg),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Bypass: Use whole farm as 1 single lot and jump straight to Step 3
+  void _bypassAsSingleLot(AppStrings s) {
+    if (!_step1FormKey.currentState!.validate()) {
+      return;
+    }
+
+    final total = _totalSurfaceController.text.trim();
+    for (final lot in _lots) {
+      lot.dispose();
+    }
+    _lots.clear();
+
+    setState(() {
+      _lots.add(
+        LotItem(
+          nameController: TextEditingController(
+            text: '${_farmNameController.text.trim()} - Lote Principal',
+          ),
+          surfaceController: TextEditingController(text: total),
+          subplotsCountController: TextEditingController(text: '0'),
+        ),
+      );
+      _lotsCountController.text = '1';
+      _currentStep = 2; // Jump to Review & Ivy
+    });
   }
 
   void _syncLotsCount(int targetCount, AppStrings s) {
@@ -161,12 +227,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
   }
 
-  void _onSubplotsCountChanged(LotItem lot, String value, AppStrings s) {
-    final parsed = int.tryParse(value);
-    if (parsed == null || parsed < 0) return;
-    _syncSubplotsCount(lot, parsed, s);
-  }
-
   void _syncSubplotsCount(LotItem lot, int targetCount, AppStrings s) {
     if (targetCount == lot.subplots.length) return;
 
@@ -208,245 +268,15 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
   }
 
-  void _submitForm(AppStrings s) {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  double get _totalFarmSurface =>
+      double.tryParse(_totalSurfaceController.text) ?? 0.0;
 
-    final farmSurface = double.tryParse(_totalSurfaceController.text) ?? 0.0;
-    double totalLotsSurface = 0.0;
-    bool subplotsExceed = false;
-
+  double get _totalLotsSurface {
+    double sum = 0.0;
     for (final lot in _lots) {
-      final lotSurface = double.tryParse(lot.surfaceController.text) ?? 0.0;
-      totalLotsSurface += lotSurface;
-
-      double lotSubplotsSurface = 0.0;
-      for (final subplot in lot.subplots) {
-        lotSubplotsSurface +=
-            double.tryParse(subplot.surfaceController.text) ?? 0.0;
-      }
-      if (lotSubplotsSurface > lotSurface && lotSurface > 0) {
-        subplotsExceed = true;
-      }
+      sum += double.tryParse(lot.surfaceController.text) ?? 0.0;
     }
-
-    final lotsExceed = totalLotsSurface > farmSurface && farmSurface > 0;
-
-    _showSummaryDialog(
-      s,
-      lotsExceedWarning: lotsExceed,
-      subplotsExceedWarning: subplotsExceed,
-    );
-  }
-
-  void _showSummaryDialog(
-    AppStrings s, {
-    required bool lotsExceedWarning,
-    required bool subplotsExceedWarning,
-  }) {
-    final unitShort = _getUnitShortName(_selectedUnit, s);
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              const Icon(Icons.agriculture, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  s.kSummaryTitle,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (lotsExceedWarning)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.shade300),
-                    ),
-                    child: Text(
-                      s.kLotsSurfaceExceededWarning,
-                      style: TextStyle(
-                        color: Colors.orange.shade900,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                if (subplotsExceedWarning)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.shade300),
-                    ),
-                    child: Text(
-                      s.kSubplotsSurfaceExceededWarning,
-                      style: TextStyle(
-                        color: Colors.orange.shade900,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                _buildSummaryRow(
-                  s.kFarmer,
-                  s.kFarmer,
-                  isBold: true,
-                ),
-                _buildSummaryRow(
-                  s.kFarm,
-                  _farmNameController.text,
-                  isBold: true,
-                ),
-                _buildSummaryRow(
-                  s.kTotalSurfaceLabel,
-                  '${_totalSurfaceController.text} $unitShort',
-                ),
-                _buildSummaryRow(
-                  s.kGeographicZoneLabel,
-                  _geographicZoneController.text,
-                ),
-                _buildSummaryRow(
-                  s.kSurfaceUnitLabel,
-                  _getUnitFullName(_selectedUnit, s),
-                ),
-                _buildSummaryRow(
-                  s.kLotsCountLabel,
-                  '${_lots.length}',
-                ),
-                const Divider(height: 24),
-                Text(
-                  s.kLotsSectionTitle,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                for (var i = 0; i < _lots.length; i++) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '• ${_lots[i].nameController.text} (${_lots[i].surfaceController.text} $unitShort)',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        if (_lots[i].subplots.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16, top: 4),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  s.kSubplotsSectionTitle,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade700,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                                for (final sub in _lots[i].subplots)
-                                  Text(
-                                    '  - ${sub.nameController.text}: ${sub.surfaceController.text} $unitShort',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                              ],
-                            ),
-                          )
-                        else
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16, top: 2),
-                            child: Text(
-                              s.kNoSubplots,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade600,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(s.kClose),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: AppColors.primary,
-                    content: Text(s.kFormSavedSuccessfully),
-                  ),
-                );
-              },
-              child: Text(s.kConfirmSave),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildSummaryRow(String label, String value, {bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return sum;
   }
 
   @override
@@ -482,191 +312,384 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               const SizedBox(width: 8),
             ],
           ),
-          body: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildHierarchyHeader(s),
-                const SizedBox(height: 16),
-                _buildGeneralInfoCard(s, unitShort),
-                const SizedBox(height: 20),
-                _buildLotsHeaderCard(s),
-                const SizedBox(height: 12),
-                _buildLotsList(s, unitShort),
-                const SizedBox(height: 24),
-                _buildSaveButton(s),
-                const SizedBox(height: 32),
-              ],
-            ),
+          body: Column(
+            children: [
+              _buildStepIndicator(s),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    if (_currentStep == 0)
+                      _buildStep1FarmInfo(s, unitShort)
+                    else if (_currentStep == 1)
+                      _buildStep2LotsInfo(s, unitShort)
+                    else
+                      _buildStep3Summary(s, unitShort),
+                  ],
+                ),
+              ),
+              _buildBottomNavigationBar(s),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildHierarchyHeader(AppStrings s) {
-    return Card(
-      elevation: 0,
-      color: AppColors.lotCardBg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.treeLine, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            const Icon(Icons.person, color: AppColors.primary, size: 20),
-            const SizedBox(width: 6),
-            Text(
-              s.kFarmer,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryDark,
+  // --- Step Indicator ---
+  Widget _buildStepIndicator(AppStrings s) {
+    final steps = [s.kStep1Title, s.kStep2Title, s.kStep3Title];
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: List.generate(steps.length, (index) {
+          final isActive = _currentStep == index;
+          final isDone = _currentStep > index;
+
+          return Expanded(
+            child: InkWell(
+              onTap: () {
+                // Allow tapping completed steps to jump back
+                if (index < _currentStep) {
+                  setState(() => _currentStep = index);
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundColor: isDone
+                        ? AppColors.primary
+                        : (isActive ? AppColors.primaryLight : Colors.grey.shade300),
+                    child: isDone
+                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                        : Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isActive ? Colors.white : Colors.black54,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      steps[index],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight:
+                            isActive ? FontWeight.bold : FontWeight.normal,
+                        color: isActive
+                            ? AppColors.primaryDark
+                            : (isDone ? Colors.black87 : Colors.grey),
+                      ),
+                    ),
+                  ),
+                  if (index < steps.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(Icons.chevron_right,
+                          size: 16, color: Colors.grey.shade400),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
-            const SizedBox(width: 8),
-            const Icon(Icons.landscape, color: AppColors.primary, size: 20),
-            const SizedBox(width: 6),
-            Text(
-              s.kFarm,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryDark,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
-            const SizedBox(width: 8),
-            Text(
-              s.kLotsSectionTitle,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
+          );
+        }),
       ),
     );
   }
 
-  Widget _buildGeneralInfoCard(AppStrings s, String unitShort) {
-    return Card(
-      elevation: 2,
-      color: AppColors.cardBg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.eco, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text(
-                  s.kGeneralInfoSection,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+  // --- Step 1: Farm Info + Quick Start Bypass ---
+  Widget _buildStep1FarmInfo(AppStrings s, String unitShort) {
+    return Form(
+      key: _step1FormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // QUICK START BANNER
+          Card(
+            elevation: 3,
+            color: const Color(0xFFE8F5E9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.bolt, color: Colors.amber, size: 24),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          s.kQuickStartBypass,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Carga datos predefinidos de prueba (2.5 ha en Estelí) y salta directamente al análisis con Ivy.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => _loadDemoFarm(s),
+                      icon: const Icon(Icons.play_arrow, size: 18),
+                      label: const Text('Cargar Demo y Probar Ivy'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Card(
+            elevation: 2,
+            color: AppColors.cardBg,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.eco, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        s.kGeneralInfoSection,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _farmNameController,
+                    decoration: InputDecoration(
+                      labelText: s.kFarmNameLabel,
+                      hintText: s.kFarmNameHint,
+                      prefixIcon: const Icon(Icons.business),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return s.kFieldRequired;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _geographicZoneController,
+                    decoration: InputDecoration(
+                      labelText: s.kGeographicZoneLabel,
+                      hintText: s.kGeographicZoneHint,
+                      prefixIcon: const Icon(Icons.map),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return s.kFieldRequired;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      'Estelí',
+                      'Matagalpa',
+                      'Jinotega',
+                      'León',
+                    ].map((zone) {
+                      return ActionChip(
+                        avatar: const Icon(Icons.location_on, size: 14),
+                        label: Text(zone, style: const TextStyle(fontSize: 12)),
+                        onPressed: () {
+                          setState(() {
+                            _geographicZoneController.text = zone;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<SurfaceUnit>(
+                    initialValue: _selectedUnit,
+                    decoration: InputDecoration(
+                      labelText: s.kSurfaceUnitLabel,
+                      hintText: s.kSurfaceUnitHint,
+                      prefixIcon: const Icon(Icons.straighten),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    items: SurfaceUnit.values.map((unit) {
+                      return DropdownMenuItem<SurfaceUnit>(
+                        value: unit,
+                        child: Text(_getUnitFullName(unit, s)),
+                      );
+                    }).toList(),
+                    onChanged: (SurfaceUnit? newUnit) {
+                      if (newUnit != null) {
+                        setState(() {
+                          _selectedUnit = newUnit;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _totalSurfaceController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: '${s.kTotalSurfaceLabel} ($unitShort)',
+                      hintText: s.kTotalSurfaceHint,
+                      suffixText: unitShort,
+                      prefixIcon: const Icon(Icons.square_foot),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return s.kFieldRequired;
+                      }
+                      final numVal = double.tryParse(val);
+                      if (numVal == null || numVal <= 0) {
+                        return s.kInvalidNumber;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      side: const BorderSide(color: AppColors.accent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      minimumSize: const Size.fromHeight(46),
+                    ),
+                    onPressed: () => _bypassAsSingleLot(s),
+                    icon: const Icon(Icons.fast_forward),
+                    label: Text(s.kQuickStartWholeFarm),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Step 2: Lots and Subplots ---
+  Widget _buildStep2LotsInfo(AppStrings s, String unitShort) {
+    final farmSurface = _totalFarmSurface;
+    final allocated = _totalLotsSurface;
+    final isExceeded = allocated > farmSurface && farmSurface > 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Allocation progress bar
+        Card(
+          elevation: 1,
+          color: isExceeded ? Colors.orange.shade50 : AppColors.cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+              color: isExceeded ? Colors.orange : AppColors.treeLine,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      s.kAllocatedSurface,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '${allocated.toStringAsFixed(1)} / ${farmSurface.toStringAsFixed(1)} $unitShort',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isExceeded ? Colors.orange.shade900 : AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: farmSurface > 0
+                      ? (allocated / farmSurface).clamp(0.0, 1.0)
+                      : 0.0,
+                  backgroundColor: Colors.grey.shade200,
+                  color: isExceeded ? Colors.orange : AppColors.primary,
+                ),
+                if (isExceeded)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      s.kLotsSurfaceExceededWarning,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.orange.shade900,
+                      ),
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _farmNameController,
-              decoration: InputDecoration(
-                labelText: s.kFarmNameLabel,
-                hintText: s.kFarmNameHint,
-                prefixIcon: const Icon(Icons.business),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              validator: (val) {
-                if (val == null || val.trim().isEmpty) {
-                  return s.kFieldRequired;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _geographicZoneController,
-              decoration: InputDecoration(
-                labelText: s.kGeographicZoneLabel,
-                hintText: s.kGeographicZoneHint,
-                prefixIcon: const Icon(Icons.map),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              validator: (val) {
-                if (val == null || val.trim().isEmpty) {
-                  return s.kFieldRequired;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<SurfaceUnit>(
-              initialValue: _selectedUnit,
-              decoration: InputDecoration(
-                labelText: s.kSurfaceUnitLabel,
-                hintText: s.kSurfaceUnitHint,
-                prefixIcon: const Icon(Icons.straighten),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              items: SurfaceUnit.values.map((unit) {
-                return DropdownMenuItem<SurfaceUnit>(
-                  value: unit,
-                  child: Text(_getUnitFullName(unit, s)),
-                );
-              }).toList(),
-              onChanged: (SurfaceUnit? newUnit) {
-                if (newUnit != null) {
-                  setState(() {
-                    _selectedUnit = newUnit;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _totalSurfaceController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: '${s.kTotalSurfaceLabel} ($unitShort)',
-                hintText: s.kTotalSurfaceHint,
-                suffixText: unitShort,
-                prefixIcon: const Icon(Icons.square_foot),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              validator: (val) {
-                if (val == null || val.trim().isEmpty) {
-                  return s.kFieldRequired;
-                }
-                final numVal = double.tryParse(val);
-                if (numVal == null || numVal <= 0) {
-                  return s.kInvalidNumber;
-                }
-                return null;
-              },
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 16),
+        _buildLotsHeaderCard(s),
+        const SizedBox(height: 12),
+        _buildLotsList(s, unitShort),
+      ],
     );
   }
 
@@ -676,82 +699,32 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       color: AppColors.cardBg,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.grid_view_rounded, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    s.kLotsSectionTitle,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+            const Icon(Icons.grid_view_rounded, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                s.kLotsSectionTitle,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () => _addLot(s),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(s.kAddLot),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _lotsCountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: s.kLotsCountLabel,
-                      hintText: s.kLotsCountHint,
-                      prefixIcon: const Icon(Icons.numbers),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onChanged: (val) => _onLotsCountChanged(val, s),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return s.kFieldRequired;
-                      }
-                      final parsed = int.tryParse(val);
-                      if (parsed == null || parsed < 0) {
-                        return s.kLotsCountPositive;
-                      }
-                      return null;
-                    },
-                  ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 8),
-                IconButton.filledTonal(
-                  onPressed: _lots.isNotEmpty
-                      ? () => _removeLotAt(_lots.length - 1)
-                      : null,
-                  icon: const Icon(Icons.remove),
-                ),
-                IconButton.filled(
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () => _addLot(s),
-                  icon: const Icon(Icons.add),
-                ),
-              ],
+              ),
+              onPressed: () => _addLot(s),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(s.kAddLot),
             ),
           ],
         ),
@@ -761,14 +734,31 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   Widget _buildLotsList(AppStrings s, String unitShort) {
     if (_lots.isEmpty) {
-      return const SizedBox.shrink();
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              Icon(Icons.layers_clear, size: 48, color: Colors.grey.shade400),
+              const SizedBox(height: 8),
+              const Text('Aún no has agregado lotes.'),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: () => _addLot(s),
+                icon: const Icon(Icons.add),
+                label: Text(s.kAddLot),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _lots.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, index) => const SizedBox(height: 16),
       itemBuilder: (ctx, index) {
         return _buildLotCard(_lots[index], index, s, unitShort);
       },
@@ -824,12 +814,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              validator: (val) {
-                if (val == null || val.trim().isEmpty) {
-                  return s.kFieldRequired;
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -847,16 +831,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              validator: (val) {
-                if (val == null || val.trim().isEmpty) {
-                  return s.kFieldRequired;
-                }
-                final numVal = double.tryParse(val);
-                if (numVal == null || numVal <= 0) {
-                  return s.kInvalidNumber;
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 16),
             const Divider(),
@@ -892,53 +866,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               onPressed: () => _addSubplot(lot, s),
               icon: const Icon(Icons.add, size: 16),
               label: Text(s.kAddSubplot),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: lot.subplotsCountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: s.kSubplotsCountLabel,
-                  hintText: s.kSubplotsCountHint,
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.format_list_numbered),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onChanged: (val) => _onSubplotsCountChanged(lot, val, s),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return s.kFieldRequired;
-                  }
-                  final parsed = int.tryParse(val);
-                  if (parsed == null || parsed < 0) {
-                    return s.kSubplotsCountPositive;
-                  }
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            IconButton.filledTonal(
-              onPressed: lot.subplots.isNotEmpty
-                  ? () => _removeSubplotAt(lot, lot.subplots.length - 1)
-                  : null,
-              icon: const Icon(Icons.remove),
-            ),
-            IconButton.filled(
-              style: IconButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => _addSubplot(lot, s),
-              icon: const Icon(Icons.add),
             ),
           ],
         ),
@@ -1006,17 +933,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             decoration: InputDecoration(
               isDense: true,
               labelText: s.kSubplotNameLabel,
-              hintText: s.kSubplotNameHint,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            validator: (val) {
-              if (val == null || val.trim().isEmpty) {
-                return s.kFieldRequired;
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -1026,49 +946,233 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             decoration: InputDecoration(
               isDense: true,
               labelText: '${s.kSubplotSurfaceLabel} ($unitShort)',
-              hintText: s.kSubplotSurfaceHint,
-              suffixText: unitShort,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            validator: (val) {
-              if (val == null || val.trim().isEmpty) {
-                return s.kFieldRequired;
-              }
-              final numVal = double.tryParse(val);
-              if (numVal == null || numVal <= 0) {
-                return s.kInvalidNumber;
-              }
-              return null;
-            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSaveButton(AppStrings s) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 3,
+  // --- Step 3: Summary ---
+  Widget _buildStep3Summary(AppStrings s, String unitShort) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Farm Summary Card
+        Card(
+          elevation: 2,
+          color: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.treeLine),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      s.kSummaryTitle,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 20),
+                _buildSummaryRow(
+                  s.kFarm,
+                  _farmNameController.text.isNotEmpty
+                      ? _farmNameController.text
+                      : 'Sin nombre',
+                  isBold: true,
+                ),
+                _buildSummaryRow(
+                  s.kGeographicZoneLabel,
+                  _geographicZoneController.text.isNotEmpty
+                      ? _geographicZoneController.text
+                      : 'Estelí',
+                ),
+                _buildSummaryRow(
+                  s.kTotalSurfaceLabel,
+                  '${_totalSurfaceController.text} $unitShort',
+                ),
+                _buildSummaryRow(
+                  s.kLotsCountLabel,
+                  '${_lots.length}',
+                ),
+                if (_lots.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Distribución de Lotes:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(height: 4),
+                  for (final lot in _lots)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8, bottom: 2),
+                      child: Text(
+                        '• ${lot.nameController.text}: ${lot.surfaceController.text} $unitShort',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                ],
+              ],
+            ),
           ),
         ),
-        onPressed: () => _submitForm(s),
-        icon: const Icon(Icons.save),
-        label: Text(
-          s.kSave,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        const SizedBox(height: 16),
+
+        // NASA Environmental Card
+        Card(
+          elevation: 2,
+          color: const Color(0xFFF1F8E9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.primaryLight),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.public, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      s.kNasaDataReady,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Datos satelitales NASA POWER (radiación y lluvia) y SMAP (humedad del suelo) sincronizados con tu zona.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Bottom Navigation Bar ---
+  Widget _buildBottomNavigationBar(AppStrings s) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          if (_currentStep > 0)
+            Expanded(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  setState(() => _currentStep--);
+                },
+                icon: const Icon(Icons.arrow_back),
+                label: Text(s.kPreviousStep),
+              ),
+            ),
+          if (_currentStep > 0) const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                if (_currentStep == 0) {
+                  if (_step1FormKey.currentState!.validate()) {
+                    setState(() => _currentStep = 1);
+                  }
+                } else if (_currentStep == 1) {
+                  setState(() => _currentStep = 2);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.primary,
+                      content: Text(s.kFormSavedSuccessfully),
+                    ),
+                  );
+                }
+              },
+              icon: Icon(
+                _currentStep == 2 ? Icons.save : Icons.arrow_forward,
+              ),
+              label: Text(
+                _currentStep == 2 ? s.kSave : s.kNextStep,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-

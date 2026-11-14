@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppLanguageType>(
       valueListenable: AppLanguage.current,
-      builder: (context, _, __) {
+      builder: (context, currentLang, _) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: AppLanguage.strings.kFarmInfoTitle,

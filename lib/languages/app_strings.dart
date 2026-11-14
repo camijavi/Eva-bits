@@ -75,6 +75,22 @@ abstract class AppStrings {
   String get kFormSavedSuccessfully;
   String get kConfirmSave;
 
+  // Wizard & Quick Start
+  String get kStep1Title;
+  String get kStep2Title;
+  String get kStep3Title;
+  String get kQuickStartBypass;
+  String get kQuickStartWholeFarm;
+  String get kNextStep;
+  String get kPreviousStep;
+  String get kSingleLotMode;
+  String get kCustomLotsMode;
+  String get kAllocatedSurface;
+  String get kAskIvyTitle;
+  String get kNasaDataReady;
+  String get kFastDemoBanner;
+  String get kPresetLoadedMsg;
+
   // Language
   String get kLanguage;
   String get kEnglish;
@@ -198,6 +214,35 @@ class EngStrings implements AppStrings {
   String get kFormSavedSuccessfully => eng.kFormSavedSuccessfully;
   @override
   String get kConfirmSave => eng.kConfirmSave;
+
+  @override
+  String get kStep1Title => eng.kStep1Title;
+  @override
+  String get kStep2Title => eng.kStep2Title;
+  @override
+  String get kStep3Title => eng.kStep3Title;
+  @override
+  String get kQuickStartBypass => eng.kQuickStartBypass;
+  @override
+  String get kQuickStartWholeFarm => eng.kQuickStartWholeFarm;
+  @override
+  String get kNextStep => eng.kNextStep;
+  @override
+  String get kPreviousStep => eng.kPreviousStep;
+  @override
+  String get kSingleLotMode => eng.kSingleLotMode;
+  @override
+  String get kCustomLotsMode => eng.kCustomLotsMode;
+  @override
+  String get kAllocatedSurface => eng.kAllocatedSurface;
+  @override
+  String get kAskIvyTitle => eng.kAskIvyTitle;
+  @override
+  String get kNasaDataReady => eng.kNasaDataReady;
+  @override
+  String get kFastDemoBanner => eng.kFastDemoBanner;
+  @override
+  String get kPresetLoadedMsg => eng.kPresetLoadedMsg;
 
   @override
   String get kLanguage => eng.kLanguage;
@@ -324,6 +369,35 @@ class SpaStrings implements AppStrings {
   String get kFormSavedSuccessfully => spa.kFormSavedSuccessfully;
   @override
   String get kConfirmSave => spa.kConfirmSave;
+
+  @override
+  String get kStep1Title => spa.kStep1Title;
+  @override
+  String get kStep2Title => spa.kStep2Title;
+  @override
+  String get kStep3Title => spa.kStep3Title;
+  @override
+  String get kQuickStartBypass => spa.kQuickStartBypass;
+  @override
+  String get kQuickStartWholeFarm => spa.kQuickStartWholeFarm;
+  @override
+  String get kNextStep => spa.kNextStep;
+  @override
+  String get kPreviousStep => spa.kPreviousStep;
+  @override
+  String get kSingleLotMode => spa.kSingleLotMode;
+  @override
+  String get kCustomLotsMode => spa.kCustomLotsMode;
+  @override
+  String get kAllocatedSurface => spa.kAllocatedSurface;
+  @override
+  String get kAskIvyTitle => spa.kAskIvyTitle;
+  @override
+  String get kNasaDataReady => spa.kNasaDataReady;
+  @override
+  String get kFastDemoBanner => spa.kFastDemoBanner;
+  @override
+  String get kPresetLoadedMsg => spa.kPresetLoadedMsg;
 
   @override
   String get kLanguage => spa.kLanguage;

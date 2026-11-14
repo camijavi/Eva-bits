@@ -71,6 +71,22 @@ const String kFormSavedSuccessfully =
     '¡Información de la finca guardada con éxito!';
 const String kConfirmSave = 'Confirmar y Guardar';
 
+// Wizard & Quick Start
+const String kStep1Title = '1. Finca';
+const String kStep2Title = '2. Lotes';
+const String kStep3Title = '3. Resumen';
+const String kQuickStartBypass = '⚡ Inicio Rápido (Demo María - Estelí)';
+const String kQuickStartWholeFarm = '⚡ Omitir división (1 Lote)';
+const String kNextStep = 'Siguiente';
+const String kPreviousStep = 'Atrás';
+const String kSingleLotMode = 'Lote Único (Toda la finca)';
+const String kCustomLotsMode = 'Múltiples Lotes / Subparcelas';
+const String kAllocatedSurface = 'Superficie Asignada';
+const String kAskIvyTitle = '🌾 Consultar a Ivy (Predicción)';
+const String kNasaDataReady = 'Datos NASA & Clima';
+const String kFastDemoBanner = '¿Tienes poco tiempo para la demo?';
+const String kPresetLoadedMsg = '¡Finca de prueba (María - Estelí) cargada!';
+
 // Language
 const String kLanguage = 'Idioma';
 const String kEnglish = 'Inglés';
