@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../constants/app_colors.dart';
 import '../languages/app_strings.dart';
+import '../services/nasa_power_service.dart';
 
 enum SurfaceUnit {
   hectares,
@@ -65,6 +67,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   late final TextEditingController _totalSurfaceController;
   late final TextEditingController _geographicZoneController;
   late final TextEditingController _lotsCountController;
+  late final TextEditingController _latitudeController;
+  late final TextEditingController _longitudeController;
+
+  bool _isGettingLocation = false;
 
   SurfaceUnit _selectedUnit = SurfaceUnit.hectares;
   final List<LotItem> _lots = [];
@@ -76,6 +82,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     _totalSurfaceController = TextEditingController();
     _geographicZoneController = TextEditingController();
     _lotsCountController = TextEditingController(text: '0');
+    _latitudeController = TextEditingController();
+    _longitudeController = TextEditingController();
   }
 
   @override
@@ -84,10 +92,97 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     _totalSurfaceController.dispose();
     _geographicZoneController.dispose();
     _lotsCountController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
     for (final lot in _lots) {
       lot.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _getCurrentLocation(AppStrings s) async {
+    setState(() => _isGettingLocation = true);
+
+    try {
+      final position = await _determinePosition(s);
+      if (position != null && mounted) {
+        setState(() {
+          _latitudeController.text = position.latitude.toStringAsFixed(6);
+          _longitudeController.text = position.longitude.toStringAsFixed(6);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.primary,
+            content: Text(
+              '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red.shade800,
+            content: Text(s.kGpsError),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGettingLocation = false);
+      }
+    }
+  }
+
+  Future<Position?> _determinePosition(AppStrings s) async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.orange.shade900,
+            content: Text(s.kGpsServiceDisabled),
+          ),
+        );
+      }
+      return null;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.orange.shade900,
+              content: Text(s.kGpsPermissionDenied),
+            ),
+          );
+        }
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red.shade900,
+            content: Text(s.kGpsPermissionDeniedPermanently),
+          ),
+        );
+      }
+      return null;
+    }
+
+    return await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 15),
+      ),
+    );
   }
 
   String _getUnitFullName(SurfaceUnit unit, AppStrings s) {
@@ -132,7 +227,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       _lots.add(
         LotItem(
           nameController: TextEditingController(
-            text: '${_farmNameController.text.trim()} - Lote Principal',
+            text: '${_farmNameController.text.trim()} - ${s.kMainLot}',
           ),
           surfaceController: TextEditingController(text: total),
           subplotsCountController: TextEditingController(text: '0'),
@@ -446,10 +541,129 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                         onPressed: () {
                           setState(() {
                             _geographicZoneController.text = zone;
+                            if (_latitudeController.text.isEmpty &&
+                                NasaPowerService.knownRegions.containsKey(zone)) {
+                              _latitudeController.text = NasaPowerService
+                                  .knownRegions[zone]!['lat']!
+                                  .toStringAsFixed(4);
+                              _longitudeController.text = NasaPowerService
+                                  .knownRegions[zone]!['lon']!
+                                  .toStringAsFixed(4);
+                            }
                           });
                         },
                       );
                     }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.lotCardBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.treeLine),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.gps_fixed,
+                                color: AppColors.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                s.kFarmLocationLabel,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: _isGettingLocation
+                                ? null
+                                : () => _getCurrentLocation(s),
+                            icon: _isGettingLocation
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.my_location, size: 18),
+                            label: Text(
+                              _isGettingLocation
+                                  ? s.kGettingGpsLocation
+                                  : s.kGetGpsLocationButton,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _latitudeController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true, signed: true),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  isDense: true,
+                                  labelText: s.kLatitudeLabel,
+                                  hintText: s.kLatitudeHint,
+                                  prefixIcon: const Icon(
+                                      Icons.explore_outlined,
+                                      size: 18),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _longitudeController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true, signed: true),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  isDense: true,
+                                  labelText: s.kLongitudeLabel,
+                                  hintText: s.kLongitudeHint,
+                                  prefixIcon:
+                                      const Icon(Icons.explore, size: 18),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<SurfaceUnit>(
@@ -643,7 +857,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             children: [
               Icon(Icons.layers_clear, size: 48, color: Colors.grey.shade400),
               const SizedBox(height: 8),
-              const Text('Aún no has agregado lotes.'),
+              Text(s.kNoLotsAddedYet),
               const SizedBox(height: 8),
               ElevatedButton.icon(
                 onPressed: () => _addLot(s),
@@ -904,6 +1118,12 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       ? _geographicZoneController.text
                       : '-',
                 ),
+                if (_latitudeController.text.isNotEmpty &&
+                    _longitudeController.text.isNotEmpty)
+                  _buildSummaryRow(
+                    s.kFarmLocationLabel,
+                    '${_latitudeController.text}, ${_longitudeController.text}',
+                  ),
                 _buildSummaryRow(
                   s.kTotalSurfaceLabel,
                   '${_totalSurfaceController.text} $unitShort',
@@ -914,9 +1134,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 ),
                 if (_lots.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  const Text(
-                    'Distribución de Lotes:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  Text(
+                    '${s.kLotsDistribution}:',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   for (final lot in _lots)
@@ -962,9 +1182,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Datos satelitales NASA POWER (radiación y lluvia) y SMAP (humedad del suelo) sincronizados con tu zona.',
-                  style: TextStyle(fontSize: 12),
+                Text(
+                  s.kNasaDataDescription,
+                  style: const TextStyle(fontSize: 12),
                 ),
               ],
             ),

@@ -21,6 +21,22 @@ const String kTotalSurfaceHint = 'Ingrese la superficie total';
 const String kGeographicZoneLabel = 'Zona geográfica';
 const String kGeographicZoneHint = 'Ingrese la zona geográfica';
 
+// GPS & Location
+const String kFarmLocationLabel = 'Coordenadas GPS de la Finca';
+const String kGetGpsLocationButton = 'Detectar Ubicación GPS Actual';
+const String kGettingGpsLocation = 'Obteniendo señal GPS...';
+const String kLatitudeLabel = 'Latitud';
+const String kLatitudeHint = 'ej. 13.0910';
+const String kLongitudeLabel = 'Longitud';
+const String kLongitudeHint = 'ej. -86.3538';
+const String kGpsSuccess = 'Coordenadas GPS capturadas con éxito';
+const String kGpsServiceDisabled =
+    'Los servicios de ubicación están desactivados. Por favor active el GPS.';
+const String kGpsPermissionDenied = 'El permiso de ubicación fue denegado.';
+const String kGpsPermissionDeniedPermanently =
+    'Los permisos de ubicación están permanentemente denegados. Por favor actívelos en ajustes.';
+const String kGpsError = 'No se pudieron obtener las coordenadas GPS.';
+
 // Surface Units
 const String kSurfaceUnitLabel = 'Unidad de medida de superficie';
 const String kSurfaceUnitHint = 'Seleccione la unidad de medida';
@@ -79,10 +95,15 @@ const String kQuickStartWholeFarm = 'Omitir división (Usar toda la finca como 1
 const String kNextStep = 'Siguiente';
 const String kPreviousStep = 'Atrás';
 const String kSingleLotMode = 'Lote Único (Toda la finca)';
+const String kMainLot = 'Lote Principal';
 const String kCustomLotsMode = 'Múltiples Lotes / Subparcelas';
 const String kAllocatedSurface = 'Superficie Asignada';
 const String kAskIvyTitle = '🌾 Consultar a Ivy (Predicción)';
 const String kNasaDataReady = 'Datos NASA & Clima';
+const String kNoLotsAddedYet = 'Aún no has agregado lotes.';
+const String kLotsDistribution = 'Distribución de Lotes';
+const String kNasaDataDescription =
+    'Datos satelitales NASA POWER y SMAP (radiación, lluvia y humedad) sincronizados con tus coordenadas.';
 
 // Language
 const String kLanguage = 'Idioma';

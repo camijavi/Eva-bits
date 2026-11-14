@@ -30,6 +30,20 @@ abstract class AppStrings {
   String get kGeographicZoneLabel;
   String get kGeographicZoneHint;
 
+  // GPS & Location
+  String get kFarmLocationLabel;
+  String get kGetGpsLocationButton;
+  String get kGettingGpsLocation;
+  String get kLatitudeLabel;
+  String get kLatitudeHint;
+  String get kLongitudeLabel;
+  String get kLongitudeHint;
+  String get kGpsSuccess;
+  String get kGpsServiceDisabled;
+  String get kGpsPermissionDenied;
+  String get kGpsPermissionDeniedPermanently;
+  String get kGpsError;
+
   // Surface Units
   String get kSurfaceUnitLabel;
   String get kSurfaceUnitHint;
@@ -83,10 +97,14 @@ abstract class AppStrings {
   String get kNextStep;
   String get kPreviousStep;
   String get kSingleLotMode;
+  String get kMainLot;
   String get kCustomLotsMode;
   String get kAllocatedSurface;
   String get kAskIvyTitle;
   String get kNasaDataReady;
+  String get kNoLotsAddedYet;
+  String get kLotsDistribution;
+  String get kNasaDataDescription;
 
   // Language
   String get kLanguage;
@@ -133,6 +151,32 @@ class EngStrings implements AppStrings {
   String get kGeographicZoneLabel => eng.kGeographicZoneLabel;
   @override
   String get kGeographicZoneHint => eng.kGeographicZoneHint;
+
+  @override
+  String get kFarmLocationLabel => eng.kFarmLocationLabel;
+  @override
+  String get kGetGpsLocationButton => eng.kGetGpsLocationButton;
+  @override
+  String get kGettingGpsLocation => eng.kGettingGpsLocation;
+  @override
+  String get kLatitudeLabel => eng.kLatitudeLabel;
+  @override
+  String get kLatitudeHint => eng.kLatitudeHint;
+  @override
+  String get kLongitudeLabel => eng.kLongitudeLabel;
+  @override
+  String get kLongitudeHint => eng.kLongitudeHint;
+  @override
+  String get kGpsSuccess => eng.kGpsSuccess;
+  @override
+  String get kGpsServiceDisabled => eng.kGpsServiceDisabled;
+  @override
+  String get kGpsPermissionDenied => eng.kGpsPermissionDenied;
+  @override
+  String get kGpsPermissionDeniedPermanently =>
+      eng.kGpsPermissionDeniedPermanently;
+  @override
+  String get kGpsError => eng.kGpsError;
 
   @override
   String get kSurfaceUnitLabel => eng.kSurfaceUnitLabel;
@@ -227,6 +271,8 @@ class EngStrings implements AppStrings {
   @override
   String get kSingleLotMode => eng.kSingleLotMode;
   @override
+  String get kMainLot => eng.kMainLot;
+  @override
   String get kCustomLotsMode => eng.kCustomLotsMode;
   @override
   String get kAllocatedSurface => eng.kAllocatedSurface;
@@ -234,6 +280,12 @@ class EngStrings implements AppStrings {
   String get kAskIvyTitle => eng.kAskIvyTitle;
   @override
   String get kNasaDataReady => eng.kNasaDataReady;
+  @override
+  String get kNoLotsAddedYet => eng.kNoLotsAddedYet;
+  @override
+  String get kLotsDistribution => eng.kLotsDistribution;
+  @override
+  String get kNasaDataDescription => eng.kNasaDataDescription;
 
   @override
   String get kLanguage => eng.kLanguage;
@@ -282,6 +334,32 @@ class SpaStrings implements AppStrings {
   String get kGeographicZoneLabel => spa.kGeographicZoneLabel;
   @override
   String get kGeographicZoneHint => spa.kGeographicZoneHint;
+
+  @override
+  String get kFarmLocationLabel => spa.kFarmLocationLabel;
+  @override
+  String get kGetGpsLocationButton => spa.kGetGpsLocationButton;
+  @override
+  String get kGettingGpsLocation => spa.kGettingGpsLocation;
+  @override
+  String get kLatitudeLabel => spa.kLatitudeLabel;
+  @override
+  String get kLatitudeHint => spa.kLatitudeHint;
+  @override
+  String get kLongitudeLabel => spa.kLongitudeLabel;
+  @override
+  String get kLongitudeHint => spa.kLongitudeHint;
+  @override
+  String get kGpsSuccess => spa.kGpsSuccess;
+  @override
+  String get kGpsServiceDisabled => spa.kGpsServiceDisabled;
+  @override
+  String get kGpsPermissionDenied => spa.kGpsPermissionDenied;
+  @override
+  String get kGpsPermissionDeniedPermanently =>
+      spa.kGpsPermissionDeniedPermanently;
+  @override
+  String get kGpsError => spa.kGpsError;
 
   @override
   String get kSurfaceUnitLabel => spa.kSurfaceUnitLabel;
@@ -376,6 +454,8 @@ class SpaStrings implements AppStrings {
   @override
   String get kSingleLotMode => spa.kSingleLotMode;
   @override
+  String get kMainLot => spa.kMainLot;
+  @override
   String get kCustomLotsMode => spa.kCustomLotsMode;
   @override
   String get kAllocatedSurface => spa.kAllocatedSurface;
@@ -383,6 +463,12 @@ class SpaStrings implements AppStrings {
   String get kAskIvyTitle => spa.kAskIvyTitle;
   @override
   String get kNasaDataReady => spa.kNasaDataReady;
+  @override
+  String get kNoLotsAddedYet => spa.kNoLotsAddedYet;
+  @override
+  String get kLotsDistribution => spa.kLotsDistribution;
+  @override
+  String get kNasaDataDescription => spa.kNasaDataDescription;
 
   @override
   String get kLanguage => spa.kLanguage;

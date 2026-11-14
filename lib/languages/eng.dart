@@ -21,6 +21,22 @@ const String kTotalSurfaceHint = 'Enter total surface';
 const String kGeographicZoneLabel = 'Geographic Zone';
 const String kGeographicZoneHint = 'Enter geographic zone';
 
+// GPS & Location
+const String kFarmLocationLabel = 'Farm GPS Coordinates';
+const String kGetGpsLocationButton = 'Detect Current GPS Location';
+const String kGettingGpsLocation = 'Acquiring GPS signal...';
+const String kLatitudeLabel = 'Latitude';
+const String kLatitudeHint = 'e.g. 13.0910';
+const String kLongitudeLabel = 'Longitude';
+const String kLongitudeHint = 'e.g. -86.3538';
+const String kGpsSuccess = 'GPS coordinates captured successfully';
+const String kGpsServiceDisabled =
+    'Location services are disabled on your device. Please enable GPS.';
+const String kGpsPermissionDenied = 'Location permission was denied.';
+const String kGpsPermissionDeniedPermanently =
+    'Location permissions are permanently denied. Please enable them in settings.';
+const String kGpsError = 'Failed to acquire GPS coordinates.';
+
 // Surface Units
 const String kSurfaceUnitLabel = 'Surface Unit of Measurement';
 const String kSurfaceUnitHint = 'Select measurement unit';
@@ -77,10 +93,15 @@ const String kQuickStartWholeFarm = 'Bypass lot division (Use whole farm as 1 lo
 const String kNextStep = 'Next';
 const String kPreviousStep = 'Back';
 const String kSingleLotMode = 'Single Lot (Whole Farm)';
+const String kMainLot = 'Main Lot';
 const String kCustomLotsMode = 'Multiple Lots / Subplots';
 const String kAllocatedSurface = 'Allocated Surface';
 const String kAskIvyTitle = '🌾 Ask Ivy (Prediction)';
 const String kNasaDataReady = 'NASA & Climate Data';
+const String kNoLotsAddedYet = 'You have not added any lots yet.';
+const String kLotsDistribution = 'Lots Distribution';
+const String kNasaDataDescription =
+    'NASA POWER and SMAP satellite data (solar radiation, rainfall, and soil moisture) synchronized for your coordinates.';
 
 // Language
 const String kLanguage = 'Language';
