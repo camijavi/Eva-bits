@@ -1,0 +1,1 @@
+ /Users/camijavi/Projects/Eva-bits/.dart_tool/flutter_build/c56442f207fc5c6df603996a71767d9e/native_assets.json: 
