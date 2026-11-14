@@ -16,13 +16,16 @@ const String kSummaryTitle = 'Farm Summary';
 // Farm Fields
 const String kFarmNameLabel = 'Farm Name';
 const String kFarmNameHint = 'Enter farm name';
+const String kCountryLabel = 'Country';
+const String kCountryHint = 'Enter country';
 const String kTotalSurfaceLabel = 'Total Surface';
 const String kTotalSurfaceHint = 'Enter total surface';
 const String kGeographicZoneLabel = 'Geographic Zone';
 const String kGeographicZoneHint = 'Enter geographic zone';
 
 // GPS & Location
-const String kFarmLocationLabel = 'Farm GPS Coordinates';
+const String kFarmLocationLabel = 'Farm Location';
+const String kWhereIsYourFarm = 'Where is your farm?';
 const String kGetGpsLocationButton = 'Detect Current GPS Location';
 const String kGettingGpsLocation = 'Acquiring GPS signal...';
 const String kLatitudeLabel = 'Latitude';
@@ -36,6 +39,12 @@ const String kGpsPermissionDenied = 'Location permission was denied.';
 const String kGpsPermissionDeniedPermanently =
     'Location permissions are permanently denied. Please enable them in settings.';
 const String kGpsError = 'Failed to acquire GPS coordinates.';
+const String kLocationNotCapturedYet =
+    'GPS location not recorded yet. Tap to detect.';
+const String kRefreshLocation = 'Update GPS';
+const String kLocationRequired =
+    'Please detect the farm GPS location before continuing.';
+const String kGpsCoordinates = 'Coordinates';
 
 // Surface Units
 const String kSurfaceUnitLabel = 'Surface Unit of Measurement';
@@ -86,9 +95,9 @@ const String kFormSavedSuccessfully = 'Farm information saved successfully!';
 const String kConfirmSave = 'Confirm and Save';
 
 // Wizard & Quick Start
-const String kStep1Title = '1. Farm';
-const String kStep2Title = '2. Lots';
-const String kStep3Title = '3. Summary';
+const String kStep1Title = 'Farm';
+const String kStep2Title = 'Lots';
+const String kStep3Title = 'Summary';
 const String kQuickStartWholeFarm = 'Bypass lot division (Use whole farm as 1 lot)';
 const String kNextStep = 'Next';
 const String kPreviousStep = 'Back';

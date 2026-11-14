@@ -25,6 +25,8 @@ abstract class AppStrings {
   // Farm Fields
   String get kFarmNameLabel;
   String get kFarmNameHint;
+  String get kCountryLabel;
+  String get kCountryHint;
   String get kTotalSurfaceLabel;
   String get kTotalSurfaceHint;
   String get kGeographicZoneLabel;
@@ -32,6 +34,7 @@ abstract class AppStrings {
 
   // GPS & Location
   String get kFarmLocationLabel;
+  String get kWhereIsYourFarm;
   String get kGetGpsLocationButton;
   String get kGettingGpsLocation;
   String get kLatitudeLabel;
@@ -43,6 +46,10 @@ abstract class AppStrings {
   String get kGpsPermissionDenied;
   String get kGpsPermissionDeniedPermanently;
   String get kGpsError;
+  String get kLocationNotCapturedYet;
+  String get kRefreshLocation;
+  String get kLocationRequired;
+  String get kGpsCoordinates;
 
   // Surface Units
   String get kSurfaceUnitLabel;
@@ -144,6 +151,10 @@ class EngStrings implements AppStrings {
   @override
   String get kFarmNameHint => eng.kFarmNameHint;
   @override
+  String get kCountryLabel => eng.kCountryLabel;
+  @override
+  String get kCountryHint => eng.kCountryHint;
+  @override
   String get kTotalSurfaceLabel => eng.kTotalSurfaceLabel;
   @override
   String get kTotalSurfaceHint => eng.kTotalSurfaceHint;
@@ -154,6 +165,8 @@ class EngStrings implements AppStrings {
 
   @override
   String get kFarmLocationLabel => eng.kFarmLocationLabel;
+  @override
+  String get kWhereIsYourFarm => eng.kWhereIsYourFarm;
   @override
   String get kGetGpsLocationButton => eng.kGetGpsLocationButton;
   @override
@@ -177,6 +190,14 @@ class EngStrings implements AppStrings {
       eng.kGpsPermissionDeniedPermanently;
   @override
   String get kGpsError => eng.kGpsError;
+  @override
+  String get kLocationNotCapturedYet => eng.kLocationNotCapturedYet;
+  @override
+  String get kRefreshLocation => eng.kRefreshLocation;
+  @override
+  String get kLocationRequired => eng.kLocationRequired;
+  @override
+  String get kGpsCoordinates => eng.kGpsCoordinates;
 
   @override
   String get kSurfaceUnitLabel => eng.kSurfaceUnitLabel;
@@ -327,6 +348,10 @@ class SpaStrings implements AppStrings {
   @override
   String get kFarmNameHint => spa.kFarmNameHint;
   @override
+  String get kCountryLabel => spa.kCountryLabel;
+  @override
+  String get kCountryHint => spa.kCountryHint;
+  @override
   String get kTotalSurfaceLabel => spa.kTotalSurfaceLabel;
   @override
   String get kTotalSurfaceHint => spa.kTotalSurfaceHint;
@@ -337,6 +362,8 @@ class SpaStrings implements AppStrings {
 
   @override
   String get kFarmLocationLabel => spa.kFarmLocationLabel;
+  @override
+  String get kWhereIsYourFarm => spa.kWhereIsYourFarm;
   @override
   String get kGetGpsLocationButton => spa.kGetGpsLocationButton;
   @override
@@ -360,6 +387,14 @@ class SpaStrings implements AppStrings {
       spa.kGpsPermissionDeniedPermanently;
   @override
   String get kGpsError => spa.kGpsError;
+  @override
+  String get kLocationNotCapturedYet => spa.kLocationNotCapturedYet;
+  @override
+  String get kRefreshLocation => spa.kRefreshLocation;
+  @override
+  String get kLocationRequired => spa.kLocationRequired;
+  @override
+  String get kGpsCoordinates => spa.kGpsCoordinates;
 
   @override
   String get kSurfaceUnitLabel => spa.kSurfaceUnitLabel;

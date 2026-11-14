@@ -16,13 +16,16 @@ const String kSummaryTitle = 'Resumen de la Finca';
 // Farm Fields
 const String kFarmNameLabel = 'Nombre de la finca';
 const String kFarmNameHint = 'Ingrese el nombre de la finca';
+const String kCountryLabel = 'País';
+const String kCountryHint = 'Ingrese el país';
 const String kTotalSurfaceLabel = 'Superficie total';
 const String kTotalSurfaceHint = 'Ingrese la superficie total';
 const String kGeographicZoneLabel = 'Zona geográfica';
 const String kGeographicZoneHint = 'Ingrese la zona geográfica';
 
 // GPS & Location
-const String kFarmLocationLabel = 'Coordenadas GPS de la Finca';
+const String kFarmLocationLabel = 'Ubicación de la finca';
+const String kWhereIsYourFarm = '¿Dónde está tu finca?';
 const String kGetGpsLocationButton = 'Detectar Ubicación GPS Actual';
 const String kGettingGpsLocation = 'Obteniendo señal GPS...';
 const String kLatitudeLabel = 'Latitud';
@@ -36,6 +39,12 @@ const String kGpsPermissionDenied = 'El permiso de ubicación fue denegado.';
 const String kGpsPermissionDeniedPermanently =
     'Los permisos de ubicación están permanentemente denegados. Por favor actívelos en ajustes.';
 const String kGpsError = 'No se pudieron obtener las coordenadas GPS.';
+const String kLocationNotCapturedYet =
+    'Ubicación GPS no registrada aún. Presione para detectar.';
+const String kRefreshLocation = 'Actualizar GPS';
+const String kLocationRequired =
+    'Por favor detecte la ubicación GPS de la finca antes de continuar.';
+const String kGpsCoordinates = 'Coordenadas';
 
 // Surface Units
 const String kSurfaceUnitLabel = 'Unidad de medida de superficie';
@@ -88,9 +97,9 @@ const String kFormSavedSuccessfully =
 const String kConfirmSave = 'Confirmar y Guardar';
 
 // Wizard & Quick Start
-const String kStep1Title = '1. Finca';
-const String kStep2Title = '2. Lotes';
-const String kStep3Title = '3. Resumen';
+const String kStep1Title = 'Finca';
+const String kStep2Title = 'Lotes';
+const String kStep3Title = 'Resumen';
 const String kQuickStartWholeFarm = 'Omitir división (Usar toda la finca como 1 lote)';
 const String kNextStep = 'Siguiente';
 const String kPreviousStep = 'Atrás';

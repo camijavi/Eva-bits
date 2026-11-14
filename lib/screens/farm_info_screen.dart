@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../constants/app_colors.dart';
 import '../languages/app_strings.dart';
-import '../services/nasa_power_service.dart';
 
 enum SurfaceUnit {
   hectares,
@@ -64,12 +63,12 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // Farm General Controllers
   late final TextEditingController _farmNameController;
+  late final TextEditingController _countryController;
   late final TextEditingController _totalSurfaceController;
-  late final TextEditingController _geographicZoneController;
   late final TextEditingController _lotsCountController;
-  late final TextEditingController _latitudeController;
-  late final TextEditingController _longitudeController;
 
+  double? _latitude;
+  double? _longitude;
   bool _isGettingLocation = false;
 
   SurfaceUnit _selectedUnit = SurfaceUnit.hectares;
@@ -79,21 +78,21 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   void initState() {
     super.initState();
     _farmNameController = TextEditingController();
+    _countryController = TextEditingController();
     _totalSurfaceController = TextEditingController();
-    _geographicZoneController = TextEditingController();
     _lotsCountController = TextEditingController(text: '0');
-    _latitudeController = TextEditingController();
-    _longitudeController = TextEditingController();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCurrentLocation(AppLanguage.strings);
+    });
   }
 
   @override
   void dispose() {
     _farmNameController.dispose();
+    _countryController.dispose();
     _totalSurfaceController.dispose();
-    _geographicZoneController.dispose();
     _lotsCountController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
     for (final lot in _lots) {
       lot.dispose();
     }
@@ -107,8 +106,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       final position = await _determinePosition(s);
       if (position != null && mounted) {
         setState(() {
-          _latitudeController.text = position.latitude.toStringAsFixed(6);
-          _longitudeController.text = position.longitude.toStringAsFixed(6);
+          _latitude = position.latitude;
+          _longitude = position.longitude;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -214,6 +213,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   // Bypass: Use whole farm as 1 single lot and jump straight to Step 3
   void _bypassAsSingleLot(AppStrings s) {
     if (!_step1FormKey.currentState!.validate()) {
+      return;
+    }
+    if (_latitude == null || _longitude == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.orange.shade900,
+          content: Text(s.kLocationRequired),
+        ),
+      );
+      _getCurrentLocation(s);
       return;
     }
 
@@ -510,11 +519,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: _geographicZoneController,
+                    controller: _countryController,
                     decoration: InputDecoration(
-                      labelText: s.kGeographicZoneLabel,
-                      hintText: s.kGeographicZoneHint,
-                      prefixIcon: const Icon(Icons.map),
+                      labelText: s.kCountryLabel,
+                      hintText: s.kCountryHint,
+                      prefixIcon: const Icon(Icons.public),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -526,142 +535,132 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      'Estelí',
-                      'Matagalpa',
-                      'Jinotega',
-                      'León',
-                    ].map((zone) {
-                      return ActionChip(
-                        avatar: const Icon(Icons.location_on, size: 14),
-                        label: Text(zone, style: const TextStyle(fontSize: 12)),
-                        onPressed: () {
-                          setState(() {
-                            _geographicZoneController.text = zone;
-                            if (_latitudeController.text.isEmpty &&
-                                NasaPowerService.knownRegions.containsKey(zone)) {
-                              _latitudeController.text = NasaPowerService
-                                  .knownRegions[zone]!['lat']!
-                                  .toStringAsFixed(4);
-                              _longitudeController.text = NasaPowerService
-                                  .knownRegions[zone]!['lon']!
-                                  .toStringAsFixed(4);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
                   const SizedBox(height: 16),
+                  // GPS Farm Location Card (Automatic & Current GPS)
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.lotCardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.treeLine),
+                      color: _latitude != null
+                          ? const Color(0xFFF1F8E9)
+                          : AppColors.lotCardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _latitude != null
+                            ? AppColors.primaryLight
+                            : AppColors.treeLine,
+                        width: 1.2,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.gps_fixed,
-                                color: AppColors.primary, size: 20),
+                            Icon(
+                              _latitude != null
+                                  ? Icons.location_on
+                                  : Icons.location_searching,
+                              color: _latitude != null
+                                  ? AppColors.primary
+                                  : Colors.grey.shade700,
+                              size: 22,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                s.kFarmLocationLabel,
+                                s.kWhereIsYourFarm,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 15,
                                   color: AppColors.primaryDark,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                            if (_latitude != null)
+                              IconButton.filledTonal(
+                                visualDensity: VisualDensity.compact,
+                                tooltip: s.kRefreshLocation,
+                                onPressed: _isGettingLocation
+                                    ? null
+                                    : () => _getCurrentLocation(s),
+                                icon: const Icon(Icons.refresh, size: 18),
                               ),
-                            ),
-                            onPressed: _isGettingLocation
-                                ? null
-                                : () => _getCurrentLocation(s),
-                            icon: _isGettingLocation
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(Icons.my_location, size: 18),
-                            label: Text(
-                              _isGettingLocation
-                                  ? s.kGettingGpsLocation
-                                  : s.kGetGpsLocationButton,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
+                          ],
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _latitudeController,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true, signed: true),
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  isDense: true,
-                                  labelText: s.kLatitudeLabel,
-                                  hintText: s.kLatitudeHint,
-                                  prefixIcon: const Icon(
-                                      Icons.explore_outlined,
-                                      size: 18),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                        if (_isGettingLocation) ...[
+                          Row(
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                s.kGettingGpsLocation,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade700,
+                                  fontStyle: FontStyle.italic,
                                 ),
                               ),
+                            ],
+                          ),
+                        ] else if (_latitude != null &&
+                            _longitude != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppColors.treeLine),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _longitudeController,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true, signed: true),
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  isDense: true,
-                                  labelText: s.kLongitudeLabel,
-                                  hintText: s.kLongitudeHint,
-                                  prefixIcon:
-                                      const Icon(Icons.explore, size: 18),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.satellite_alt,
+                                    size: 18, color: AppColors.primary),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${s.kLatitudeLabel}: ${_latitude!.toStringAsFixed(6)}   |   ${s.kLongitudeLabel}: ${_longitude!.toStringAsFixed(6)}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ] else ...[
+                          Text(
+                            s.kLocationNotCapturedYet,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: () => _getCurrentLocation(s),
+                              icon: const Icon(Icons.my_location, size: 18),
+                              label: Text(s.kGetGpsLocationButton),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1113,16 +1112,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   isBold: true,
                 ),
                 _buildSummaryRow(
-                  s.kGeographicZoneLabel,
-                  _geographicZoneController.text.isNotEmpty
-                      ? _geographicZoneController.text
+                  s.kCountryLabel,
+                  _countryController.text.isNotEmpty
+                      ? _countryController.text
                       : '-',
                 ),
-                if (_latitudeController.text.isNotEmpty &&
-                    _longitudeController.text.isNotEmpty)
+                if (_latitude != null && _longitude != null)
                   _buildSummaryRow(
                     s.kFarmLocationLabel,
-                    '${_latitudeController.text}, ${_longitudeController.text}',
+                    '${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}',
+                    isBold: true,
                   ),
                 _buildSummaryRow(
                   s.kTotalSurfaceLabel,
@@ -1271,6 +1270,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               onPressed: () {
                 if (_currentStep == 0) {
                   if (_step1FormKey.currentState!.validate()) {
+                    if (_latitude == null || _longitude == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.orange.shade900,
+                          content: Text(s.kLocationRequired),
+                        ),
+                      );
+                      _getCurrentLocation(s);
+                      return;
+                    }
                     setState(() => _currentStep = 1);
                   }
                 } else if (_currentStep == 1) {
