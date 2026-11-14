@@ -6,7 +6,7 @@ The **Conversational Onboarding & Quick Start Bypass** subsystem captures and st
 
 The system provides two entry channels:
 1. **Conversational Extraction Channel:** Ingests unformatted voice audio or natural language text descriptions and uses an LLM entity extraction pipeline to parse and normalize the input into structured data.
-2. **Quick Start Bypass Channel:** Bypasses sequential manual entry using either a one-click validated preset profile or an automatic single-lot consolidation.
+2. **Quick Start Bypass Channel:** Allows users to bypass detailed lot/subplot division by automatically consolidating the user's declared total farm area into a single primary management lot.
 
 ---
 
@@ -129,7 +129,7 @@ Instructions:
 ### Sample Instance
 ```json
 {
-  "farm_name": "Finca Las Delicias",
+  "farm_name": "Finca San Pedro",
   "geographic_zone": "Estelí",
   "total_surface": 2.5,
   "surface_unit": "hectares",
@@ -141,9 +141,9 @@ Instructions:
       "subplots": []
     },
     {
-      "name": "Lote 2 - Frijol Criollo",
+      "name": "Lote 2 - Frijol",
       "surface": 1.0,
-      "current_crop": "Frijol Criollo",
+      "current_crop": "Frijol",
       "subplots": []
     }
   ]
@@ -152,30 +152,17 @@ Instructions:
 
 ---
 
-## 5. Quick Start Bypass Implementation
+## 5. Quick Start Bypass Implementation (`_bypassAsSingleLot`)
 
-To expedite testing and eliminate entry overhead, the system implements two direct bypass routines within the onboarding wizard:
+To eliminate complex manual subdivision overhead for farmers managing their property as a unified block:
 
-### 5.1 Preset Demo Bypass (`_loadDemoFarm`)
-* **Trigger:** Action button on Step 1: *"Cargar Demo y Probar"* (`kQuickStartBypass`).
+* **Trigger:** Action button on Step 1: *"Omitir división (Usar toda la finca como 1 lote)"* (`kQuickStartWholeFarm`).
 * **Execution:**
-  1. Clears existing controller allocations and memory buffers.
-  2. Injects pre-validated test vectors into state:
-     * `_farmNameController.text` = `"Finca Las Delicias (María)"`
-     * `_geographicZoneController.text` = `"Estelí"`
-     * `_totalSurfaceController.text` = `"2.5"`
-     * `_selectedUnit` = `SurfaceUnit.hectares`
-     * `_lots` = 2 pre-allocated `LotItem` objects (1.5 ha and 1.0 ha).
-  3. Updates step index directly: `_currentStep = 2` (Step 3: Summary).
-* **Latency:** Instantaneous ($< 5\text{ ms}$).
-
-### 5.2 Single-Lot Bypass (`_bypassAsSingleLot`)
-* **Trigger:** Button on Step 1: *"Omitir división (1 Lote)"* (`kQuickStartWholeFarm`).
-* **Execution:**
-  1. Validates general farm fields on Step 1 (`_step1FormKey.currentState.validate()`).
-  2. Consolidates 100% of the declared farm surface into a single primary `LotItem` (`"<Farm Name> - Lote Principal"`).
+  1. Validates the general farm parameters entered by the user on Step 1 (`_step1FormKey.currentState.validate()`).
+  2. Consolidates 100% of the user-entered farm surface into a single primary `LotItem` (`"<Farm Name> - Lote Principal"`).
   3. Sets `_lotsCountController.text` = `"1"`.
-  4. Advances wizard state immediately: `_currentStep = 2` (Step 3: Summary).
+  4. Advances the wizard directly to Step 3 (`_currentStep = 2`) for summary review and NASA linking.
+* **Latency:** Instantaneous ($< 5\text{ ms}$).
 
 ---
 

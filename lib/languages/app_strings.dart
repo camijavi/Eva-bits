@@ -79,7 +79,6 @@ abstract class AppStrings {
   String get kStep1Title;
   String get kStep2Title;
   String get kStep3Title;
-  String get kQuickStartBypass;
   String get kQuickStartWholeFarm;
   String get kNextStep;
   String get kPreviousStep;
@@ -88,8 +87,6 @@ abstract class AppStrings {
   String get kAllocatedSurface;
   String get kAskIvyTitle;
   String get kNasaDataReady;
-  String get kFastDemoBanner;
-  String get kPresetLoadedMsg;
 
   // Language
   String get kLanguage;
@@ -222,8 +219,6 @@ class EngStrings implements AppStrings {
   @override
   String get kStep3Title => eng.kStep3Title;
   @override
-  String get kQuickStartBypass => eng.kQuickStartBypass;
-  @override
   String get kQuickStartWholeFarm => eng.kQuickStartWholeFarm;
   @override
   String get kNextStep => eng.kNextStep;
@@ -239,10 +234,6 @@ class EngStrings implements AppStrings {
   String get kAskIvyTitle => eng.kAskIvyTitle;
   @override
   String get kNasaDataReady => eng.kNasaDataReady;
-  @override
-  String get kFastDemoBanner => eng.kFastDemoBanner;
-  @override
-  String get kPresetLoadedMsg => eng.kPresetLoadedMsg;
 
   @override
   String get kLanguage => eng.kLanguage;
@@ -377,8 +368,6 @@ class SpaStrings implements AppStrings {
   @override
   String get kStep3Title => spa.kStep3Title;
   @override
-  String get kQuickStartBypass => spa.kQuickStartBypass;
-  @override
   String get kQuickStartWholeFarm => spa.kQuickStartWholeFarm;
   @override
   String get kNextStep => spa.kNextStep;
@@ -394,10 +383,6 @@ class SpaStrings implements AppStrings {
   String get kAskIvyTitle => spa.kAskIvyTitle;
   @override
   String get kNasaDataReady => spa.kNasaDataReady;
-  @override
-  String get kFastDemoBanner => spa.kFastDemoBanner;
-  @override
-  String get kPresetLoadedMsg => spa.kPresetLoadedMsg;
 
   @override
   String get kLanguage => spa.kLanguage;

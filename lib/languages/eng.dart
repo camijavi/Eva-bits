@@ -73,8 +73,7 @@ const String kConfirmSave = 'Confirm and Save';
 const String kStep1Title = '1. Farm';
 const String kStep2Title = '2. Lots';
 const String kStep3Title = '3. Summary';
-const String kQuickStartBypass = '⚡ Quick Start (Demo María - Estelí)';
-const String kQuickStartWholeFarm = '⚡ Bypass (Use whole farm as 1 lot)';
+const String kQuickStartWholeFarm = 'Bypass lot division (Use whole farm as 1 lot)';
 const String kNextStep = 'Next';
 const String kPreviousStep = 'Back';
 const String kSingleLotMode = 'Single Lot (Whole Farm)';
@@ -82,8 +81,6 @@ const String kCustomLotsMode = 'Multiple Lots / Subplots';
 const String kAllocatedSurface = 'Allocated Surface';
 const String kAskIvyTitle = '🌾 Ask Ivy (Prediction)';
 const String kNasaDataReady = 'NASA & Climate Data';
-const String kFastDemoBanner = 'Short on time for the demo?';
-const String kPresetLoadedMsg = 'Demo farm profile (María - Estelí) loaded!';
 
 // Language
 const String kLanguage = 'Language';

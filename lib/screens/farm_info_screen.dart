@@ -116,48 +116,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
   }
 
-  // Quick Start Bypass: Loads Demo Farm (María - Estelí 2.5 ha) and jumps straight to Step 3
-  void _loadDemoFarm(AppStrings s) {
-    for (final lot in _lots) {
-      lot.dispose();
-    }
-    _lots.clear();
-
-    setState(() {
-      _farmNameController.text = 'Finca Las Delicias (María)';
-      _geographicZoneController.text = 'Estelí';
-      _totalSurfaceController.text = '2.5';
-      _selectedUnit = SurfaceUnit.hectares;
-
-      _lots.add(
-        LotItem(
-          nameController: TextEditingController(text: 'Lote 1 - Maíz'),
-          surfaceController: TextEditingController(text: '1.5'),
-          subplotsCountController: TextEditingController(text: '0'),
-        ),
-      );
-
-      _lots.add(
-        LotItem(
-          nameController: TextEditingController(text: 'Lote 2 - Frijol Criollo'),
-          surfaceController: TextEditingController(text: '1.0'),
-          subplotsCountController: TextEditingController(text: '0'),
-        ),
-      );
-
-      _lotsCountController.text = '2';
-      _currentStep = 2; // Jump directly to Review & Ivy
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.primary,
-        content: Text(s.kPresetLoadedMsg),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   // Bypass: Use whole farm as 1 single lot and jump straight to Step 3
   void _bypassAsSingleLot(AppStrings s) {
     if (!_step1FormKey.currentState!.validate()) {
@@ -406,69 +364,13 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     );
   }
 
-  // --- Step 1: Farm Info + Quick Start Bypass ---
+  // --- Step 1: Farm Info ---
   Widget _buildStep1FarmInfo(AppStrings s, String unitShort) {
     return Form(
       key: _step1FormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // QUICK START BANNER
-          Card(
-            elevation: 3,
-            color: const Color(0xFFE8F5E9),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.bolt, color: Colors.amber, size: 24),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          s.kQuickStartBypass,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryDark,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Carga datos predefinidos de prueba (2.5 ha en Estelí) y salta directamente al análisis con Ivy.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () => _loadDemoFarm(s),
-                      icon: const Icon(Icons.play_arrow, size: 18),
-                      label: const Text('Cargar Demo y Probar Ivy'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
           Card(
             elevation: 2,
             color: AppColors.cardBg,
@@ -993,14 +895,14 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   s.kFarm,
                   _farmNameController.text.isNotEmpty
                       ? _farmNameController.text
-                      : 'Sin nombre',
+                      : '-',
                   isBold: true,
                 ),
                 _buildSummaryRow(
                   s.kGeographicZoneLabel,
                   _geographicZoneController.text.isNotEmpty
                       ? _geographicZoneController.text
-                      : 'Estelí',
+                      : '-',
                 ),
                 _buildSummaryRow(
                   s.kTotalSurfaceLabel,
