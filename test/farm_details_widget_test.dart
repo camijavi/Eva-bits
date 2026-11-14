@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_eva_bits/screens/dashboard_screen.dart';
 import 'package:flutter_eva_bits/screens/farm_info.dart';
 import 'package:flutter_eva_bits/screens/edit_farm_info.dart';
+import 'package:flutter_eva_bits/screens/new_farm_info_screen.dart';
 import 'package:flutter_eva_bits/languages/app_strings.dart';
 
 void main() {
@@ -67,6 +68,21 @@ void main() {
     expect(find.text('4.25'), findsOneWidget);
     expect(find.text(s.kSaveChanges), findsOneWidget);
     expect(updatedCalled, isFalse);
+  });
+
+  testWidgets(
+      'FarmInfoScreen with checkExisting false renders farm input wizard',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FarmInfoScreen(checkExisting: false),
+      ),
+    );
+    await tester.pump();
+
+    final s = AppLanguage.strings;
+    expect(find.text(s.kFarmInfoTitle), findsOneWidget);
+    expect(find.text(s.kQuickStartWholeFarm), findsOneWidget);
   });
 }
 

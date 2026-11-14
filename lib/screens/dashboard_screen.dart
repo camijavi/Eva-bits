@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'farm_info.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final String? farmName;
   final String? location;
   final String? surface;
@@ -19,23 +20,44 @@ class DashboardScreen extends StatelessWidget {
   });
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  Map<String, dynamic>? _dbFarm;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestFarm();
+  }
+
+  Future<void> _loadLatestFarm() async {
+    try {
+      final farm = await DatabaseManager().getLatestFarm();
+      if (mounted && farm != null) {
+        setState(() {
+          _dbFarm = farm;
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppLanguageType>(
       valueListenable: AppLanguage.current,
       builder: (context, _, child) {
         final s = AppLanguage.strings;
 
-        final displayLocation =
-            (location != null && location!.trim().isNotEmpty)
-                ? location!
-                : 'Estelí, Nicaragua';
-        final displayFarmName =
-            (farmName != null && farmName!.trim().isNotEmpty)
-                ? farmName!
-                : s.kDashboardYourFarm;
-        final displaySurface = (surface != null && surface!.trim().isNotEmpty)
-            ? surface!
-            : '2.5 ha';
+        final displayLocation = widget.location ??
+            (_dbFarm?['country']?.toString() ?? 'Estelí, Nicaragua');
+        final displayFarmName = widget.farmName ??
+            (_dbFarm?['name']?.toString() ?? s.kDashboardYourFarm);
+        final displaySurface = widget.surface ??
+            (_dbFarm != null
+                ? '${_dbFarm!['total_surface']} ${_dbFarm!['surface_unit'] ?? 'ha'}'
+                : '2.5 ha');
 
         return Scaffold(
           backgroundColor: const Color(0xFFF9FBF8),
@@ -300,12 +322,13 @@ class DashboardScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.of(context).push(
+                onPressed: () async {
+                  await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const FarmInfoDetailScreen(),
                     ),
                   );
+                  _loadLatestFarm();
                 },
                 child: Text(
                   s.kDashboardViewDetails,
