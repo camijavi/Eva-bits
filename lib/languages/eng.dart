@@ -93,6 +93,7 @@ const String kSubplotsSurfaceExceededWarning =
     'Warning: Total subplot surface exceeds lot surface!';
 const String kFormSavedSuccessfully = 'Farm information saved successfully!';
 const String kConfirmSave = 'Confirm and Save';
+const String kErrorSavingData = 'Error saving farm data. Please try again.';
 
 // Wizard & Quick Start
 const String kStep1Title = 'Farm';

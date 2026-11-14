@@ -95,6 +95,8 @@ const String kSubplotsSurfaceExceededWarning =
 const String kFormSavedSuccessfully =
     '¡Información de la finca guardada con éxito!';
 const String kConfirmSave = 'Confirmar y Guardar';
+const String kErrorSavingData =
+    'Error al guardar los datos de la finca. Por favor intente nuevamente.';
 
 // Wizard & Quick Start
 const String kStep1Title = 'Finca';

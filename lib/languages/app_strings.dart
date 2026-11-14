@@ -95,6 +95,7 @@ abstract class AppStrings {
   String get kSubplotsSurfaceExceededWarning;
   String get kFormSavedSuccessfully;
   String get kConfirmSave;
+  String get kErrorSavingData;
 
   // Wizard & Quick Start
   String get kStep1Title;
@@ -293,6 +294,8 @@ class EngStrings implements AppStrings {
   String get kFormSavedSuccessfully => eng.kFormSavedSuccessfully;
   @override
   String get kConfirmSave => eng.kConfirmSave;
+  @override
+  String get kErrorSavingData => eng.kErrorSavingData;
 
   @override
   String get kStep1Title => eng.kStep1Title;
@@ -521,6 +524,8 @@ class SpaStrings implements AppStrings {
   String get kFormSavedSuccessfully => spa.kFormSavedSuccessfully;
   @override
   String get kConfirmSave => spa.kConfirmSave;
+  @override
+  String get kErrorSavingData => spa.kErrorSavingData;
 
   @override
   String get kStep1Title => spa.kStep1Title;
