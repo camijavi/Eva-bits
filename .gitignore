@@ -1,50 +1,100 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
+# --------------------------------------------------
+# Flutter / Dart / Pub
+# --------------------------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+**/doc/api/
 
-# Production build outputs
-dist/
-dist-ssr/
-build/
-out/
+# Symbol processing & Obfuscation
+app.*.symbols
+app.*.map.json
 
-# Environment variables & local configuration
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.local
-!.env.example
+# --------------------------------------------------
+# Android
+# --------------------------------------------------
+android/**/gradle-wrapper.jar
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/GeneratedPluginRegistrant.java
+android/.cxx/
+**/android/**/.gradle/
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Keystores & Signing secrets
+key.properties
+**/*.keystore
+**/*.jks
+**/*.p12
+**/*.p8
+**/*.cer
+**/*.mobileprovision
 
-# Testing & Coverage
+# --------------------------------------------------
+# iOS / macOS Flutter
+# --------------------------------------------------
+**/ios/**/frameworks/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+*.xcuserdatad/
+
+# --------------------------------------------------
+# macOS / Linux / Windows Ephemeral
+# --------------------------------------------------
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+
+# --------------------------------------------------
+# Flutter Web
+# --------------------------------------------------
+lib/generated_plugin_registrant.dart
+web/manifest.json.tmp
+
+# --------------------------------------------------
+# Testing & Code Coverage
+# --------------------------------------------------
 coverage/
 *.lcov
 .nyc_output/
 
-# TypeScript cache
-*.tsbuildinfo
-
-# Linter and Formatter caches
-.eslintcache
-.stylelintcache
-.prettiercache
-
-# Editor & IDE configurations
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+# --------------------------------------------------
+# IDEs & Editors
+# --------------------------------------------------
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
 .idea/
+
+# VS Code
+.vscode/
+
+# Visual Studio / Misc
 *.suo
 *.ntvs*
 *.njsproj
@@ -53,15 +103,27 @@ coverage/
 *.sublime-workspace
 *.sublime-project
 
-# OS generated files
+# --------------------------------------------------
+# OS & System Files
+# --------------------------------------------------
 .DS_Store
 .DS_Store?
 ._*
 Thumbs.db
 ehthumbs.db
+Icon?
 
-# Tooling and build caches
+# --------------------------------------------------
+# Logs & Environment / Web dependencies
+# --------------------------------------------------
+logs/
+*.log
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+dist-ssr/
+out/
 .cache/
-.parcel-cache/
 .turbo/
-
