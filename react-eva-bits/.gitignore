@@ -1,5 +1,25 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production build outputs
+dist/
+dist-ssr/
+build/
+out/
+
+# Environment variables & local configuration
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.local
+!.env.example
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,18 +27,40 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Testing & Coverage
+coverage/
+*.lcov
+.nyc_output/
 
-# Editor directories and files
+# TypeScript cache
+*.tsbuildinfo
+
+# Linter and Formatter caches
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# Editor & IDE configurations
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.sublime-workspace
+*.sublime-project
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Tooling and build caches
+.cache/
+.parcel-cache/
+.turbo/
