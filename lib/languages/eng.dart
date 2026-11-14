@@ -112,6 +112,25 @@ const String kLotsDistribution = 'Lots Distribution';
 const String kNasaDataDescription =
     'NASA POWER and SMAP satellite data (solar radiation, rainfall, and soil moisture) synchronized for your coordinates.';
 
+// Dashboard Mockup
+const String kDashboardGreeting = 'Hello, María!';
+const String kDashboardSubtitle =
+    'Here is a summary of your farm and recommendations for today.';
+const String kDashboardWeatherSummary = 'Mostly sunny';
+const String kDashboardYourFarm = 'Your Farm';
+const String kDashboardFarmSize = 'Size';
+const String kDashboardCurrentCrops = 'Current crops: Corn, Beans';
+const String kDashboardViewDetails = 'View details';
+const String kDashboardWhatToDo = 'What would you like to do today?';
+const String kDashboardAction1 = 'Compare crop rotations';
+const String kDashboardAction2 =
+    'Explore environmental data (climate and soil)';
+const String kDashboardAction3 = 'View personalized recommendations';
+const String kNavHome = 'Home';
+const String kNavRotations = 'Rotations';
+const String kNavCommunity = 'Community';
+const String kNavMore = 'More';
+
 // Language
 const String kLanguage = 'Language';
 const String kEnglish = 'English';

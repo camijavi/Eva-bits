@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../constants/app_colors.dart';
 import '../languages/app_strings.dart';
+import 'dashboard_screen.dart';
 
 enum SurfaceUnit {
   hectares,
@@ -1289,6 +1290,22 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     SnackBar(
                       backgroundColor: AppColors.primary,
                       content: Text(s.kFormSavedSuccessfully),
+                    ),
+                  );
+                  final unitShort = _getUnitShortName(_selectedUnit, s);
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (_) => DashboardScreen(
+                        farmName: _farmNameController.text.isNotEmpty
+                            ? _farmNameController.text
+                            : null,
+                        location: _countryController.text.isNotEmpty
+                            ? _countryController.text
+                            : null,
+                        surface: _totalSurfaceController.text.isNotEmpty
+                            ? '${_totalSurfaceController.text} $unitShort'
+                            : null,
+                      ),
                     ),
                   );
                 }

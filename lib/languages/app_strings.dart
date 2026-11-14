@@ -113,6 +113,23 @@ abstract class AppStrings {
   String get kLotsDistribution;
   String get kNasaDataDescription;
 
+  // Dashboard Mockup
+  String get kDashboardGreeting;
+  String get kDashboardSubtitle;
+  String get kDashboardWeatherSummary;
+  String get kDashboardYourFarm;
+  String get kDashboardFarmSize;
+  String get kDashboardCurrentCrops;
+  String get kDashboardViewDetails;
+  String get kDashboardWhatToDo;
+  String get kDashboardAction1;
+  String get kDashboardAction2;
+  String get kDashboardAction3;
+  String get kNavHome;
+  String get kNavRotations;
+  String get kNavCommunity;
+  String get kNavMore;
+
   // Language
   String get kLanguage;
   String get kEnglish;
@@ -307,6 +324,37 @@ class EngStrings implements AppStrings {
   String get kLotsDistribution => eng.kLotsDistribution;
   @override
   String get kNasaDataDescription => eng.kNasaDataDescription;
+
+  @override
+  String get kDashboardGreeting => eng.kDashboardGreeting;
+  @override
+  String get kDashboardSubtitle => eng.kDashboardSubtitle;
+  @override
+  String get kDashboardWeatherSummary => eng.kDashboardWeatherSummary;
+  @override
+  String get kDashboardYourFarm => eng.kDashboardYourFarm;
+  @override
+  String get kDashboardFarmSize => eng.kDashboardFarmSize;
+  @override
+  String get kDashboardCurrentCrops => eng.kDashboardCurrentCrops;
+  @override
+  String get kDashboardViewDetails => eng.kDashboardViewDetails;
+  @override
+  String get kDashboardWhatToDo => eng.kDashboardWhatToDo;
+  @override
+  String get kDashboardAction1 => eng.kDashboardAction1;
+  @override
+  String get kDashboardAction2 => eng.kDashboardAction2;
+  @override
+  String get kDashboardAction3 => eng.kDashboardAction3;
+  @override
+  String get kNavHome => eng.kNavHome;
+  @override
+  String get kNavRotations => eng.kNavRotations;
+  @override
+  String get kNavCommunity => eng.kNavCommunity;
+  @override
+  String get kNavMore => eng.kNavMore;
 
   @override
   String get kLanguage => eng.kLanguage;
@@ -504,6 +552,37 @@ class SpaStrings implements AppStrings {
   String get kLotsDistribution => spa.kLotsDistribution;
   @override
   String get kNasaDataDescription => spa.kNasaDataDescription;
+
+  @override
+  String get kDashboardGreeting => spa.kDashboardGreeting;
+  @override
+  String get kDashboardSubtitle => spa.kDashboardSubtitle;
+  @override
+  String get kDashboardWeatherSummary => spa.kDashboardWeatherSummary;
+  @override
+  String get kDashboardYourFarm => spa.kDashboardYourFarm;
+  @override
+  String get kDashboardFarmSize => spa.kDashboardFarmSize;
+  @override
+  String get kDashboardCurrentCrops => spa.kDashboardCurrentCrops;
+  @override
+  String get kDashboardViewDetails => spa.kDashboardViewDetails;
+  @override
+  String get kDashboardWhatToDo => spa.kDashboardWhatToDo;
+  @override
+  String get kDashboardAction1 => spa.kDashboardAction1;
+  @override
+  String get kDashboardAction2 => spa.kDashboardAction2;
+  @override
+  String get kDashboardAction3 => spa.kDashboardAction3;
+  @override
+  String get kNavHome => spa.kNavHome;
+  @override
+  String get kNavRotations => spa.kNavRotations;
+  @override
+  String get kNavCommunity => spa.kNavCommunity;
+  @override
+  String get kNavMore => spa.kNavMore;
 
   @override
   String get kLanguage => spa.kLanguage;
