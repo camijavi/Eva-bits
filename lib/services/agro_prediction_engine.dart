@@ -227,6 +227,8 @@ class AgroPredictionEngine {
     'trigo': 'Poaceae (Gramíneas)',
     'sugarcane': 'Poaceae (Gramíneas)',
     'caña de azúcar': 'Poaceae (Gramíneas)',
+    'sorghum': 'Poaceae (Gramíneas)',
+    'sorgo': 'Poaceae (Gramíneas)',
     'beans': 'Fabaceae (Leguminosas)',
     'frijol': 'Fabaceae (Leguminosas)',
     'soybean': 'Fabaceae (Leguminosas)',
@@ -247,12 +249,53 @@ class AgroPredictionEngine {
     'manzana': 'Rosaceae',
   };
 
+  /// FAO-56 Crop Coefficient (Kc mid-season) for crop water demand
+  static const Map<String, double> _cropKc = {
+    'corn': 1.15,
+    'maíz': 1.15,
+    'beans': 1.00,
+    'frijol': 1.00,
+    'rice': 1.20,
+    'arroz': 1.20,
+    'soybean': 1.05,
+    'soya': 1.05,
+    'wheat': 1.10,
+    'trigo': 1.10,
+    'coffee': 0.95,
+    'café': 0.95,
+    'sugarcane': 1.25,
+    'caña de azúcar': 1.25,
+    'plantain': 1.10,
+    'plátano': 1.10,
+    'banana': 1.10,
+    'banano': 1.10,
+    'watermelon': 1.00,
+    'sandía': 1.00,
+    'sorghum': 1.05,
+    'sorgo': 1.05,
+  };
+
+  /// Soil texture water retention & drainage factors
+  /// - Arenoso: Infiltración rápida, baja retención (0.65x). Drena rápido.
+  /// - Arcilloso: Infiltración lenta, alta retención (1.35x). Riesgo de asfixia en saturación.
+  /// - Limoso: Retención media-alta (1.10x). Susceptible a compactación superficial.
+  /// - Franco: Equilibrio agronómico ideal (1.00x).
+  static double _getSoilRetentionFactor(String soilType) {
+    final lower = soilType.toLowerCase();
+    if (lower.contains('aren')) return 0.65;
+    if (lower.contains('arcill')) return 1.35;
+    if (lower.contains('lim')) return 1.10;
+    return 1.0;
+  }
+
   /// Generates the complete deterministic 6-prediction report.
   static FarmPredictionsReport generateReport({
     required Map<String, dynamic> farmData,
     required Map<String, dynamic> nasaData,
     SubplotGraph? graph,
     List<Map<String, dynamic>>? subplots,
+    String? targetCrop,
+    String? targetSoilType,
   }) {
     final summary = nasaData['summary'] as Map<String, dynamic>? ?? {};
     final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
@@ -265,26 +308,36 @@ class AgroPredictionEngine {
     final farmSurfaceHa =
         (farmData['total_surface'] as num?)?.toDouble() ?? 2.5;
 
-    // Detect dominant crop across subplots or farm
-    String dominantCrop = 'Maíz';
-    if (subplots != null && subplots.isNotEmpty) {
+    // Detect active crop and soil type
+    String activeCrop = targetCrop ?? 'Maíz';
+    String activeSoil = targetSoilType ?? 'Franco';
+
+    if (targetCrop == null && subplots != null && subplots.isNotEmpty) {
       final firstCrop = subplots.first['crop']?.toString();
       if (firstCrop != null && firstCrop.isNotEmpty) {
-        dominantCrop = firstCrop;
+        activeCrop = firstCrop;
+      }
+    }
+    if (targetSoilType == null && subplots != null && subplots.isNotEmpty) {
+      final firstSoil = subplots.first['soil_type']?.toString();
+      if (firstSoil != null && firstSoil.isNotEmpty) {
+        activeSoil = firstSoil;
       }
     }
 
-    // 1. Irrigation Prediction
+    // 1. Irrigation Prediction (adjusted for crop Kc and soil retention)
     final irrigation = _calculateIrrigation(
       soilMoisture: soilMoisture,
       rain7dMm: rainMm,
       tempC: tempC,
       solarMj: solarMj,
+      crop: activeCrop,
+      soilType: activeSoil,
     );
 
     // 2. Rotation Simulator Prediction
     final rotation = _calculateRotationSimulation(
-      currentCrop: dominantCrop,
+      currentCrop: activeCrop,
       soilMoisture: soilMoisture,
       graph: graph,
       subplots: subplots,
@@ -294,7 +347,7 @@ class AgroPredictionEngine {
     final calendar = _calculatePlantingCalendar(
       tempC: tempC,
       soilMoisture: soilMoisture,
-      dominantCrop: dominantCrop,
+      dominantCrop: activeCrop,
     );
 
     // 4. Crop Health & Biomass Prediction
@@ -304,19 +357,21 @@ class AgroPredictionEngine {
       weeklyDeficitMm: irrigation.weeklyDeficitMm,
     );
 
-    // 5. Extreme Risks & Alerts
+    // 5. Extreme Risks & Alerts (tailored for soil texture and climate)
     final risks = _detectExtremeRisks(
       soilMoisture: soilMoisture,
       rain7dMm: rainMm,
       tempC: tempC,
       solarMj: solarMj,
+      soilType: activeSoil,
     );
 
-    // 6. Soil Nutrition & Nitrogen Gain
+    // 6. Soil Nutrition & Nitrogen Gain (adapted for soil leaching)
     final nutrition = _calculateSoilNutrition(
-      currentCrop: dominantCrop,
+      currentCrop: activeCrop,
       suggestedRotationCrop: rotation.suggestedCrop,
       farmSurfaceHa: farmSurfaceHa,
+      soilType: activeSoil,
     );
 
     return FarmPredictionsReport(
@@ -338,43 +393,52 @@ class AgroPredictionEngine {
     required double rain7dMm,
     required double tempC,
     required double solarMj,
+    String crop = 'Maíz',
+    String soilType = 'Franco',
   }) {
-    // Reference evapotranspiration approximation (mm/day)
-    // ET0 ~ solar radiation factor adjusted by temperature
+    final kc = _cropKc[crop.toLowerCase().trim()] ?? 1.05;
+    final retentionFactor = _getSoilRetentionFactor(soilType);
+
+    // Reference evapotranspiration approximation ET0 adjusted by Crop Kc (FAO-56)
     final dailyEt0 = (0.16 * solarMj * (tempC / (tempC + 15))).clamp(2.5, 7.0);
-    final weeklyCropWaterDemandMm = dailyEt0 * 7;
+    final weeklyCropWaterDemandMm = dailyEt0 * kc * 7;
     final weeklyDeficitMm =
         math.max(0.0, weeklyCropWaterDemandMm - rain7dMm);
 
     final soilMoisturePct = (soilMoisture * 100).clamp(0.0, 100.0);
 
+    // Soil texture adjusts days of reserve and critical threshold
+    final int daysUntilStress =
+        (soilMoisture * 10 * retentionFactor / kc).round().clamp(1, 10);
+
     final String status;
-    final int daysUntilStress;
     final double recommendedWaterMm;
     final String actionTitle;
     final String actionRecommendation;
 
-    if (soilMoisture < 0.40) {
+    final double criticalThreshold =
+        (0.40 / math.max(0.7, retentionFactor)).clamp(0.32, 0.48);
+
+    if (soilMoisture < criticalThreshold) {
       status = 'critical';
-      daysUntilStress = (soilMoisture * 5).toInt().clamp(1, 2);
-      recommendedWaterMm = (weeklyDeficitMm * 0.85).clamp(18.0, 45.0);
+      recommendedWaterMm =
+          (weeklyDeficitMm * (1.1 / retentionFactor)).clamp(18.0, 50.0);
       actionTitle = 'Riego Urgente Requerido';
       actionRecommendation =
-          'Humedad crítica en zona radicular ($soilMoisturePct%). Aplica lámina de riego de ${recommendedWaterMm.toStringAsFixed(0)} mm en las próximas 48 h para evitar marchitez irreversible.';
+          'Humedad radicular crítica ($soilMoisturePct%) en suelo $soilType para $crop (Kc: $kc). Aplica lámina de ${recommendedWaterMm.toStringAsFixed(0)} mm en las próximas 48 h para evitar marchitez.';
     } else if (soilMoisture <= 0.65) {
       status = 'moderate';
-      daysUntilStress = (soilMoisture * 10).toInt().clamp(3, 5);
-      recommendedWaterMm = (weeklyDeficitMm * 0.5).clamp(10.0, 25.0);
+      recommendedWaterMm =
+          (weeklyDeficitMm * 0.55).clamp(10.0, 28.0);
       actionTitle = 'Humedad Moderada - Monitorear';
       actionRecommendation =
-          'El perfil radicular cuenta con agua para los próximos $daysUntilStress días. Planifica riego de apoyo (${recommendedWaterMm.toStringAsFixed(0)} mm) al finalizar la semana.';
+          'Suelo $soilType retiene agua para los próximos $daysUntilStress días. Programa riego preventivo (${recommendedWaterMm.toStringAsFixed(0)} mm) al promediar la semana.';
     } else {
       status = 'optimal';
-      daysUntilStress = 8;
       recommendedWaterMm = 0.0;
       actionTitle = 'Nivel Hídrico Óptimo';
       actionRecommendation =
-          'Suelo con excelente reserva de agua ($soilMoisturePct%). No se requiere riego suplementario en los siguientes 7 días.';
+          'Reserva hídrica suficiente ($soilMoisturePct%) para $crop en suelo $soilType. No se requiere riego en los siguientes 7 días.';
     }
 
     return IrrigationPrediction(
@@ -564,26 +628,38 @@ class AgroPredictionEngine {
     required double rain7dMm,
     required double tempC,
     required double solarMj,
+    String soilType = 'Franco',
   }) {
-    // Flash Drought conditions: low soil moisture + extreme heat + high solar radiation + zero rain
-    if (soilMoisture < 0.35 && tempC > 27.0 && solarMj > 18.0 && rain7dMm < 6.0) {
-      return const ExtremeRiskAlert(
+    final isClay = soilType.toLowerCase().contains('arcill');
+    final isSandy = soilType.toLowerCase().contains('aren');
+
+    // Flash Drought conditions: Sandy soils are vulnerable with lower heat due to rapid percolation
+    final droughtMoistureThreshold = isSandy ? 0.40 : 0.35;
+    if (soilMoisture < droughtMoistureThreshold &&
+        tempC > 26.0 &&
+        solarMj > 17.0 &&
+        rain7dMm < 6.0) {
+      return ExtremeRiskAlert(
         alertType: 'flash_drought',
         severity: 'danger',
         headline: 'Alerta de Sequía Relámpago (Flash Drought)',
-        mitigationAdvice:
-            'Caída acelerada de humedad por radiación solar extrema. Aplica acolchado (mulch) orgánico en las bases y adelanta ciclos de riego defensivo.',
+        mitigationAdvice: isSandy
+            ? 'Suelo arenoso con drenaje acelerado: la humedad se evapora rápidamente bajo radiación solar intensa. Aplica cobertura vegetal (mulch) y riegos cortos frecuentes.'
+            : 'Caída acelerada de humedad por radiación solar extrema. Aplica acolchado (mulch) orgánico en las bases y adelanta ciclos de riego defensivo.',
       );
     }
 
-    // Waterlogging / Root Asphyxia risk: excessive rain on saturated soil
-    if (soilMoisture > 0.82 && rain7dMm > 45.0) {
-      return const ExtremeRiskAlert(
+    // Waterlogging / Root Asphyxia risk: Clay soils waterlog with less rain
+    final waterlogMoistureThreshold = isClay ? 0.75 : 0.82;
+    final rainThreshold = isClay ? 35.0 : 45.0;
+    if (soilMoisture > waterlogMoistureThreshold && rain7dMm > rainThreshold) {
+      return ExtremeRiskAlert(
         alertType: 'waterlogging',
         severity: 'warning',
         headline: 'Riesgo de Saturación y Asfixia Radicular',
-        mitigationAdvice:
-            'Precipitación acumulada excesiva en suelo saturado. Abre zanjas de drenaje superficiales para evacuar escorrentía estancada.',
+        mitigationAdvice: isClay
+            ? 'Suelo arcilloso con infiltración lenta: el exceso de agua estancada asfixia las raíces. Abre zanjas de evacuación superficial y evita el pisoteo del terreno.'
+            : 'Precipitación acumulada excesiva en suelo saturado. Abre zanjas de drenaje superficiales para evacuar escorrentía estancada.',
       );
     }
 
@@ -614,12 +690,15 @@ class AgroPredictionEngine {
     required String currentCrop,
     required String suggestedRotationCrop,
     required double farmSurfaceHa,
+    String soilType = 'Franco',
   }) {
     final suggestedLower = suggestedRotationCrop.toLowerCase();
     final bool isLegume = suggestedLower.contains('frijol') ||
         suggestedLower.contains('soya') ||
         suggestedLower.contains('leguminosa') ||
         suggestedLower.contains('abono');
+
+    final isSandy = soilType.toLowerCase().contains('aren');
 
     // Biological Nitrogen Fixation (BNF) estimates in kg N / ha
     final double nitrogenGainKgHa = isLegume ? 55.0 : -35.0;
@@ -628,11 +707,19 @@ class AgroPredictionEngine {
     // Urea is ~46% Nitrogen (1 kg N ~ 2.17 kg Urea)
     final double ureaSavingsKg = isLegume ? (totalFarmNitrogenKg * 2.17) : 0.0;
 
-    final int soilHealthScore = isLegume ? 88 : 64;
+    int soilHealthScore = isLegume ? 88 : 64;
+    if (isSandy) soilHealthScore -= 6; // Sandy soils have lower baseline cation-exchange capacity
 
-    final String diagnosis = isLegume
-        ? 'La rotación propuesta con leguminosas aportará un estimado de ${nitrogenGainKgHa.toStringAsFixed(0)} kg de Nitrógeno biológico por hectárea, ahorrando cerca de ${ureaSavingsKg.toStringAsFixed(0)} kg de urea comercial.'
-        : 'Los cereales extraen nitrógeno del perfil (-35 kg N/ha). Se recomienda incorporar cobertura vegetal o compost para mantener la fertilidad del suelo.';
+    final String diagnosis;
+    if (isLegume) {
+      diagnosis = isSandy
+          ? 'La rotación propuesta con leguminosas aportará ~${nitrogenGainKgHa.toStringAsFixed(0)} kg N/ha. En suelo arenoso, se aconseja incorporar biomasa verde para evitar lixiviación, ahorrando ~${ureaSavingsKg.toStringAsFixed(0)} kg de urea.'
+          : 'La rotación propuesta con leguminosas aportará un estimado de ${nitrogenGainKgHa.toStringAsFixed(0)} kg de Nitrógeno biológico por hectárea, ahorrando cerca de ${ureaSavingsKg.toStringAsFixed(0)} kg de urea comercial.';
+    } else {
+      diagnosis = isSandy
+          ? 'Los cereales extraen nitrógeno (-35 kg N/ha) y en suelo arenoso el lavado por lluvia es severo. Incorpora abonos verdes profundos o compost inmediatamente.'
+          : 'Los cereales extraen nitrógeno del perfil (-35 kg N/ha). Se recomienda incorporar cobertura vegetal o compost para mantener la fertilidad del suelo.';
+    }
 
     return SoilNutritionPrediction(
       projectedNitrogenGainKgPerHa: nitrogenGainKgHa,

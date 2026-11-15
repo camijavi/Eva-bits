@@ -3,6 +3,7 @@ import '../constants/app_colors.dart';
 import '../languages/app_strings.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/lots_screen.dart';
+import '../screens/predictions_screen.dart';
 import '../screens/settings_screen.dart';
 
 /// Available animation styles for bottom navigation transitions.
@@ -137,6 +138,14 @@ class CustomBottomNavBar extends StatelessWidget {
               Navigator.of(context).push(
                 createBottomNavPageRoute(
                   const LotsScreen(),
+                  fromLeft: false,
+                  animationType: animationType,
+                ),
+              );
+            } else if (index == 2) {
+              Navigator.of(context).push(
+                createBottomNavPageRoute(
+                  const PredictionsScreen(),
                   fromLeft: false,
                   animationType: animationType,
                 ),
