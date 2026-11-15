@@ -1786,6 +1786,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // 4. PREDICCIÓN DE VIGOR Y NDVI PROXY
   // ===========================================================================
   Widget _buildHealthTab(CropHealthPrediction item, AppStrings s) {
+     final isDark = AppColors.isDark(context);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
@@ -1793,20 +1795,24 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE8F5E9), Color(0xFFDCEDC8)],
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF1E3324), const Color(0xFF16261B)]
+                  : [const Color(0xFFE8F5E9), const Color(0xFFDCEDC8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFAED581)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2E5A38) : const Color(0xFFAED581),
+            ),
           ),
           child: Row(
             children: [
               _buildIconBadge(
                 icon: Icons.eco_rounded,
                 color: const Color(0xFF1B5E20),
-                bgColor: Colors.white,
+                bgColor: isDark ? const Color(0xFF26382C) : Colors.white,
                 size: 28,
                 containerSize: 48,
               ),
@@ -1817,17 +1823,18 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   children: [
                     Text(
                       item.vigorStatus,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B5E20),
+                        color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       item.biomassCondition,
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade800),
+                          fontSize: 11,
+                          color: AppColors.getTextPrimary(context)),
                     ),
                   ],
                 ),
@@ -1870,18 +1877,31 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // 5. ALERTAS CLIMÁTICAS EXTREMAS
   // ===========================================================================
   Widget _buildRisksTab(ExtremeRiskAlert item, AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final bool isDanger = item.severity == 'danger';
     final bool isWarning = item.severity == 'warning';
 
-    final Color cardColor = isDanger
-        ? const Color(0xFFFFEBEE)
-        : (isWarning ? const Color(0xFFFFF8E1) : const Color(0xFFE8F5E9));
-    final Color borderColor = isDanger
-        ? const Color(0xFFFFCDD2)
-        : (isWarning ? const Color(0xFFFFECB3) : const Color(0xFFC8E6C9));
-    final Color textColor = isDanger
-        ? const Color(0xFFC62828)
-        : (isWarning ? const Color(0xFFF57F17) : const Color(0xFF2E7D32));
+    final Color cardColor = isDark
+        ? (isDanger
+            ? const Color(0xFF3B1A1E)
+            : (isWarning ? const Color(0xFF3D2E14) : const Color(0xFF1B2F22)))
+        : (isDanger
+            ? const Color(0xFFFFEBEE)
+            : (isWarning ? const Color(0xFFFFF8E1) : const Color(0xFFE8F5E9)));
+    final Color borderColor = isDark
+        ? (isDanger
+            ? const Color(0xFF6B2A30)
+            : (isWarning ? const Color(0xFF6E5220) : const Color(0xFF2E4E36)))
+        : (isDanger
+            ? const Color(0xFFFFCDD2)
+            : (isWarning ? const Color(0xFFFFECB3) : const Color(0xFFC8E6C9)));
+    final Color textColor = isDark
+        ? (isDanger
+            ? const Color(0xFFEF5350)
+            : (isWarning ? const Color(0xFFFFB74D) : const Color(0xFF81C784)))
+        : (isDanger
+            ? const Color(0xFFC62828)
+            : (isWarning ? const Color(0xFFF57F17) : const Color(0xFF2E7D32)));
     final IconData riskIcon = isDanger
         ? Icons.warning_rounded
         : (isWarning ? Icons.report_problem_rounded : Icons.shield_rounded);
@@ -1904,7 +1924,11 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   _buildIconBadge(
                     icon: riskIcon,
                     color: textColor,
-                    bgColor: Colors.white,
+                    bgColor: isDark
+                        ? (isDanger
+                            ? const Color(0xFF4A2025)
+                            : (isWarning ? const Color(0xFF4A3816) : const Color(0xFF26382C)))
+                        : Colors.white,
                     size: 26,
                     containerSize: 44,
                   ),
@@ -1926,7 +1950,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E2821) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: borderColor),
                 ),
@@ -1934,7 +1958,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   item.mitigationAdvice,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade900,
+                    color: AppColors.getTextPrimary(context),
                     height: 1.35,
                   ),
                 ),
@@ -1955,6 +1979,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   }
 
   Widget _buildCropPestsSection(AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
     final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
     final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
@@ -1974,7 +1999,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       decoration: BoxDecoration(
         color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFFFCCBC)),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFFFFCCBC),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1984,7 +2011,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               _buildIconBadge(
                 icon: Icons.pest_control_rounded,
                 color: const Color(0xFFD84315),
-                bgColor: const Color(0xFFFBE9E7),
+                bgColor: isDark ? const Color(0xFF35201B) : const Color(0xFFFBE9E7),
                 size: 20,
                 containerSize: 36,
               ),
@@ -1995,17 +2022,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   children: [
                     Text(
                       '${s.kCropPestsSectionTitle} ($_selectedCrop)',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E2D24),
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Text(
                       '${s.kSoilPrefix} $_selectedSoil',
                       style: TextStyle(
                         fontSize: 10.5,
-                        color: Colors.grey.shade600,
+                        color: AppColors.getTextMuted(context),
                       ),
                     ),
                   ],
@@ -2021,13 +2048,13 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isHigh
-                    ? const Color(0xFFFFF8F6)
-                    : const Color(0xFFF9FAFB),
+                    ? (isDark ? const Color(0xFF351C1B) : const Color(0xFFFFF8F6))
+                    : (isDark ? const Color(0xFF1E2821) : const Color(0xFFF9FAFB)),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isHigh
-                      ? const Color(0xFFFFAB91)
-                      : Colors.grey.shade300,
+                      ? (isDark ? const Color(0xFF6B2B28) : const Color(0xFFFFAB91))
+                      : (isDark ? AppColors.borderDark : Colors.grey.shade300),
                 ),
               ),
               child: Column(
@@ -2048,10 +2075,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       Expanded(
                         child: Text(
                           '${p.pestName} (${p.scientificName})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E2D24),
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ),
@@ -2089,17 +2116,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     p.symptomsAndImpact,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade800,
+                      color: AppColors.getTextPrimary(context),
                       height: 1.35,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${s.kPreventionLabel} ${p.preventionAction}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1B5E20),
+                      color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                       height: 1.3,
                     ),
                   ),
@@ -2113,6 +2140,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   }
 
   Widget _buildNaturalPhenomenaSection(AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
     final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
     final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
@@ -2135,7 +2163,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       decoration: BoxDecoration(
         color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFBBDEFB)),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFFBBDEFB),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2145,7 +2175,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               _buildIconBadge(
                 icon: Icons.thunderstorm_rounded,
                 color: const Color(0xFF1565C0),
-                bgColor: const Color(0xFFE3F2FD),
+                bgColor: isDark ? const Color(0xFF162D3D) : const Color(0xFFE3F2FD),
                 size: 20,
                 containerSize: 36,
               ),
@@ -2153,10 +2183,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               Expanded(
                 child: Text(
                   s.kNaturalPhenomenaSectionTitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E2D24),
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
               ),
@@ -2171,17 +2201,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isDanger
-                    ? const Color(0xFFFFF8F6)
+                    ? (isDark ? const Color(0xFF351C1B) : const Color(0xFFFFF8F6))
                     : (isWarn
-                        ? const Color(0xFFFFFDE7)
-                        : const Color(0xFFF5F9FF)),
+                        ? (isDark ? const Color(0xFF383018) : const Color(0xFFFFFDE7))
+                        : (isDark ? const Color(0xFF162536) : const Color(0xFFF5F9FF))),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isDanger
-                      ? const Color(0xFFFFCDD2)
+                      ? (isDark ? const Color(0xFF6B2B28) : const Color(0xFFFFCDD2))
                       : (isWarn
-                          ? const Color(0xFFFFF59D)
-                          : const Color(0xFFBBDEFB)),
+                          ? (isDark ? const Color(0xFF6E5E20) : const Color(0xFFFFF59D))
+                          : (isDark ? const Color(0xFF264566) : const Color(0xFFBBDEFB))),
                 ),
               ),
               child: Column(
@@ -2202,10 +2232,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       Expanded(
                         child: Text(
                           ph.phenomenonName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E2D24),
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ),
@@ -2216,17 +2246,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     ph.description,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade800,
+                      color: AppColors.getTextPrimary(context),
                       height: 1.35,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${s.kPreventionLabel} ${ph.preventionMeasure}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1B5E20),
+                      color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                       height: 1.3,
                     ),
                   ),
@@ -2243,6 +2273,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // 6. NUTRICIÓN Y BALANCE DE NITRÓGENO
   // ===========================================================================
   Widget _buildNutritionTab(SoilNutritionPrediction item, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
@@ -2250,13 +2282,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE8F5E9), Color(0xFFDCEDC8)],
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF1E3324), const Color(0xFF16261B)]
+                  : [const Color(0xFFE8F5E9), const Color(0xFFDCEDC8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFAED581)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2E5A38) : const Color(0xFFAED581),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2266,7 +2302,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   _buildIconBadge(
                     icon: Icons.savings_rounded,
                     color: const Color(0xFF1B5E20),
-                    bgColor: Colors.white,
+                    bgColor: isDark ? const Color(0xFF26382C) : Colors.white,
                     size: 20,
                     containerSize: 34,
                   ),
@@ -2274,10 +2310,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   Expanded(
                     child: Text(
                       s.kMetricBiologicalNFixation,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Color(0xFF1B5E20),
+                        color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                       ),
                     ),
                   ),
@@ -2290,7 +2326,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E2821) : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
@@ -2305,20 +2341,20 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                                 child: Text(s.kBiologicalNFixationPerHa,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.grey)),
+                                        color: isDark ? AppColors.textMutedDark : Colors.grey)),
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${item.projectedNitrogenGainKgPerHa > 0 ? '+' : ''}${item.projectedNitrogenGainKgPerHa} kg/ha',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B5E20),
+                              color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                             ),
                           ),
                         ],
@@ -2330,7 +2366,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E2821) : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
@@ -2345,20 +2381,20 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                                 child: Text(s.kUreaSavingsShort,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.grey)),
+                                        color: isDark ? AppColors.textMutedDark : Colors.grey)),
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '~${item.estimatedUreaSavingsKg.toStringAsFixed(0)} kg',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF2E7D32),
+                              color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                             ),
                           ),
                         ],
@@ -2372,12 +2408,14 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: isDark
+                      ? const Color(0xFF1E2821)
+                      : Colors.white.withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   item.regenerationDiagnosis,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade800),
+                  style: TextStyle(fontSize: 11, color: AppColors.getTextPrimary(context)),
                 ),
               ),
             ],
