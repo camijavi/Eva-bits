@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../constants/agricultural_locations.dart';
@@ -85,6 +86,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   bool _isCheckingExistingFarm = true;
   String? _selectedLocationId;
   bool _isCustomLocation = false;
+  String? _gpsPrioritizedMessage;
 
   SurfaceUnit _selectedUnit = SurfaceUnit.hectares;
   final List<LotItem> _lots = [];
@@ -168,16 +170,77 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     try {
       final position = await _determinePosition(s);
       if (position != null && mounted) {
-        setState(() {
-          _latitude = position.latitude;
-          _longitude = position.longitude;
-        });
+        final prevPreset = _selectedLocationId != null &&
+                _selectedLocationId != AgriculturalLocation.customId
+            ? AgriculturalLocation.presets
+                .cast<AgriculturalLocation?>()
+                .firstWhere(
+                  (p) => p?.id == _selectedLocationId,
+                  orElse: () => null,
+                )
+            : null;
+
+        final nearest = AgriculturalLocation.findNearest(
+          position.latitude,
+          position.longitude,
+        );
+        final dLat = nearest.latitude - position.latitude;
+        final dLon = nearest.longitude - position.longitude;
+        final distDeg = math.sqrt(dLat * dLat + dLon * dLon);
+
+        String? noticeMsg;
+        String snackMsg;
+
+        if (distDeg < 4.5) {
+          final hasCountryMismatch = prevPreset != null &&
+              prevPreset.country.toLowerCase() !=
+                  nearest.country.toLowerCase();
+
+          setState(() {
+            _latitude = position.latitude;
+            _longitude = position.longitude;
+            _selectedLocationId = nearest.id;
+            _countryController.text = nearest.displayName;
+            _isCustomLocation = false;
+
+            if (hasCountryMismatch) {
+              noticeMsg = AppLanguage.isSpanish
+                  ? 'Coordenadas GPS priorizadas: Se detectó ${nearest.displayName} en lugar de ${prevPreset.country}. Los datos satelitales NASA se sincronizarán con estas coordenadas reales.'
+                  : 'GPS coordinates prioritized: Detected ${nearest.displayName} instead of ${prevPreset.country}. NASA and satellite telemetry will calculate using your exact coordinates.';
+            } else {
+              noticeMsg = AppLanguage.isSpanish
+                  ? 'Coordenadas GPS sincronizadas con ${nearest.displayName}. Prioridad activa para telemetría NASA.'
+                  : 'GPS coordinates synced with ${nearest.displayName}. Active priority for NASA telemetry.';
+            }
+            _gpsPrioritizedMessage = noticeMsg;
+          });
+
+          snackMsg = hasCountryMismatch
+              ? (AppLanguage.isSpanish
+                  ? 'Ubicación ajustada a ${nearest.displayName} según tus coordenadas GPS.'
+                  : 'Location adjusted to ${nearest.displayName} based on GPS.')
+              : '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+        } else {
+          setState(() {
+            _latitude = position.latitude;
+            _longitude = position.longitude;
+            _selectedLocationId = AgriculturalLocation.customId;
+            _isCustomLocation = true;
+            noticeMsg = AppLanguage.isSpanish
+                ? 'Coordenadas GPS personalizadas (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}). Prioridad activa para cálculos satelitales NASA.'
+                : 'Custom GPS coordinates (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}). Priority active for NASA satellite data.';
+            _gpsPrioritizedMessage = noticeMsg;
+          });
+
+          snackMsg =
+              '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.primary,
-            content: Text(
-              '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
-            ),
+            duration: const Duration(seconds: 4),
+            content: Text(snackMsg),
           ),
         );
       }
@@ -953,6 +1016,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       if (val == null) return;
                       setState(() {
                         _selectedLocationId = val;
+                        _gpsPrioritizedMessage = null;
                         if (val == AgriculturalLocation.customId) {
                           _isCustomLocation = true;
                           _countryController.clear();
@@ -1101,6 +1165,43 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFBBF7D0)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.gps_fixed,
+                                  size: 15,
+                                  color: Color(0xFF16A34A),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _gpsPrioritizedMessage ??
+                                        (AppLanguage.isSpanish
+                                            ? 'Coordenadas GPS activas con máxima prioridad para la telemetría climática NASA y datos del suelo.'
+                                            : 'GPS coordinates active with top priority for NASA climate telemetry and soil data.'),
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: Color(0xFF166534),
+                                      height: 1.3,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ] else ...[
                           Text(
                             s.kLocationNotCapturedYet,
@@ -1132,6 +1233,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<SurfaceUnit>(
                     initialValue: _selectedUnit,
+                    isExpanded: true,
                     menuMaxHeight: 220,
                     borderRadius: BorderRadius.circular(16),
                     elevation: 4,
@@ -1145,6 +1247,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       labelText: s.kSurfaceUnitLabel,
                       hintText: s.kSurfaceUnitHint,
                       prefixIcon: const Icon(Icons.straighten),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -1160,7 +1266,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     items: SurfaceUnit.values.map((unit) {
                       return DropdownMenuItem<SurfaceUnit>(
                         value: unit,
-                        child: Text(_getUnitFullName(unit, s)),
+                        child: Text(
+                          _getUnitFullName(unit, s),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       );
                     }).toList(),
                     onChanged: (SurfaceUnit? newUnit) {

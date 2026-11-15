@@ -202,6 +202,23 @@ class AgriculturalLocation {
     ),
   ];
 
+  /// Finds the closest preset location to the given GPS coordinates.
+  static AgriculturalLocation findNearest(double lat, double lon) {
+    AgriculturalLocation best = presets.first;
+    double minDistanceSq = double.infinity;
+
+    for (final loc in presets) {
+      final dLat = loc.latitude - lat;
+      final dLon = loc.longitude - lon;
+      final distSq = dLat * dLat + dLon * dLon;
+      if (distSq < minDistanceSq) {
+        minDistanceSq = distSq;
+        best = loc;
+      }
+    }
+    return best;
+  }
+
   /// Finds matching preset by exact id or fuzzy name matching.
   static AgriculturalLocation? findByText(String text) {
     if (text.trim().isEmpty) return null;
