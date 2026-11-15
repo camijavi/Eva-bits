@@ -562,9 +562,9 @@ class _LotsScreenState extends State<LotsScreen> {
     }
 
     final cropBadgeText = lotCrop != null
-        ? '${lotCrop.emoji} ${lotCrop.localizedName(isSpanish)}'
+        ? lotCrop.localizedName(isSpanish)
         : (subplotsCrops.isNotEmpty
-            ? subplotsCrops.map((c) => '${c.emoji} ${c.localizedName(isSpanish)}').join(', ')
+            ? subplotsCrops.map((c) => c.localizedName(isSpanish)).join(', ')
             : null);
 
     final subplotsInfo = subplotsCount > 0

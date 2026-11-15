@@ -235,7 +235,7 @@ void main() {
     expect(actualEnNames, containsAll(expectedEnNames));
   });
 
-  testWidgets('CropPickerSheet renders search field, frequent crops, categories, and items',
+  testWidgets('CropPickerSheet renders search field, categories, and items without frequent crops',
       (WidgetTester tester) async {
     String? selectedCrop;
 
@@ -263,7 +263,7 @@ void main() {
     // Verify search and headers
     expect(find.text(s.kAssignCrop), findsOneWidget);
     expect(find.text(s.kSearchCropHint), findsOneWidget);
-    expect(find.text(s.kPopularCrops), findsOneWidget);
+    expect(find.text(s.kPopularCrops), findsNothing);
 
     // Verify categories
     expect(find.text(s.kAllCrops), findsOneWidget);

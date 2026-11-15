@@ -766,7 +766,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(lotCrop.emoji, style: const TextStyle(fontSize: 13)),
+              Icon(lotCrop.icon, size: 14, color: lotCrop.textColor),
               const SizedBox(width: 5),
               Text(
                 '${s.kCropLabel}: ${lotCrop.localizedName(isSpanish)}',
@@ -833,7 +833,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(crop.emoji, style: const TextStyle(fontSize: 12)),
+              Icon(crop.icon, size: 12, color: crop.textColor),
               const SizedBox(width: 4),
               Text(
                 crop.localizedName(isSpanish),

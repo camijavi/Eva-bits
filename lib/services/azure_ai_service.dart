@@ -95,12 +95,12 @@ Reglas de respuesta:
 
 Analicé los datos de **$farmName** en **$zone** cruzándolos con observaciones de la NASA:
 
-🛰️ **Diagnóstico Ambiental (NASA POWER & SMAP):**
+**Diagnóstico Ambiental (NASA POWER & SMAP):**
 • **Temperatura promedio:** $temp°C
 • **Humedad del suelo en zona radicular:** ${(soilMoist * 100).toStringAsFixed(0)}% (Humedad moderada)
 • **Radiación Solar:** Favorable para leguminosas fijadoras de nitrógeno.
 
-🌱 **Estrategia Recomendada de Rotación:**
+**Estrategia Recomendada de Rotación:**
 1. **Lote Principal (Ciclo Actual):** Si tienes Maíz, planifica la siembra de **Frijol Criollo** en el siguiente ciclo para recuperar el nitrógeno consumido.
 2. **Cultivo de Cobertura / Abono Verde:** Introduce **Crotalaria juncea** o **Canavalia** en los bordes o entre cosechas; según datos de SMAP, esto reducirá la evaporación del agua del suelo en un 35%.
 3. **Manejo Hídrico:** Las lluvias pronosticadas sugieren aplicar acolchado vegetal (mulching) antes de la próxima canícula.
