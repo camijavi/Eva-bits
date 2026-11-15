@@ -146,7 +146,6 @@ class _LotsScreenState extends State<LotsScreen> {
         }).toList();
         break;
       case LotFilterPriority.all:
-      // Keep default order (by id)
         break;
     }
 
@@ -210,46 +209,48 @@ class _LotsScreenState extends State<LotsScreen> {
       builder: (context, _, child) {
         final s = AppLanguage.strings;
         final filteredLots = _filteredAndSortedLots;
+        final scaffoldBg = AppColors.getBackground(context);
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FBF8),
+          backgroundColor: scaffoldBg,
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: _loadLots,
               color: AppColors.primary,
               child: _isLoading
                   ? const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
-              )
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
                   : SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTitleAndSubtitle(s),
-                    const SizedBox(height: 16),
-                    _buildSearchField(s),
-                    const SizedBox(height: 20),
-                    _buildPriorityFilterSection(s),
-                    const SizedBox(height: 20),
-                    _buildQuickSummaryCard(s),
-                    const SizedBox(height: 24),
-                    _buildRegisteredLotsHeader(s, filteredLots.length),
-                    const SizedBox(height: 12),
-                    if (filteredLots.isEmpty)
-                      _buildEmptyState(s)
-                    else
-                      ...filteredLots.map((lot) => _buildLotCard(s, lot)),
-                    const SizedBox(height: 80),
-                  ],
-                ),
-              ),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTitleAndSubtitle(context, s),
+                          const SizedBox(height: 16),
+                          _buildSearchField(context, s),
+                          const SizedBox(height: 20),
+                          _buildPriorityFilterSection(context, s),
+                          const SizedBox(height: 20),
+                          _buildQuickSummaryCard(context, s),
+                          const SizedBox(height: 24),
+                          _buildRegisteredLotsHeader(
+                              context, s, filteredLots.length),
+                          const SizedBox(height: 12),
+                          if (filteredLots.isEmpty)
+                            _buildEmptyState(context, s)
+                          else
+                            ...filteredLots.map((lot) => _buildLotCard(context, s, lot)),
+                          const SizedBox(height: 80),
+                        ],
+                      ),
+                    ),
             ),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -264,16 +265,19 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildTitleAndSubtitle(AppStrings s) {
+  Widget _buildTitleAndSubtitle(BuildContext context, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final subtextColor = AppColors.getTextMuted(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           s.kLotsScreenTitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F5A37),
+            color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             letterSpacing: -0.5,
           ),
         ),
@@ -282,7 +286,7 @@ class _LotsScreenState extends State<LotsScreen> {
           s.kLotsScreenSubtitle,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey.shade700,
+            color: subtextColor,
             height: 1.35,
           ),
         ),
@@ -290,15 +294,20 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildSearchField(AppStrings s) {
+  Widget _buildSearchField(BuildContext context, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderCol = AppColors.getBorder(context);
+    final textCol = AppColors.getTextPrimary(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+        border: Border.all(color: borderCol, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -307,10 +316,10 @@ class _LotsScreenState extends State<LotsScreen> {
       child: TextField(
         controller: _searchController,
         focusNode: _searchFocusNode,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF1B2E1C),
+          color: textCol,
         ),
         decoration: InputDecoration(
           hintText: s.kSearchLotsHint,
@@ -319,19 +328,19 @@ class _LotsScreenState extends State<LotsScreen> {
             fontWeight: FontWeight.normal,
             color: Colors.grey.shade500,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
-            color: Color(0xFF0F5A37),
+            color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             size: 24,
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.clear_rounded, color: Colors.grey),
-            onPressed: () {
-              _searchController.clear();
-              _searchFocusNode.unfocus();
-            },
-          )
+                  icon: const Icon(Icons.clear_rounded, color: Colors.grey),
+                  onPressed: () {
+                    _searchController.clear();
+                    _searchFocusNode.unfocus();
+                  },
+                )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -343,16 +352,18 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildPriorityFilterSection(AppStrings s) {
+  Widget _buildPriorityFilterSection(BuildContext context, AppStrings s) {
+    final textColor = AppColors.getTextPrimary(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           s.kFilterPriorityTitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B2E1C),
+            color: textColor,
           ),
         ),
         const SizedBox(height: 10),
@@ -361,6 +372,7 @@ class _LotsScreenState extends State<LotsScreen> {
           child: Row(
             children: [
               _buildFilterChip(
+                context: context,
                 label: s.kFilterAll,
                 isSelected: _selectedPriority == LotFilterPriority.all,
                 onTap: () =>
@@ -368,21 +380,21 @@ class _LotsScreenState extends State<LotsScreen> {
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
+                context: context,
                 label: s.kFilterLargest,
-                isSelected: _selectedPriority ==
-                    LotFilterPriority.largestSurface,
-                onTap: () =>
-                    setState(() =>
-                _selectedPriority = LotFilterPriority.largestSurface),
+                isSelected:
+                    _selectedPriority == LotFilterPriority.largestSurface,
+                onTap: () => setState(
+                    () => _selectedPriority = LotFilterPriority.largestSurface),
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
+                context: context,
                 label: s.kFilterSmallest,
-                isSelected: _selectedPriority ==
-                    LotFilterPriority.smallestSurface,
-                onTap: () =>
-                    setState(() =>
-                _selectedPriority = LotFilterPriority.smallestSurface),
+                isSelected:
+                    _selectedPriority == LotFilterPriority.smallestSurface,
+                onTap: () => setState(
+                    () => _selectedPriority = LotFilterPriority.smallestSurface),
               ),
             ],
           ),
@@ -392,13 +404,16 @@ class _LotsScreenState extends State<LotsScreen> {
   }
 
   Widget _buildFilterChip({
+    required BuildContext context,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    // Style matches the image attached:
-    // Selected is solid dark green pill with white text.
-    // Inactive is light soft pill with dark text.
+    final isDark = AppColors.isDark(context);
+    final unselectedBg = isDark ? const Color(0xFF1E2822) : const Color(0xFFF1F5F2);
+    final unselectedBorder = isDark ? AppColors.borderDark : const Color(0xFFE2E8F0);
+    final unselectedText = isDark ? Colors.grey.shade300 : const Color(0xFF4A5568);
+
     return InkWell(
       borderRadius: BorderRadius.circular(24),
       onTap: onTap,
@@ -406,21 +421,20 @@ class _LotsScreenState extends State<LotsScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFF1F5F2),
+          color: isSelected ? const Color(0xFF0F5A37) : unselectedBg,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F5A37) : const Color(
-                0xFFE2E8F0),
+            color: isSelected ? const Color(0xFF0F5A37) : unselectedBorder,
             width: 1.2,
           ),
           boxShadow: isSelected
               ? [
-            BoxShadow(
-              color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ]
+                  BoxShadow(
+                    color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
               : null,
         ),
         child: Text(
@@ -428,25 +442,30 @@ class _LotsScreenState extends State<LotsScreen> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF4A5568),
+            color: isSelected ? Colors.white : unselectedText,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildQuickSummaryCard(AppStrings s) {
+  Widget _buildQuickSummaryCard(BuildContext context, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = isDark ? const Color(0xFF1A261E) : const Color(0xFFEAF5EC);
+    final borderCol = isDark ? const Color(0xFF2C3E33) : const Color(0xFFC8E6C9);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF5EC),
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC8E6C9)),
+        border: Border.all(color: borderCol),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildSummaryItem(
+            context: context,
             icon: Icons.layers_outlined,
             title: '${_allLots.length}',
             subtitle: s.kTotalLots,
@@ -454,9 +473,10 @@ class _LotsScreenState extends State<LotsScreen> {
           Container(
             height: 36,
             width: 1,
-            color: const Color(0xFFC8E6C9),
+            color: borderCol,
           ),
           _buildSummaryItem(
+            context: context,
             icon: Icons.square_foot_rounded,
             title: '${_totalSurface.toStringAsFixed(1)} $_surfaceUnit',
             subtitle: s.kTotalSurfaceLabel,
@@ -464,9 +484,10 @@ class _LotsScreenState extends State<LotsScreen> {
           Container(
             height: 36,
             width: 1,
-            color: const Color(0xFFC8E6C9),
+            color: borderCol,
           ),
           _buildSummaryItem(
+            context: context,
             icon: Icons.grid_view_rounded,
             title: '$_totalSubplotsCount',
             subtitle: s.kTotalSubplots,
@@ -477,23 +498,28 @@ class _LotsScreenState extends State<LotsScreen> {
   }
 
   Widget _buildSummaryItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
+    final isDark = AppColors.isDark(context);
+    final brandColor = isDark ? AppColors.primaryLight : const Color(0xFF0F5A37);
+    final subtextColor = AppColors.getTextMuted(context);
+
     return Column(
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: const Color(0xFF0F5A37)),
+            Icon(icon, size: 16, color: brandColor),
             const SizedBox(width: 4),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F5A37),
+                color: brandColor,
               ),
             ),
           ],
@@ -504,37 +530,41 @@ class _LotsScreenState extends State<LotsScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
+            color: subtextColor,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildRegisteredLotsHeader(AppStrings s, int count) {
+  Widget _buildRegisteredLotsHeader(
+      BuildContext context, AppStrings s, int count) {
+    final isDark = AppColors.isDark(context);
+    final textColor = AppColors.getTextPrimary(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           s.kRegisteredLotsTitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B2E1C),
+            color: textColor,
           ),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF5EC),
+            color: isDark ? const Color(0xFF1E2822) : const Color(0xFFEAF5EC),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             '$count',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F5A37),
+              color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             ),
           ),
         ),
@@ -542,14 +572,20 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildLotCard(AppStrings s, Map<String, dynamic> lot) {
+  Widget _buildLotCard(
+      BuildContext context, AppStrings s, Map<String, dynamic> lot) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderCol = AppColors.getBorder(context);
+    final textCol = AppColors.getTextPrimary(context);
+    final subtextCol = AppColors.getTextMuted(context);
+
     final name = lot['name']?.toString() ?? s.kLot;
     final surface = lot['surface']?.toString() ?? '0';
     final subplots = (lot['subplots'] as List<dynamic>?) ?? [];
     final subplotsCount = subplots.length;
     final isSpanish = AppLanguage.isSpanish;
 
-    // Direct lot crop or collected from subplots
     final lotCrop = CropTypes.getByKey(lot['crop']?.toString());
     final subplotsCrops = <CropDefinition>[];
     for (final sub in subplots) {
@@ -578,20 +614,15 @@ class _LotsScreenState extends State<LotsScreen> {
     }
     final detailsText = parts.join(' • ');
 
-    // UI mirrors the image attached:
-    // White rounded rectangle card with subtle light gray border.
-    // Left: circular soft green background badge with green plant icon.
-    // Center: bold title + subtitle text.
-    // Right: pen icon for editing + chevron.
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+        border: Border.all(color: borderCol, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -606,35 +637,36 @@ class _LotsScreenState extends State<LotsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                // Soft green circular icon badge
                 Container(
                   width: 48,
                   height: 48,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEAF5EC),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF233529)
+                        : const Color(0xFFEAF5EC),
                     shape: BoxShape.circle,
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.eco_rounded,
-                      color: Color(0xFF2E7D32),
+                      color: isDark
+                          ? AppColors.primaryLight
+                          : const Color(0xFF2E7D32),
                       size: 26,
                     ),
                   ),
                 ),
                 const SizedBox(width: 14),
-
-                // Lot Name & Subtitle
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E2D24),
+                          color: textCol,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -642,29 +674,27 @@ class _LotsScreenState extends State<LotsScreen> {
                         detailsText,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: subtextCol,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // Pen icon to handle editing
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.edit_outlined,
-                    color: Color(0xFF0F5A37),
+                    color: isDark
+                        ? AppColors.primaryLight
+                        : const Color(0xFF0F5A37),
                     size: 22,
                   ),
                   tooltip: s.kEditLot,
                   onPressed: () => _openEditLotModal(lot),
                 ),
-
-                // Chevron icon (as in the screenshot)
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
-                  color: Color(0xFF9E9E9E),
+                  color: isDark ? Colors.white54 : const Color(0xFF9E9E9E),
                   size: 24,
                 ),
               ],
@@ -675,53 +705,58 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildEmptyState(AppStrings s) {
+  Widget _buildEmptyState(BuildContext context, AppStrings s) {
     final isSearching = _searchQuery.isNotEmpty;
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderCol = AppColors.getBorder(context);
+    final textCol = AppColors.getTextPrimary(context);
+    final subtextCol = AppColors.getTextMuted(context);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: borderCol),
       ),
       child: Column(
         children: [
           Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEAF5EC),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF233529) : const Color(0xFFEAF5EC),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isSearching ? Icons.search_off_rounded : Icons.landscape_outlined,
               size: 34,
-              color: const Color(0xFF0F5A37),
+              color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             isSearching ? s.kNoLotsFound : s.kNoLotsRegistered,
-            style: const TextStyle(
+            textAlign: TextAlign.center,
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1B2E1C),
+              color: textCol,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
             isSearching
                 ? '${s.kNoLotsFound} "$_searchQuery"'
                 : s.kNoLotsYetSubtitle,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey.shade600,
+              color: subtextCol,
               height: 1.35,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),
           if (isSearching)
@@ -735,7 +770,7 @@ class _LotsScreenState extends State<LotsScreen> {
           else
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F5A37),
+                backgroundColor: isDark ? AppColors.primary : const Color(0xFF0F5A37),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),

@@ -4,7 +4,9 @@ import '../constants/agricultural_locations.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
+import '../services/app_settings.dart';
 import 'dashboard_screen.dart';
+import 'welcome_screen.dart';
 
 enum SurfaceUnit {
   hectares,
@@ -89,6 +91,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   @override
   void initState() {
     super.initState();
+    // Ensure this setup screen always sets and uses light theme
+    AppSettings.setThemeMode(ThemeMode.light);
     _farmNameController = TextEditingController();
     final defaultPreset = AgriculturalLocation.presets.first;
     _selectedLocationId = defaultPreset.id;
@@ -137,8 +141,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
 
     if (mounted) {
-      setState(() => _isCheckingExistingFarm = false);
-      _getCurrentLocation(AppLanguage.strings);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const WelcomeScreen(checkExisting: false),
+        ),
+      );
     }
   }
 
@@ -475,80 +482,95 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentTheme = isDark ? AppColors.darkTheme : AppColors.lightTheme;
+
     if (_isCheckingExistingFarm) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
+      return Theme(
+        data: currentTheme,
+        child: Scaffold(
+          backgroundColor: AppColors.getBackground(context),
+          body: const Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+            ),
           ),
         ),
       );
     }
 
-    return ValueListenableBuilder<AppLanguageType>(
-      valueListenable: AppLanguage.current,
-      builder: (context, currentLang, _) {
-        final s = AppLanguage.strings;
-        final unitShort = _getUnitShortName(_selectedUnit, s);
+    return Theme(
+      data: currentTheme,
+      child: ValueListenableBuilder<AppLanguageType>(
+        valueListenable: AppLanguage.current,
+        builder: (context, currentLang, _) {
+          final s = AppLanguage.strings;
+          final unitShort = _getUnitShortName(_selectedUnit, s);
 
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            elevation: 1,
-            title: Text(
-              s.kFarmInfoTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            actions: [
-              TextButton.icon(
-                onPressed: AppLanguage.toggleLanguage,
-                icon: const Icon(Icons.language, color: Colors.white, size: 20),
-                label: Text(
-                  AppLanguage.isSpanish ? s.kEnglish : s.kSpanish,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+          return Scaffold(
+            backgroundColor: AppColors.getBackground(context),
+            appBar: AppBar(
+              backgroundColor: AppColors.getHeaderBg(context),
+              foregroundColor: Colors.white,
+              elevation: 1,
+              title: Text(
+                s.kFarmInfoTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
+              ),
+              actions: [
+                TextButton.icon(
+                  onPressed: AppLanguage.toggleLanguage,
+                  icon: const Icon(Icons.language, color: Colors.white, size: 18),
+                  label: Text(
+                    AppLanguage.isSpanish ? s.kEnglish : s.kSpanish,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 4),
+              ],
+            ),
+            body: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  _buildStepIndicator(s),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      children: [
+                        if (_currentStep == 0)
+                          _buildStep1FarmInfo(s, unitShort)
+                        else if (_currentStep == 1)
+                          _buildStep2LotsInfo(s, unitShort)
+                        else
+                          _buildStep3Summary(s, unitShort),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-            ],
-          ),
-          body: Column(
-            children: [
-              _buildStepIndicator(s),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    if (_currentStep == 0)
-                      _buildStep1FarmInfo(s, unitShort)
-                    else if (_currentStep == 1)
-                      _buildStep2LotsInfo(s, unitShort)
-                    else
-                      _buildStep3Summary(s, unitShort),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          floatingActionButton: _currentStep == 1
-              ? FloatingActionButton(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shape: const CircleBorder(),
-                  tooltip: s.kAddLot,
-                  onPressed: () => _addLot(s),
-                  child: const Icon(Icons.add_rounded, size: 28),
-                )
-              : null,
-          bottomNavigationBar: _buildBottomNavigationBar(s),
-        );
-      },
+            ),
+            floatingActionButton: _currentStep == 1
+                ? FloatingActionButton(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shape: const CircleBorder(),
+                    tooltip: s.kAddLot,
+                    onPressed: () => _addLot(s),
+                    child: const Icon(Icons.add_rounded, size: 28),
+                  )
+                : null,
+            bottomNavigationBar: _buildBottomNavigationBar(s),
+          );
+        },
+      ),
     );
   }
 
@@ -558,7 +580,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       child: Row(
         children: List.generate(steps.length, (index) {
           final isActive = _currentStep == index;
@@ -576,29 +598,29 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 12,
+                    radius: 11,
                     backgroundColor: isDone
                         ? AppColors.primary
                         : (isActive ? AppColors.primaryLight : Colors.grey.shade300),
                     child: isDone
-                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                        ? const Icon(Icons.check, size: 12, color: Colors.white)
                         : Text(
                             '${index + 1}',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: isActive ? Colors.white : Colors.black54,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       steps[index],
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight:
                             isActive ? FontWeight.bold : FontWeight.normal,
                         color: isActive
@@ -609,9 +631,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   ),
                   if (index < steps.length - 1)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
                       child: Icon(Icons.chevron_right,
-                          size: 16, color: Colors.grey.shade400),
+                          size: 14, color: Colors.grey.shade400),
                     ),
                 ],
               ),
@@ -697,7 +719,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       const DropdownMenuItem<String>(
                         value: AgriculturalLocation.customId,
                         child: Text(
-                          '🌐 Otra región / Coordenadas mundiales',
+                          'Otra región / Coordenadas mundiales',
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
@@ -931,11 +953,19 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       minimumSize: const Size.fromHeight(46),
                     ),
                     onPressed: () => _bypassAsSingleLot(s),
                     icon: const Icon(Icons.fast_forward),
-                    label: Text(s.kQuickStartWholeFarm),
+                    label: Flexible(
+                      child: Text(
+                        s.kQuickStartWholeFarm,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -973,10 +1003,15 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      s.kAllocatedSurface,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        s.kAllocatedSurface,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       '${allocated.toStringAsFixed(1)} / ${farmSurface.toStringAsFixed(1)} $unitShort',
                       style: TextStyle(
@@ -1097,15 +1132,18 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               children: [
                 const Icon(Icons.folder_outlined, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text(
-                  lotNumberStr,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryDark,
+                Expanded(
+                  child: Text(
+                    lotNumberStr,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryDark,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 IconButton(
                   tooltip: s.kRemoveLot,
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -1222,15 +1260,18 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               const Icon(Icons.layers_outlined,
                   size: 16, color: AppColors.accent),
               const SizedBox(width: 6),
-              Text(
-                subplotNumberStr,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  subplotNumberStr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-              const Spacer(),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: s.kRemoveSubplot,
@@ -1406,6 +1447,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             flex: 3,
             child: Text(
@@ -1423,87 +1465,119 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // --- Bottom Navigation Bar ---
   Widget _buildBottomNavigationBar(AppStrings s) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (_currentStep > 0)
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            if (_currentStep > 0)
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    setState(() => _currentStep--);
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.arrow_back, size: 18),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          s.kPreviousStep,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (_currentStep > 0) const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 onPressed: () {
-                  setState(() => _currentStep--);
+                  if (_currentStep == 0) {
+                    if (_step1FormKey.currentState!.validate()) {
+                      if (_latitude == null || _longitude == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: Colors.orange.shade900,
+                            content: Text(s.kLocationRequired),
+                          ),
+                        );
+                        _getCurrentLocation(s);
+                        return;
+                      }
+                      setState(() => _currentStep = 1);
+                    }
+                  } else if (_currentStep == 1) {
+                    setState(() => _currentStep = 2);
+                  } else {
+                    _saveFarmDataToDatabase(s);
+                  }
                 },
-                icon: const Icon(Icons.arrow_back),
-                label: Text(s.kPreviousStep),
-              ),
-            ),
-          if (_currentStep > 0) const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isSaving)
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    else ...[
+                      Flexible(
+                        child: Text(
+                          _currentStep == 2 ? s.kSave : s.kNextStep,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        _currentStep == 2 ? Icons.save : Icons.arrow_forward,
+                        size: 18,
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              onPressed: () {
-                if (_currentStep == 0) {
-                  if (_step1FormKey.currentState!.validate()) {
-                    if (_latitude == null || _longitude == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: Colors.orange.shade900,
-                          content: Text(s.kLocationRequired),
-                        ),
-                      );
-                      _getCurrentLocation(s);
-                      return;
-                    }
-                    setState(() => _currentStep = 1);
-                  }
-                } else if (_currentStep == 1) {
-                  setState(() => _currentStep = 2);
-                } else {
-                  _saveFarmDataToDatabase(s);
-                }
-              },
-              icon: _isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(
-                      _currentStep == 2 ? Icons.save : Icons.arrow_forward,
-                    ),
-              label: Text(
-                _currentStep == 2 ? s.kSave : s.kNextStep,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

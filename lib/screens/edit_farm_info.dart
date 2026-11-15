@@ -283,9 +283,9 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
         final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          decoration: BoxDecoration(
+            color: AppColors.getCardBg(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: EdgeInsets.only(
             left: 20,

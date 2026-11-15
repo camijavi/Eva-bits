@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'constants/app_colors.dart';
 import 'languages/app_strings.dart';
-import 'screens/new_farm_info_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'services/app_settings.dart';
 
 void main() async {
@@ -27,29 +27,11 @@ class MyApp extends StatelessWidget {
           builder: (context, currentLang, _) {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
-              title: AppLanguage.strings.kFarmInfoTitle,
+              title: 'Eva Bits',
               themeMode: currentThemeMode,
-              theme: ThemeData(
-                brightness: Brightness.light,
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: AppColors.primary,
-                  primary: AppColors.primary,
-                  brightness: Brightness.light,
-                ),
-                scaffoldBackgroundColor: const Color(0xFFF9FBF8),
-                useMaterial3: true,
-              ),
-              darkTheme: ThemeData(
-                brightness: Brightness.dark,
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: AppColors.primary,
-                  primary: AppColors.primary,
-                  brightness: Brightness.dark,
-                ),
-                scaffoldBackgroundColor: const Color(0xFF121814),
-                useMaterial3: true,
-              ),
-              home: const FarmInfoScreen(),
+              theme: AppColors.lightTheme,
+              darkTheme: AppColors.darkTheme,
+              home: const WelcomeScreen(),
             );
           },
         );

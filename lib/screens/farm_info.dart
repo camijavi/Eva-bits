@@ -58,9 +58,9 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
         final s = AppLanguage.strings;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF6F8F5),
+          backgroundColor: AppColors.getBackground(context),
           appBar: AppBar(
-            backgroundColor: const Color(0xFF0F5A37),
+            backgroundColor: AppColors.getHeaderBg(context),
             foregroundColor: Colors.white,
             elevation: 0,
             title: Text(
@@ -209,7 +209,7 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
     return Card(
       elevation: 2.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      color: Colors.white,
+      color: AppColors.getCardBg(context),
       shadowColor: Colors.black.withValues(alpha: 0.08),
       child: Container(
         decoration: BoxDecoration(
@@ -443,7 +443,7 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: Colors.white,
+      color: AppColors.getCardBg(context),
       shadowColor: Colors.black.withValues(alpha: 0.06),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -609,7 +609,7 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: Colors.white,
+      color: AppColors.getCardBg(context),
       shadowColor: Colors.black.withValues(alpha: 0.06),
       child: Padding(
         padding: const EdgeInsets.all(18),

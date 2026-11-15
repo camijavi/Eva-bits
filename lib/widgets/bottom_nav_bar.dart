@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../languages/app_strings.dart';
 import '../screens/dashboard_screen.dart';
@@ -113,6 +114,8 @@ class CustomBottomNavBar extends StatelessWidget {
       builder: (context, _, child) {
         final s = AppLanguage.strings;
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return CupertinoTabBar(
           currentIndex: currentIndex,
           onTap: (index) {
@@ -154,13 +157,14 @@ class CustomBottomNavBar extends StatelessWidget {
               );
             }
           },
-          backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
-          activeColor: AppColors.primary,
-          inactiveColor: CupertinoColors.systemGrey,
+          backgroundColor:
+              isDark ? const Color(0xFF161F1A) : Colors.white,
+          activeColor: isDark ? AppColors.primaryLight : AppColors.primary,
+          inactiveColor: isDark ? Colors.white60 : CupertinoColors.systemGrey,
           iconSize: 24,
-          border: const Border(
+          border: Border(
             top: BorderSide(
-              color: Color(0x33000000),
+              color: isDark ? const Color(0xFF2C3E33) : const Color(0x22000000),
               width: 0.5,
             ),
           ),

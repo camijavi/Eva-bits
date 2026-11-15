@@ -285,11 +285,11 @@ class _PredictionsScreenState extends State<PredictionsScreen>
 
         if (_isLoading) {
           return Scaffold(
-            backgroundColor: const Color(0xFFF7FAF7),
+            backgroundColor: AppColors.getBackground(context),
             appBar: AppBar(
               automaticallyImplyLeading: false,
               title: Text(s.kPredictionsTitle),
-              backgroundColor: const Color(0xFF0F5A37),
+              backgroundColor: AppColors.getHeaderBg(context),
               foregroundColor: Colors.white,
             ),
             body: const Center(
@@ -301,11 +301,11 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         final report = _generateCurrentReport(s);
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF7FAF7),
+          backgroundColor: AppColors.getBackground(context),
           appBar: AppBar(
             automaticallyImplyLeading: false,
             elevation: 0,
-            backgroundColor: const Color(0xFF0F5A37),
+            backgroundColor: AppColors.getHeaderBg(context),
             foregroundColor: Colors.white,
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,7 +412,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1037,7 +1037,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFC8E6C9)),
       ),
@@ -1362,7 +1362,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.getCardBg(context),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade200),
           ),
@@ -1597,7 +1597,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.getCardBg(context),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: const Color(0xFFC8E6C9)),
           ),
@@ -1911,7 +1911,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFFFCCBC)),
       ),
@@ -2072,7 +2072,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFBBDEFB)),
       ),
@@ -2350,7 +2350,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
