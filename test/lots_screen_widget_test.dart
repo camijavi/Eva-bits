@@ -137,9 +137,10 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text(s.kSearchLotsHint), findsOneWidget);
 
-    // 3. Plus icon to add new lots
-    expect(find.byIcon(Icons.add_circle_rounded), findsOneWidget);
-    expect(find.text(s.kAddLot), findsOneWidget);
+    // 3. Floating action button with plus icon to add new lots
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+    expect(find.byTooltip(s.kAddLot), findsOneWidget);
 
     // 4. Priority filter chips
     expect(find.text(s.kFilterPriorityTitle), findsOneWidget);
@@ -160,8 +161,7 @@ void main() {
     // 7. Plant / Sprout circular icon badges on cards
     expect(find.byIcon(Icons.eco_rounded), findsNWidgets(3));
 
-    // 8. Only one add button is kept (top button kAddLot), bottom button kAddNewLot is removed
-    expect(find.text(s.kAddLot), findsOneWidget);
+    // 8. Long text removed from floating add button; only plus icon remains
     expect(find.text(s.kAddNewLot), findsNothing);
   });
 

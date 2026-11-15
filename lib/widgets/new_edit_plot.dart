@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/crop_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
+import 'crop_picker_sheet.dart';
 
 /// Shows a bottom sheet modal to either create a new lot or edit an existing lot.
 Future<bool?> showNewOrEditLotModal(
@@ -49,6 +51,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
 
   late TextEditingController _nameController;
   late TextEditingController _surfaceController;
+  String? _selectedCrop;
   bool _isSaving = false;
 
   @override
@@ -60,6 +63,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
     _surfaceController = TextEditingController(
       text: widget.lot?['surface']?.toString() ?? '',
     );
+    _selectedCrop = widget.lot?['crop']?.toString();
   }
 
   @override
@@ -82,6 +86,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
         final lotMap = Map<String, dynamic>.from(widget.lot!);
         lotMap['name'] = nameVal;
         lotMap['surface'] = surfaceVal;
+        lotMap['crop'] = _selectedCrop;
 
         await DatabaseManager().updateLot(lotMap);
 
@@ -106,6 +111,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
           'farm_id': farmId,
           'name': nameVal,
           'surface': surfaceVal,
+          'crop': _selectedCrop,
         });
 
         if (mounted) {
@@ -443,6 +449,19 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                   return null;
                 },
               ),
+              const SizedBox(height: 18),
+
+              // Crop Selector
+              Text(
+                s.kCropLabel,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B2E1C),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildCropSelector(s),
               const SizedBox(height: 26),
 
               // Action Buttons
@@ -517,6 +536,102 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
               const SizedBox(height: 10),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCropSelector(AppStrings s) {
+    final isSpanish = AppLanguage.isSpanish;
+    final crop = CropTypes.getByKey(_selectedCrop);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () async {
+        final result = await showCropPickerModal(
+          context,
+          selectedCropKey: _selectedCrop,
+        );
+        if (result != null) {
+          setState(() {
+            _selectedCrop = result.isEmpty ? null : result;
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FBF8),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            if (crop != null) ...[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: crop.bgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    crop.icon,
+                    size: 18,
+                    color: crop.textColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  crop.localizedName(isSpanish),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B2E1C),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF5EC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  s.kChangeCrop,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F5A37),
+                  ),
+                ),
+              ),
+            ] else ...[
+              const Icon(
+                Icons.eco_outlined,
+                color: AppColors.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  s.kCropHint,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.grey,
+                size: 22,
+              ),
+            ],
+          ],
         ),
       ),
     );

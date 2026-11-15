@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/crop_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/new_edit_plot.dart';
 import '../services/app_settings.dart';
+import 'subplot_screen.dart';
 
 enum LotFilterPriority {
   all,
@@ -107,13 +109,15 @@ class _LotsScreenState extends State<LotsScreen> {
       result = result.where((lot) {
         final name = (lot['name'] ?? '').toString().toLowerCase();
         final surface = (lot['surface'] ?? '').toString().toLowerCase();
+        final cropKey = (lot['crop'] ?? '').toString().toLowerCase();
         final subplots = (lot['subplots'] as List<dynamic>?) ?? [];
         final hasMatchingSubplot = subplots.any((sub) =>
-            (sub['name'] ?? '').toString().toLowerCase().contains(
-                _searchQuery));
+            (sub['name'] ?? '').toString().toLowerCase().contains(_searchQuery) ||
+            (sub['crop'] ?? '').toString().toLowerCase().contains(_searchQuery));
 
         return name.contains(_searchQuery) ||
             surface.contains(_searchQuery) ||
+            cropKey.contains(_searchQuery) ||
             hasMatchingSubplot;
       }).toList();
     }
@@ -183,6 +187,21 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
+  void _navigateToSubplots(Map<String, dynamic> lot) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SubplotScreen(
+          lot: lot,
+          surfaceUnit: _surfaceUnit,
+        ),
+      ),
+    ).then((_) {
+      if (mounted) {
+        _loadLots();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppLanguageType>(
@@ -212,8 +231,6 @@ class _LotsScreenState extends State<LotsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTopBar(context, s),
-                    const SizedBox(height: 12),
                     _buildTitleAndSubtitle(s),
                     const SizedBox(height: 16),
                     _buildSearchField(s),
@@ -228,55 +245,24 @@ class _LotsScreenState extends State<LotsScreen> {
                       _buildEmptyState(s)
                     else
                       ...filteredLots.map((lot) => _buildLotCard(s, lot)),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
             ),
           ),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: const Color(0xFF0F5A37),
+            foregroundColor: Colors.white,
+            elevation: 4,
+            shape: const CircleBorder(),
+            tooltip: s.kAddLot,
+            onPressed: _openAddLotModal,
+            child: const Icon(Icons.add_rounded, size: 28),
+          ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
         );
       },
-    );
-  }
-
-  Widget _buildTopBar(BuildContext context, AppStrings s) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: _openAddLotModal,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF5EC),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFC8E6C9)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.add_circle_rounded,
-                  color: Color(0xFF0F5A37),
-                  size: 22,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  s.kAddLot,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F5A37),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -563,15 +549,36 @@ class _LotsScreenState extends State<LotsScreen> {
     final surface = lot['surface']?.toString() ?? '0';
     final subplots = (lot['subplots'] as List<dynamic>?) ?? [];
     final subplotsCount = subplots.length;
+    final isSpanish = AppLanguage.isSpanish;
+
+    // Direct lot crop or collected from subplots
+    final lotCrop = CropTypes.getByKey(lot['crop']?.toString());
+    final subplotsCrops = <CropDefinition>[];
+    for (final sub in subplots) {
+      final c = CropTypes.getByKey(sub['crop']?.toString());
+      if (c != null && !subplotsCrops.any((existing) => existing.key == c.key)) {
+        subplotsCrops.add(c);
+      }
+    }
+
+    final cropBadgeText = lotCrop != null
+        ? lotCrop.localizedName(isSpanish)
+        : (subplotsCrops.isNotEmpty
+            ? subplotsCrops.map((c) => c.localizedName(isSpanish)).join(', ')
+            : null);
 
     final subplotsInfo = subplotsCount > 0
-        ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s
-        .kSubplotsCount}'
+        ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s.kSubplotsCount}'
         : null;
 
-    final detailsText = subplotsInfo != null
-        ? '$surface $_surfaceUnit • $subplotsInfo'
-        : '$surface $_surfaceUnit';
+    final parts = <String>['$surface $_surfaceUnit'];
+    if (cropBadgeText != null) {
+      parts.add(cropBadgeText);
+    }
+    if (subplotsInfo != null) {
+      parts.add(subplotsInfo);
+    }
+    final detailsText = parts.join(' • ');
 
     // UI mirrors the image attached:
     // White rounded rectangle card with subtle light gray border.
@@ -596,7 +603,7 @@ class _LotsScreenState extends State<LotsScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _openEditLotModal(lot),
+          onTap: () => _navigateToSubplots(lot),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(

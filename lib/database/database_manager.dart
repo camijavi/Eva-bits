@@ -27,7 +27,30 @@ class DatabaseManager {
       },
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
+      onOpen: (db) async {
+        await _ensureSubplotColumns(db);
+      },
     );
+  }
+
+  Future<void> _ensureSubplotColumns(Database db) async {
+    try {
+      final info = await db.rawQuery('PRAGMA table_info(subplots)');
+      final hasSoilType = info.any((col) => col['name'] == 'soil_type');
+      if (!hasSoilType) {
+        await db.execute('ALTER TABLE subplots ADD COLUMN soil_type TEXT');
+      }
+      final hasCrop = info.any((col) => col['name'] == 'crop');
+      if (!hasCrop) {
+        await db.execute('ALTER TABLE subplots ADD COLUMN crop TEXT');
+      }
+
+      final lotInfo = await db.rawQuery('PRAGMA table_info(lots)');
+      final hasLotCrop = lotInfo.any((col) => col['name'] == 'crop');
+      if (!hasLotCrop) {
+        await db.execute('ALTER TABLE lots ADD COLUMN crop TEXT');
+      }
+    } catch (_) {}
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -62,6 +85,7 @@ class DatabaseManager {
         farm_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         surface REAL NOT NULL,
+        crop TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (farm_id) REFERENCES farms (id) ON DELETE CASCADE
       )
@@ -74,6 +98,8 @@ class DatabaseManager {
         lot_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         surface REAL NOT NULL,
+        soil_type TEXT,
+        crop TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (lot_id) REFERENCES lots (id) ON DELETE CASCADE
       )
@@ -235,6 +261,18 @@ class DatabaseManager {
     );
   }
 
+  Future<Map<String, dynamic>?> getLotById(int lotId) async {
+    final Database db = await database;
+    final results = await db.query(
+      'lots',
+      where: 'id = ?',
+      whereArgs: [lotId],
+      limit: 1,
+    );
+    if (results.isEmpty) return null;
+    return results.first;
+  }
+
   Future<int> insertLot(Map<String, dynamic> lot) async {
     final Database db = await database;
     return await db.insert('lots', lot);
@@ -249,6 +287,16 @@ class DatabaseManager {
       lotMap,
       where: 'id = ?',
       whereArgs: [lot['id']],
+    );
+  }
+
+  Future<int> updateLotCrop(int lotId, String? crop) async {
+    final Database db = await database;
+    return await db.update(
+      'lots',
+      {'crop': crop},
+      where: 'id = ?',
+      whereArgs: [lotId],
     );
   }
 
@@ -314,33 +362,42 @@ class DatabaseManager {
         'farm_id': farmId,
         'name': 'Lote 1 - Norte (Maíz y Frijol)',
         'surface': 2.5,
+        'crop': 'corn',
       });
       await txn.insert('subplots', {
         'lot_id': lot1Id,
         'name': 'Subparcela A - Maíz blanco',
         'surface': 1.5,
+        'soil_type': 'franco',
+        'crop': 'corn',
       });
       await txn.insert('subplots', {
         'lot_id': lot1Id,
         'name': 'Subparcela B - Frijol rojo',
         'surface': 1.0,
+        'soil_type': 'arenoso',
+        'crop': 'beans',
       });
 
       final lot2Id = await txn.insert('lots', {
         'farm_id': farmId,
         'name': 'Lote 2 - Sur (Frijolar)',
         'surface': 1.8,
+        'crop': 'beans',
       });
       await txn.insert('subplots', {
         'lot_id': lot2Id,
         'name': 'Subparcela Principal',
         'surface': 1.8,
+        'soil_type': 'arcilloso',
+        'crop': 'beans',
       });
 
       await txn.insert('lots', {
         'farm_id': farmId,
         'name': 'Lote 3 - Este (Rotación Crotalaria)',
         'surface': 3.0,
+        'crop': 'coffee',
       });
     });
   }
@@ -362,6 +419,27 @@ class DatabaseManager {
   Future<int> insertSubplot(Map<String, dynamic> subplot) async {
     final Database db = await database;
     return await db.insert('subplots', subplot);
+  }
+
+  Future<int> updateSubplot(Map<String, dynamic> subplot) async {
+    final Database db = await database;
+    final subplotMap = Map<String, dynamic>.from(subplot);
+    return await db.update(
+      'subplots',
+      subplotMap,
+      where: 'id = ?',
+      whereArgs: [subplot['id']],
+    );
+  }
+
+  Future<int> updateSubplotCrop(int subplotId, String? crop) async {
+    final Database db = await database;
+    return await db.update(
+      'subplots',
+      {'crop': crop},
+      where: 'id = ?',
+      whereArgs: [subplotId],
+    );
   }
 
   Future<int> deleteSubplot(int subplotId) async {

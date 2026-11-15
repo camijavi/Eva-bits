@@ -106,7 +106,7 @@ const String kSingleLotMode = 'Single Lot (Whole Farm)';
 const String kMainLot = 'Main Lot';
 const String kCustomLotsMode = 'Multiple Lots / Subplots';
 const String kAllocatedSurface = 'Allocated Surface';
-const String kAskIvyTitle = '🌾 Ask Ivy (Prediction)';
+const String kAskIvyTitle = 'Ask Ivy (Prediction)';
 const String kNasaDataReady = 'NASA & Climate Data';
 const String kNoLotsAddedYet = 'You have not added any lots yet.';
 const String kLotsDistribution = 'Lots Distribution';
@@ -206,4 +206,56 @@ const String kUnitFahrenheit = 'Fahrenheit (°F)';
 const String kUnitCelsiusShort = '°C';
 const String kUnitFahrenheitShort = '°F';
 const String kSettingsSaved = 'Settings updated';
+
+// Subplot Details & Management
+const String kLotDetailsTitle = 'Lot Details';
+const String kSubplotsTitle = 'Subplots';
+const String kAddNewSubplot = 'Add Subplot';
+const String kEditSubplot = 'Edit Subplot';
+const String kDeleteSubplot = 'Delete Subplot';
+const String kDeleteSubplotConfirm = 'Are you sure you want to delete this subplot?';
+const String kDeleteSubplotWarning = 'This action cannot be undone. All records for this subplot will be removed.';
+const String kSubplotCreatedSuccessfully = 'Subplot registered successfully!';
+const String kSubplotUpdatedSuccessfully = 'Subplot updated successfully!';
+const String kSubplotDeletedSuccessfully = 'Subplot deleted successfully!';
+const String kSaveSubplot = 'Save Subplot';
+const String kLotAllocation = 'Lot Land Allocation';
+const String kTotalLotSurface = 'Total Lot Area';
+const String kAllocatedToSubplots = 'Allocated to subplots';
+const String kUnallocatedFromLot = 'Unallocated';
+const String kNoSubplotsYet = 'No subplots in this lot yet.';
+const String kNoSubplotsSubtitle = 'Divide this lot into subplots to manage specific crops, rotations, and soil practices.';
+const String kExceededLotSurfaceWarning = 'Total subplot area exceeds the lot surface area!';
+
+// Soil Classification
+const String kSoilTypeLabel = 'Soil Type';
+const String kSoilTypeHint = 'Select soil type';
+const String kSoilComposition = 'Soil Composition';
+const String kSoilSandy = 'Sandy (Arenosos)';
+const String kSoilClay = 'Clay (Arcillosos)';
+const String kSoilSilt = 'Silt (Limosos)';
+const String kSoilLoam = 'Loam (Francos)';
+const String kSoilClayLoam = 'Clay Loam (Franco-arcilloso)';
+const String kSoilSandyLoam = 'Sandy Loam (Franco-arenoso)';
+const String kSoilOrganic = 'Organic-rich (Humífero)';
+const String kSoilRocky = 'Rocky (Pedregoso)';
+const String kSoilUnknown = 'Unspecified';
+
+// Crop Selection & Management
+const String kCropLabel = 'Current Crop';
+const String kCropHint = 'Select a crop (Optional)';
+const String kAssignCrop = 'Assign Crop';
+const String kChangeCrop = 'Change';
+const String kNoCropAssigned = 'No crop assigned';
+const String kClearCrop = 'None (Clear crop)';
+const String kPopularCrops = 'Frequent Crops';
+const String kAllCrops = 'All Crops';
+const String kSearchCropHint = 'Search crop by name...';
+const String kCategoryGrains = 'Grains & Legumes';
+const String kCategoryFruits = 'Fruits';
+const String kCategoryCommercial = 'Commercial & Cash Crops';
+const String kCropUpdatedSuccessfully = 'Crop updated successfully!';
+
+
+
 

@@ -205,6 +205,55 @@ abstract class AppStrings {
   String get kUnitCelsiusShort;
   String get kUnitFahrenheitShort;
   String get kSettingsSaved;
+
+  // Subplot Details & Management
+  String get kLotDetailsTitle;
+  String get kSubplotsTitle;
+  String get kAddNewSubplot;
+  String get kEditSubplot;
+  String get kDeleteSubplot;
+  String get kDeleteSubplotConfirm;
+  String get kDeleteSubplotWarning;
+  String get kSubplotCreatedSuccessfully;
+  String get kSubplotUpdatedSuccessfully;
+  String get kSubplotDeletedSuccessfully;
+  String get kSaveSubplot;
+  String get kLotAllocation;
+  String get kTotalLotSurface;
+  String get kAllocatedToSubplots;
+  String get kUnallocatedFromLot;
+  String get kNoSubplotsYet;
+  String get kNoSubplotsSubtitle;
+  String get kExceededLotSurfaceWarning;
+
+  // Soil Classification
+  String get kSoilTypeLabel;
+  String get kSoilTypeHint;
+  String get kSoilComposition;
+  String get kSoilLoam;
+  String get kSoilClay;
+  String get kSoilSandy;
+  String get kSoilClayLoam;
+  String get kSoilSandyLoam;
+  String get kSoilSilt;
+  String get kSoilOrganic;
+  String get kSoilRocky;
+  String get kSoilUnknown;
+
+  // Crop Selection & Management
+  String get kCropLabel;
+  String get kCropHint;
+  String get kAssignCrop;
+  String get kChangeCrop;
+  String get kNoCropAssigned;
+  String get kClearCrop;
+  String get kPopularCrops;
+  String get kAllCrops;
+  String get kSearchCropHint;
+  String get kCategoryGrains;
+  String get kCategoryFruits;
+  String get kCategoryCommercial;
+  String get kCropUpdatedSuccessfully;
 }
 
 class EngStrings implements AppStrings {
@@ -569,6 +618,98 @@ class EngStrings implements AppStrings {
   String get kUnitFahrenheitShort => eng.kUnitFahrenheitShort;
   @override
   String get kSettingsSaved => eng.kSettingsSaved;
+
+  // Subplot Details & Management
+  @override
+  String get kLotDetailsTitle => eng.kLotDetailsTitle;
+  @override
+  String get kSubplotsTitle => eng.kSubplotsTitle;
+  @override
+  String get kAddNewSubplot => eng.kAddNewSubplot;
+  @override
+  String get kEditSubplot => eng.kEditSubplot;
+  @override
+  String get kDeleteSubplot => eng.kDeleteSubplot;
+  @override
+  String get kDeleteSubplotConfirm => eng.kDeleteSubplotConfirm;
+  @override
+  String get kDeleteSubplotWarning => eng.kDeleteSubplotWarning;
+  @override
+  String get kSubplotCreatedSuccessfully => eng.kSubplotCreatedSuccessfully;
+  @override
+  String get kSubplotUpdatedSuccessfully => eng.kSubplotUpdatedSuccessfully;
+  @override
+  String get kSubplotDeletedSuccessfully => eng.kSubplotDeletedSuccessfully;
+  @override
+  String get kSaveSubplot => eng.kSaveSubplot;
+  @override
+  String get kLotAllocation => eng.kLotAllocation;
+  @override
+  String get kTotalLotSurface => eng.kTotalLotSurface;
+  @override
+  String get kAllocatedToSubplots => eng.kAllocatedToSubplots;
+  @override
+  String get kUnallocatedFromLot => eng.kUnallocatedFromLot;
+  @override
+  String get kNoSubplotsYet => eng.kNoSubplotsYet;
+  @override
+  String get kNoSubplotsSubtitle => eng.kNoSubplotsSubtitle;
+  @override
+  String get kExceededLotSurfaceWarning => eng.kExceededLotSurfaceWarning;
+
+  // Soil Classification
+  @override
+  String get kSoilTypeLabel => eng.kSoilTypeLabel;
+  @override
+  String get kSoilTypeHint => eng.kSoilTypeHint;
+  @override
+  String get kSoilComposition => eng.kSoilComposition;
+  @override
+  String get kSoilLoam => eng.kSoilLoam;
+  @override
+  String get kSoilClay => eng.kSoilClay;
+  @override
+  String get kSoilSandy => eng.kSoilSandy;
+  @override
+  String get kSoilClayLoam => eng.kSoilClayLoam;
+  @override
+  String get kSoilSandyLoam => eng.kSoilSandyLoam;
+  @override
+  String get kSoilSilt => eng.kSoilSilt;
+  @override
+  String get kSoilOrganic => eng.kSoilOrganic;
+  @override
+  String get kSoilRocky => eng.kSoilRocky;
+  @override
+  String get kSoilUnknown => eng.kSoilUnknown;
+
+  // Crop Selection & Management
+  @override
+  String get kCropLabel => eng.kCropLabel;
+  @override
+  String get kCropHint => eng.kCropHint;
+  @override
+  String get kAssignCrop => eng.kAssignCrop;
+  @override
+  String get kChangeCrop => eng.kChangeCrop;
+  @override
+  String get kNoCropAssigned => eng.kNoCropAssigned;
+  @override
+  String get kClearCrop => eng.kClearCrop;
+  @override
+  String get kPopularCrops => eng.kPopularCrops;
+  @override
+  String get kAllCrops => eng.kAllCrops;
+  @override
+  String get kSearchCropHint => eng.kSearchCropHint;
+  @override
+  String get kCategoryGrains => eng.kCategoryGrains;
+  @override
+  String get kCategoryFruits => eng.kCategoryFruits;
+  @override
+  String get kCategoryCommercial => eng.kCategoryCommercial;
+  @override
+  String get kCropUpdatedSuccessfully => eng.kCropUpdatedSuccessfully;
 }
 
 class SpaStrings implements AppStrings {
@@ -933,6 +1074,98 @@ class SpaStrings implements AppStrings {
   String get kUnitFahrenheitShort => spa.kUnitFahrenheitShort;
   @override
   String get kSettingsSaved => spa.kSettingsSaved;
+
+  // Subplot Details & Management
+  @override
+  String get kLotDetailsTitle => spa.kLotDetailsTitle;
+  @override
+  String get kSubplotsTitle => spa.kSubplotsTitle;
+  @override
+  String get kAddNewSubplot => spa.kAddNewSubplot;
+  @override
+  String get kEditSubplot => spa.kEditSubplot;
+  @override
+  String get kDeleteSubplot => spa.kDeleteSubplot;
+  @override
+  String get kDeleteSubplotConfirm => spa.kDeleteSubplotConfirm;
+  @override
+  String get kDeleteSubplotWarning => spa.kDeleteSubplotWarning;
+  @override
+  String get kSubplotCreatedSuccessfully => spa.kSubplotCreatedSuccessfully;
+  @override
+  String get kSubplotUpdatedSuccessfully => spa.kSubplotUpdatedSuccessfully;
+  @override
+  String get kSubplotDeletedSuccessfully => spa.kSubplotDeletedSuccessfully;
+  @override
+  String get kSaveSubplot => spa.kSaveSubplot;
+  @override
+  String get kLotAllocation => spa.kLotAllocation;
+  @override
+  String get kTotalLotSurface => spa.kTotalLotSurface;
+  @override
+  String get kAllocatedToSubplots => spa.kAllocatedToSubplots;
+  @override
+  String get kUnallocatedFromLot => spa.kUnallocatedFromLot;
+  @override
+  String get kNoSubplotsYet => spa.kNoSubplotsYet;
+  @override
+  String get kNoSubplotsSubtitle => spa.kNoSubplotsSubtitle;
+  @override
+  String get kExceededLotSurfaceWarning => spa.kExceededLotSurfaceWarning;
+
+  // Soil Classification
+  @override
+  String get kSoilTypeLabel => spa.kSoilTypeLabel;
+  @override
+  String get kSoilTypeHint => spa.kSoilTypeHint;
+  @override
+  String get kSoilComposition => spa.kSoilComposition;
+  @override
+  String get kSoilLoam => spa.kSoilLoam;
+  @override
+  String get kSoilClay => spa.kSoilClay;
+  @override
+  String get kSoilSandy => spa.kSoilSandy;
+  @override
+  String get kSoilClayLoam => spa.kSoilClayLoam;
+  @override
+  String get kSoilSandyLoam => spa.kSoilSandyLoam;
+  @override
+  String get kSoilSilt => spa.kSoilSilt;
+  @override
+  String get kSoilOrganic => spa.kSoilOrganic;
+  @override
+  String get kSoilRocky => spa.kSoilRocky;
+  @override
+  String get kSoilUnknown => spa.kSoilUnknown;
+
+  // Crop Selection & Management
+  @override
+  String get kCropLabel => spa.kCropLabel;
+  @override
+  String get kCropHint => spa.kCropHint;
+  @override
+  String get kAssignCrop => spa.kAssignCrop;
+  @override
+  String get kChangeCrop => spa.kChangeCrop;
+  @override
+  String get kNoCropAssigned => spa.kNoCropAssigned;
+  @override
+  String get kClearCrop => spa.kClearCrop;
+  @override
+  String get kPopularCrops => spa.kPopularCrops;
+  @override
+  String get kAllCrops => spa.kAllCrops;
+  @override
+  String get kSearchCropHint => spa.kSearchCropHint;
+  @override
+  String get kCategoryGrains => spa.kCategoryGrains;
+  @override
+  String get kCategoryFruits => spa.kCategoryFruits;
+  @override
+  String get kCategoryCommercial => spa.kCategoryCommercial;
+  @override
+  String get kCropUpdatedSuccessfully => spa.kCropUpdatedSuccessfully;
 }
 
 class AppLanguage {
