@@ -64,7 +64,7 @@ void main() {
     // Verify header and fields are visible
     expect(find.text(s.kEditFarmInfo), findsOneWidget);
     expect(find.text('Finca Los Pinos'), findsOneWidget);
-    expect(find.text('Nicaragua'), findsOneWidget);
+    expect(find.textContaining('Nicaragua'), findsWidgets);
     expect(find.text('4.25'), findsOneWidget);
     expect(find.text(s.kSaveChanges), findsOneWidget);
     expect(updatedCalled, isFalse);

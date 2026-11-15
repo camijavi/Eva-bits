@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'subplot_graph_service.dart';
+import '../languages/app_strings.dart';
 
 // =============================================================================
 // DATA MODELS FOR THE 6 PREDICTIONS
@@ -296,7 +297,9 @@ class AgroPredictionEngine {
     List<Map<String, dynamic>>? subplots,
     String? targetCrop,
     String? targetSoilType,
+    AppStrings? strings,
   }) {
+    final s = strings ?? AppLanguage.strings;
     final summary = nasaData['summary'] as Map<String, dynamic>? ?? {};
     final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
     final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
@@ -309,8 +312,8 @@ class AgroPredictionEngine {
         (farmData['total_surface'] as num?)?.toDouble() ?? 2.5;
 
     // Detect active crop and soil type
-    String activeCrop = targetCrop ?? 'Maíz';
-    String activeSoil = targetSoilType ?? 'Franco';
+    String activeCrop = targetCrop ?? s.kDefaultCropName;
+    String activeSoil = targetSoilType ?? s.kDefaultSoilName;
 
     if (targetCrop == null && subplots != null && subplots.isNotEmpty) {
       final firstCrop = subplots.first['crop']?.toString();
@@ -333,6 +336,7 @@ class AgroPredictionEngine {
       solarMj: solarMj,
       crop: activeCrop,
       soilType: activeSoil,
+      s: s,
     );
 
     // 2. Rotation Simulator Prediction
@@ -341,6 +345,7 @@ class AgroPredictionEngine {
       soilMoisture: soilMoisture,
       graph: graph,
       subplots: subplots,
+      s: s,
     );
 
     // 3. Planting Calendar & GDD Prediction
@@ -348,6 +353,7 @@ class AgroPredictionEngine {
       tempC: tempC,
       soilMoisture: soilMoisture,
       dominantCrop: activeCrop,
+      s: s,
     );
 
     // 4. Crop Health & Biomass Prediction
@@ -355,6 +361,7 @@ class AgroPredictionEngine {
       solarMj: solarMj,
       soilMoisture: soilMoisture,
       weeklyDeficitMm: irrigation.weeklyDeficitMm,
+      s: s,
     );
 
     // 5. Extreme Risks & Alerts (tailored for soil texture and climate)
@@ -364,6 +371,7 @@ class AgroPredictionEngine {
       tempC: tempC,
       solarMj: solarMj,
       soilType: activeSoil,
+      s: s,
     );
 
     // 6. Soil Nutrition & Nitrogen Gain (adapted for soil leaching)
@@ -372,6 +380,7 @@ class AgroPredictionEngine {
       suggestedRotationCrop: rotation.suggestedCrop,
       farmSurfaceHa: farmSurfaceHa,
       soilType: activeSoil,
+      s: s,
     );
 
     return FarmPredictionsReport(
@@ -393,6 +402,7 @@ class AgroPredictionEngine {
     required double rain7dMm,
     required double tempC,
     required double solarMj,
+    required AppStrings s,
     String crop = 'Maíz',
     String soilType = 'Franco',
   }) {
@@ -423,22 +433,33 @@ class AgroPredictionEngine {
       status = 'critical';
       recommendedWaterMm =
           (weeklyDeficitMm * (1.1 / retentionFactor)).clamp(18.0, 50.0);
-      actionTitle = 'Riego Urgente Requerido';
-      actionRecommendation =
-          'Humedad radicular crítica ($soilMoisturePct%) en suelo $soilType para $crop (Kc: $kc). Aplica lámina de ${recommendedWaterMm.toStringAsFixed(0)} mm en las próximas 48 h para evitar marchitez.';
+      actionTitle = s.kIrrigationUrgentTitle;
+      actionRecommendation = s.kIrrigationUrgentRec(
+        soilMoisturePct.toStringAsFixed(1),
+        soilType,
+        crop,
+        kc.toStringAsFixed(2),
+        recommendedWaterMm.toStringAsFixed(0),
+      );
     } else if (soilMoisture <= 0.65) {
       status = 'moderate';
       recommendedWaterMm =
           (weeklyDeficitMm * 0.55).clamp(10.0, 28.0);
-      actionTitle = 'Humedad Moderada - Monitorear';
-      actionRecommendation =
-          'Suelo $soilType retiene agua para los próximos $daysUntilStress días. Programa riego preventivo (${recommendedWaterMm.toStringAsFixed(0)} mm) al promediar la semana.';
+      actionTitle = s.kIrrigationModerateTitle;
+      actionRecommendation = s.kIrrigationModerateRec(
+        soilType,
+        daysUntilStress,
+        recommendedWaterMm.toStringAsFixed(0),
+      );
     } else {
       status = 'optimal';
       recommendedWaterMm = 0.0;
-      actionTitle = 'Nivel Hídrico Óptimo';
-      actionRecommendation =
-          'Reserva hídrica suficiente ($soilMoisturePct%) para $crop en suelo $soilType. No se requiere riego en los siguientes 7 días.';
+      actionTitle = s.kIrrigationOptimalTitle;
+      actionRecommendation = s.kIrrigationOptimalRec(
+        soilMoisturePct.toStringAsFixed(1),
+        crop,
+        soilType,
+      );
     }
 
     return IrrigationPrediction(
@@ -459,30 +480,39 @@ class AgroPredictionEngine {
   static RotationCompatibilityPrediction _calculateRotationSimulation({
     required String currentCrop,
     required double soilMoisture,
+    required AppStrings s,
     SubplotGraph? graph,
     List<Map<String, dynamic>>? subplots,
   }) {
     int score = 85;
     bool hasCorridorRisk = false;
     final currentNormalized = currentCrop.toLowerCase().trim();
-    final currentFamily = _botanicalFamilies[currentNormalized] ?? 'Desconocida';
+    final currentFamily = _botanicalFamilies[currentNormalized] ?? s.kFamilyUnknown;
 
-    String suggestedCrop = 'Frijol Rojo (Leguminosa)';
+    String suggestedCrop = s.kCropRedBeansLegume;
     List<String> alternativeCrops = [
-      'Crotalaria / Abono Verde',
-      'Soya',
-      'Sorgo Tolerante',
+      s.kCropCrotalariaManure,
+      s.kCropSoybean,
+      s.kCropTolerantSorghum,
     ];
 
     // Agronomic synergy: Cereals (Gramineae) must rotate into Legumes to regenerate Nitrogen
     if (currentFamily.contains('Gramíneas')) {
       score += 10;
-      suggestedCrop = 'Frijol (Fabaceae)';
-      alternativeCrops = ['Soya', 'Crotalaria (Abono Verde)', 'Hortalizas'];
+      suggestedCrop = s.kCropBeansLegume;
+      alternativeCrops = [
+        s.kCropSoybean,
+        s.kCropCrotalariaGreenManure,
+        s.kCropVegetables,
+      ];
     } else if (currentFamily.contains('Leguminosas')) {
       score += 5;
-      suggestedCrop = 'Maíz o Sorgo (Gramíneas)';
-      alternativeCrops = ['Ajonjolí', 'Girasol', 'Hortalizas'];
+      suggestedCrop = s.kCropCornSorghumGrass;
+      alternativeCrops = [
+        s.kCropSesame,
+        s.kCropSunflower,
+        s.kCropVegetables,
+      ];
     }
 
     // Spatial Graph check: Penalize if adjacent neighbors share the same crop family
@@ -507,18 +537,18 @@ class AgroPredictionEngine {
     // Climate adaptation: Penalize high-demand crops if moisture is low
     if (soilMoisture < 0.40) {
       score -= 10;
-      suggestedCrop = 'Frijol Alacita / Sorgo Sequero';
+      suggestedCrop = s.kCropDroughtBeansSorghum;
     }
 
     score = score.clamp(30, 98);
 
     final String level = score >= 80
-        ? 'Alta Compatibilidad'
-        : (score >= 60 ? 'Media Compatibilidad' : 'Desaconsejada');
+        ? s.kCompatibilityHigh
+        : (score >= 60 ? s.kCompatibilityMedium : s.kCompatibilityDiscouraged);
 
     final String explanation = hasCorridorRisk
-        ? 'Se detectó que parcelas vecinas comparten la misma familia ($currentFamily). Rotar con $suggestedCrop romperá el corredor biológico de plagas y fijará nitrógeno.'
-        : 'La secuencia sugerida ($currentCrop -> $suggestedCrop) optimiza el uso de nutrientes y aprovecha el nivel hídrico actual.';
+        ? s.kRotationCorridorRiskExp(currentFamily, suggestedCrop)
+        : s.kRotationStandardExp(currentCrop, suggestedCrop);
 
     return RotationCompatibilityPrediction(
       score: score,
@@ -537,6 +567,7 @@ class AgroPredictionEngine {
     required double tempC,
     required double soilMoisture,
     required String dominantCrop,
+    required AppStrings s,
   }) {
     // Base temperature threshold for tropical grains
     const double tBase = 10.0;
@@ -555,15 +586,13 @@ class AgroPredictionEngine {
     final String thermalAdvice;
 
     if (isWindowOpen) {
-      windowStatus = 'Ventana Óptima de Siembra';
-      dateRange = 'Próximos 10 a 14 días';
-      thermalAdvice =
-          'Suma térmica favorable ($accumulatedGdd7d GDD/sem). La germinación ocurrirá en 4 a 6 días sin riesgo de estrés térmico.';
+      windowStatus = s.kWindowStatusOptimal;
+      dateRange = s.kDateRangeNext10To14Days;
+      thermalAdvice = s.kThermalAdviceFavorable(accumulatedGdd7d.toStringAsFixed(1));
     } else {
-      windowStatus = 'Esperar Mayor Humedad';
-      dateRange = 'Postergar hasta próximas lluvias';
-      thermalAdvice =
-          'La humedad radicular (${(soilMoisture * 100).toInt()}%) está por debajo del umbral de germinación uniforme (mínimo 42%).';
+      windowStatus = s.kWindowStatusWaitMoisture;
+      dateRange = s.kDateRangePostponeUntilRain;
+      thermalAdvice = s.kThermalAdviceMoistureLow((soilMoisture * 100).toInt());
     }
 
     return PlantingCalendarPrediction(
@@ -583,6 +612,7 @@ class AgroPredictionEngine {
     required double solarMj,
     required double soilMoisture,
     required double weeklyDeficitMm,
+    required AppStrings s,
   }) {
     // Model satellite NDVI proxy (0.0 - 1.0) combining radiation and water sufficiency
     final moistureFactor = soilMoisture.clamp(0.0, 1.0);
@@ -595,20 +625,18 @@ class AgroPredictionEngine {
     final String condition;
 
     if (ndviProxy >= 0.68) {
-      vigorStatus = 'Vigor Excelente';
+      vigorStatus = s.kVigorStatusExcellent;
       expectedYieldRatioPct = 92.0 + (ndviProxy * 6);
-      condition =
-          'Dosel vegetal denso con alta actividad fotosintética. Proyección de cosecha en percentil superior.';
+      condition = s.kBiomassConditionDense;
     } else if (ndviProxy >= 0.50) {
-      vigorStatus = 'Vigor Normal';
+      vigorStatus = s.kVigorStatusNormal;
       expectedYieldRatioPct = 80.0 + (ndviProxy * 10);
-      condition =
-          'Desarrollo vegetativo acorde a la fecha fenológica sin anomalías marcadas.';
+      condition = s.kBiomassConditionNormal;
     } else {
-      vigorStatus = 'Bajo Estrés Hídrico';
+      vigorStatus = s.kVigorStatusWaterStress;
       expectedYieldRatioPct = (65.0 + (ndviProxy * 15)).clamp(50.0, 78.0);
-      condition =
-          'Vigor deprimido por déficit hídrico sostenido. Se proyecta merma del ${(100 - expectedYieldRatioPct).toStringAsFixed(0)}% si no se irriga.';
+      condition = s.kBiomassConditionStress(
+          (100 - expectedYieldRatioPct).toStringAsFixed(0));
     }
 
     return CropHealthPrediction(
@@ -628,6 +656,7 @@ class AgroPredictionEngine {
     required double rain7dMm,
     required double tempC,
     required double solarMj,
+    required AppStrings s,
     String soilType = 'Franco',
   }) {
     final isClay = soilType.toLowerCase().contains('arcill');
@@ -642,10 +671,10 @@ class AgroPredictionEngine {
       return ExtremeRiskAlert(
         alertType: 'flash_drought',
         severity: 'danger',
-        headline: 'Alerta de Sequía Relámpago (Flash Drought)',
+        headline: s.kRiskAlertFlashDroughtTitle,
         mitigationAdvice: isSandy
-            ? 'Suelo arenoso con drenaje acelerado: la humedad se evapora rápidamente bajo radiación solar intensa. Aplica cobertura vegetal (mulch) y riegos cortos frecuentes.'
-            : 'Caída acelerada de humedad por radiación solar extrema. Aplica acolchado (mulch) orgánico en las bases y adelanta ciclos de riego defensivo.',
+            ? s.kRiskAdviceFlashDroughtSandy
+            : s.kRiskAdviceFlashDroughtStandard,
       );
     }
 
@@ -656,30 +685,28 @@ class AgroPredictionEngine {
       return ExtremeRiskAlert(
         alertType: 'waterlogging',
         severity: 'warning',
-        headline: 'Riesgo de Saturación y Asfixia Radicular',
+        headline: s.kRiskAlertWaterloggingTitle,
         mitigationAdvice: isClay
-            ? 'Suelo arcilloso con infiltración lenta: el exceso de agua estancada asfixia las raíces. Abre zanjas de evacuación superficial y evita el pisoteo del terreno.'
-            : 'Precipitación acumulada excesiva en suelo saturado. Abre zanjas de drenaje superficiales para evacuar escorrentía estancada.',
+            ? s.kRiskAdviceWaterloggingClay
+            : s.kRiskAdviceWaterloggingStandard,
       );
     }
 
     // Heat stress during flowering
     if (tempC >= 32.0) {
-      return const ExtremeRiskAlert(
+      return ExtremeRiskAlert(
         alertType: 'heat_stress',
         severity: 'warning',
-        headline: 'Estrés Térmico por Golpe de Calor',
-        mitigationAdvice:
-            'Temperaturas diurnas elevadas que pueden provocar aborto floral en leguminosas y hortalizas. Mantén hidratado el follaje.',
+        headline: s.kRiskAlertHeatStressTitle,
+        mitigationAdvice: s.kRiskAdviceHeatStress,
       );
     }
 
-    return const ExtremeRiskAlert(
+    return ExtremeRiskAlert(
       alertType: 'none',
       severity: 'info',
-      headline: 'Sin Riesgos Climáticos Extremos Activos',
-      mitigationAdvice:
-          'Las variables hidroclimáticas se mantienen dentro de los umbrales seguros para los cultivos de la finca.',
+      headline: s.kRiskAlertNoneTitle,
+      mitigationAdvice: s.kRiskAdviceNone,
     );
   }
 
@@ -690,13 +717,18 @@ class AgroPredictionEngine {
     required String currentCrop,
     required String suggestedRotationCrop,
     required double farmSurfaceHa,
+    required AppStrings s,
     String soilType = 'Franco',
   }) {
     final suggestedLower = suggestedRotationCrop.toLowerCase();
     final bool isLegume = suggestedLower.contains('frijol') ||
+        suggestedLower.contains('bean') ||
         suggestedLower.contains('soya') ||
-        suggestedLower.contains('leguminosa') ||
-        suggestedLower.contains('abono');
+        suggestedLower.contains('soybean') ||
+        suggestedLower.contains('legumin') ||
+        suggestedLower.contains('legume') ||
+        suggestedLower.contains('abono') ||
+        suggestedLower.contains('manure');
 
     final isSandy = soilType.toLowerCase().contains('aren');
 
@@ -713,12 +745,18 @@ class AgroPredictionEngine {
     final String diagnosis;
     if (isLegume) {
       diagnosis = isSandy
-          ? 'La rotación propuesta con leguminosas aportará ~${nitrogenGainKgHa.toStringAsFixed(0)} kg N/ha. En suelo arenoso, se aconseja incorporar biomasa verde para evitar lixiviación, ahorrando ~${ureaSavingsKg.toStringAsFixed(0)} kg de urea.'
-          : 'La rotación propuesta con leguminosas aportará un estimado de ${nitrogenGainKgHa.toStringAsFixed(0)} kg de Nitrógeno biológico por hectárea, ahorrando cerca de ${ureaSavingsKg.toStringAsFixed(0)} kg de urea comercial.';
+          ? s.kSoilNutritionDiagnosisLegumeSandy(
+              nitrogenGainKgHa.toStringAsFixed(0),
+              ureaSavingsKg.toStringAsFixed(0),
+            )
+          : s.kSoilNutritionDiagnosisLegumeStandard(
+              nitrogenGainKgHa.toStringAsFixed(0),
+              ureaSavingsKg.toStringAsFixed(0),
+            );
     } else {
       diagnosis = isSandy
-          ? 'Los cereales extraen nitrógeno (-35 kg N/ha) y en suelo arenoso el lavado por lluvia es severo. Incorpora abonos verdes profundos o compost inmediatamente.'
-          : 'Los cereales extraen nitrógeno del perfil (-35 kg N/ha). Se recomienda incorporar cobertura vegetal o compost para mantener la fertilidad del suelo.';
+          ? s.kSoilNutritionDiagnosisCerealSandy
+          : s.kSoilNutritionDiagnosisCerealStandard;
     }
 
     return SoilNutritionPrediction(

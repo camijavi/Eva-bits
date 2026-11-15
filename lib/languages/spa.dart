@@ -259,6 +259,156 @@ const String kCategoryFruits = 'Frutales';
 const String kCategoryCommercial = 'Comerciales y Agroforestales';
 const String kCropUpdatedSuccessfully = '¡Cultivo actualizado con éxito!';
 
+// Agroclimatic Predictions Screen
+const String kPredictionsTitle = 'Predicciones Agroclimáticas';
+const String kPredictionsSubtitle = 'NASA POWER • SMAP L4 • Grafo Espacial';
+const String kAskIvyTooltip = 'Consultar a Ivy AI';
+const String kTabIrrigation = 'Riego';
+const String kTabRotation = 'Rotación';
+const String kTabPlantingGdd = 'Siembra';
+const String kTabVigorNdvi = 'Vigor';
+const String kTabRisks = 'Alertas';
+const String kTabNutrition = 'Nutrición';
+const String kPredictionContext = 'Contexto de la Parcela:';
+const String kWhatIfSimulator = 'Simular qué pasa si...';
+const String kWholeFarmGeneral = 'Toda la Finca';
+const String kCropPrefix = 'Cultivo:';
+const String kSoilPrefix = 'Suelo:';
+const String kMetricRootMoisture = 'Humedad en Raíz';
+const String kMetricRootMoistureSub = 'NASA SMAP L4';
+const String kMetric7dDeficit = 'Déficit a 7 Días';
+const String kMetric7dDeficitSub = 'Consumo vs. Lluvia';
+const String kMetricReserveDays = 'Días de Reserva';
+const String kMetricReserveDaysSub = 'Antes de marchitez';
+const String kMetricRequiredDepth = 'Lámina Requerida';
+const String kMetricRequiredDepthSub = 'Agua a aplicar';
+const String kSoilImpactTitle = '¿Cómo influye la textura de tu suelo?';
+const String kSoilImpactDescription = 'En suelos arenosos el agua se filtra rápidamente al fondo, necesitando riegos cortos y frecuentes. En suelos arcillosos el agua se almacena por más días, pero si llueve en exceso se debe vigilar el drenaje para evitar que las raíces se asfixien.';
+const String kCorridorRiskTitle = '¡Cuidado! Corredor de Plagas en el Lindero';
+const String kCorridorRiskDescription = 'Tus parcelas vecinas tienen cultivos de la misma familia botánica. Rotar con leguminosas (frijol o abono verde) corta el avance de gusanos y hongos.';
+const String kAgroJustificationTitle = 'Beneficio para tu Parcela:';
+const String kAlternativeCropsTitle = 'Otras Opciones Compatibles:';
+const String kOptimalCropPrefix = 'Recomendado:';
+const String kMetricThermalSumGdd = 'Suma Térmica (GDD)';
+const String kMetricThermalSumGddSub = 'Calor acumulado (Tbase 10°C)';
+const String kMetricDaysToFlowering = 'Días para Floración';
+const String kRecommendedRangePrefix = 'Fecha ideal:';
+const String kMetricNdviProxy = 'Vigor Satelital (NDVI)';
+const String kMetricNdviProxySub = 'Verdor y fotosíntesis';
+const String kMetricRelativeYield = 'Rendimiento Proyectado';
+const String kMetricRelativeYieldSub = 'Del potencial de tu lote';
+const String kMetricBiologicalNFixation = 'Aporte Biológico de Nitrógeno';
+const String kMetricNBalancePerHa = 'Nitrógeno al Suelo';
+const String kMetricUreaSavings = 'Ahorro en Fertilizante';
+const String kMetricSoilHealthScore = 'Salud y Fuerza del Suelo';
+const String kMetricSoilHealthScoreSub = 'Fertilidad y materia orgánica';
+const String kSimulatorTitle = 'Simulador de Cultivo y Suelo';
+const String kSimulatorCropQuestion = '¿Qué cultivo quieres probar?';
+const String kSimulatorSoilQuestion = '¿Qué tipo de tierra tiene tu parcela?';
+const String kSimulatorApplyButton = 'Calcular con este Escenario';
+const String kAskIvyButton = 'Preguntar a Ivy';
+const String kIvyCopilotTitle = 'Ivy • Copiloto Agroclimático';
+const String kIvyAnalyzingScenario = 'Ivy está analizando tus satélites y cultivo...';
+const String kIvyInputHint = 'Hazle una pregunta a Ivy sobre tu finca...';
+const String kIvyErrorMessage = 'Ocurrió un error al contactar a Ivy. Intenta de nuevo.';
+const String kStatusAttentionRequired = '¡Atención Requerida!';
+const String kStatusPlanIrrigation = 'Planificar Riego';
+const String kStatusOptimalMoisture = 'Humedad Óptima';
+const String kSynergyLabel = 'Sinergia';
+const String kBiologicalNFixationPerHa = 'FBN por Ha';
+const String kUreaSavingsShort = 'Ahorro Urea';
+const String kDaysUnit = 'días';
+const String kIvyInitialPrompt = 'Explícame las predicciones para mi cultivo y tipo de suelo actual.';
+const String kVisualParcelView = 'Mapa 2.5D';
+const String kCompactListView = 'Lista';
+const String kSoilBalancedDesc = 'Franco (Equilibrado)';
+const String kSoilClayDesc = 'Arcilloso (Alta retención / Infiltración lenta)';
+const String kSoilSandyDesc = 'Arenoso (Drenaje rápido / Baja retención)';
+const String kSoilSiltDesc = 'Limoso (Compactación superficial)';
+const String kActiveSubplotBadge = 'Seleccionado';
+const String kTapToInspectSubplot = 'Toca un lote o sublote para inspeccionar';
+
+// Prediction Engine Localized Messages
+const String kIrrigationUrgentTitle = 'Riego Urgente Requerido';
+const String kIrrigationModerateTitle = 'Humedad Moderada - Monitorear';
+const String kIrrigationOptimalTitle = 'Nivel Hídrico Óptimo';
+String kIrrigationUrgentRec(Object moisture, Object soil, Object crop, Object kc, Object waterMm) =>
+    'Humedad radicular crítica ($moisture%) en suelo $soil para $crop (Kc: $kc). Aplica lámina de $waterMm mm en las próximas 48 h para evitar marchitez.';
+String kIrrigationModerateRec(Object soil, Object days, Object waterMm) =>
+    'Suelo $soil retiene agua para los próximos $days días. Programa riego preventivo ($waterMm mm) al promediar la semana.';
+String kIrrigationOptimalRec(Object moisture, Object crop, Object soil) =>
+    'Reserva hídrica suficiente ($moisture%) para $crop en suelo $soil. No se requiere riego en los siguientes 7 días.';
+
+const String kCompatibilityHigh = 'Alta Compatibilidad';
+const String kCompatibilityMedium = 'Media Compatibilidad';
+const String kCompatibilityDiscouraged = 'Desaconsejada';
+const String kCropBeansLegume = 'Frijol (Fabaceae)';
+const String kCropCornSorghumGrass = 'Maíz o Sorgo (Gramíneas)';
+const String kCropRedBeansLegume = 'Frijol Rojo (Leguminosa)';
+const String kCropDroughtBeansSorghum = 'Frijol Alacita / Sorgo Sequero';
+const String kCropCrotalariaManure = 'Crotalaria / Abono Verde';
+const String kCropSoybean = 'Soya';
+const String kCropTolerantSorghum = 'Sorgo Tolerante';
+const String kCropCrotalariaGreenManure = 'Crotalaria (Abono Verde)';
+const String kCropVegetables = 'Hortalizas';
+const String kCropSesame = 'Ajonjolí';
+const String kCropSunflower = 'Girasol';
+const String kFamilyUnknown = 'Desconocida';
+String kRotationCorridorRiskExp(Object family, Object crop) =>
+    'Se detectó que parcelas vecinas comparten la misma familia ($family). Rotar con $crop romperá el corredor biológico de plagas y fijará nitrógeno.';
+String kRotationStandardExp(Object currentCrop, Object suggestedCrop) =>
+    'La secuencia sugerida ($currentCrop -> $suggestedCrop) optimiza el uso de nutrientes y aprovecha el nivel hídrico actual.';
+
+const String kWindowStatusOptimal = 'Ventana Óptima de Siembra';
+const String kWindowStatusWaitMoisture = 'Esperar Mayor Humedad';
+const String kDateRangeNext10To14Days = 'Próximos 10 a 14 días';
+const String kDateRangePostponeUntilRain = 'Postergar hasta próximas lluvias';
+String kThermalAdviceFavorable(Object gdd) =>
+    'Suma térmica favorable ($gdd GDD/sem). La germinación ocurrirá en 4 a 6 días sin riesgo de estrés térmico.';
+String kThermalAdviceMoistureLow(Object moisturePct) =>
+    'La humedad radicular ($moisturePct%) está por debajo del umbral de germinación uniforme (mínimo 42%).';
+
+const String kVigorStatusExcellent = 'Vigor Excelente';
+const String kVigorStatusNormal = 'Vigor Normal';
+const String kVigorStatusWaterStress = 'Bajo Estrés Hídrico';
+const String kBiomassConditionDense =
+    'Dosel vegetal denso con alta actividad fotosintética. Proyección de cosecha en percentil superior.';
+const String kBiomassConditionNormal =
+    'Desarrollo vegetativo acorde a la fecha fenológica sin anomalías marcadas.';
+String kBiomassConditionStress(Object lossPct) =>
+    'Vigor deprimido por déficit hídrico sostenido. Se proyecta merma del $lossPct% si no se irriga.';
+
+const String kRiskAlertFlashDroughtTitle = 'Alerta de Sequía Relámpago (Flash Drought)';
+const String kRiskAlertWaterloggingTitle = 'Riesgo de Saturación y Asfixia Radicular';
+const String kRiskAlertHeatStressTitle = 'Estrés Térmico por Golpe de Calor';
+const String kRiskAlertNoneTitle = 'Sin Riesgos Climáticos Extremos Activos';
+const String kRiskAdviceFlashDroughtSandy =
+    'Suelo arenoso con drenaje acelerado: la humedad se evapora rápidamente bajo radiación solar intensa. Aplica cobertura vegetal (mulch) y riegos cortos frecuentes.';
+const String kRiskAdviceFlashDroughtStandard =
+    'Caída acelerada de humedad por radiación solar extrema. Aplica acolchado (mulch) orgánico en las bases y adelanta ciclos de riego defensivo.';
+const String kRiskAdviceWaterloggingClay =
+    'Suelo arcilloso con infiltración lenta: el exceso de agua estancada asfixia las raíces. Abre zanjas de evacuación superficial y evita el pisoteo del terreno.';
+const String kRiskAdviceWaterloggingStandard =
+    'Precipitación acumulada excesiva en suelo saturado. Abre zanjas de drenaje superficiales para evacuar escorrentía estancada.';
+const String kRiskAdviceHeatStress =
+    'Temperaturas diurnas elevadas que pueden provocar aborto floral en leguminosas y hortalizas. Mantén hidratado el follaje.';
+const String kRiskAdviceNone =
+    'Las variables hidroclimáticas se mantienen dentro de los umbrales seguros para los cultivos de la finca.';
+
+String kSoilNutritionDiagnosisLegumeSandy(Object nGain, Object ureaSavings) =>
+    'La rotación propuesta con leguminosas aportará ~$nGain kg N/ha. En suelo arenoso, se aconseja incorporar biomasa verde para evitar lixiviación, ahorrando ~$ureaSavings kg de urea.';
+String kSoilNutritionDiagnosisLegumeStandard(Object nGain, Object ureaSavings) =>
+    'La rotación propuesta con leguminosas aportará un estimado de $nGain kg de Nitrógeno biológico por hectárea, ahorrando cerca de $ureaSavings kg de urea comercial.';
+const String kSoilNutritionDiagnosisCerealSandy =
+    'Los cereales extraen nitrógeno (-35 kg N/ha) y en suelo arenoso el lavado por lluvia es severo. Incorpora abonos verdes profundos o compost inmediatamente.';
+const String kSoilNutritionDiagnosisCerealStandard =
+    'Los cereales extraen nitrógeno del perfil (-35 kg N/ha). Se recomienda incorporar cobertura vegetal o compost para mantener la fertilidad del suelo.';
+
+const String kDefaultCropName = 'Maíz';
+const String kDefaultSoilName = 'Franco';
+
+
+
 
 
 

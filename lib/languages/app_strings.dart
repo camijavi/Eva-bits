@@ -254,6 +254,134 @@ abstract class AppStrings {
   String get kCategoryFruits;
   String get kCategoryCommercial;
   String get kCropUpdatedSuccessfully;
+
+  // Agroclimatic Predictions Screen
+  String get kPredictionsTitle;
+  String get kPredictionsSubtitle;
+  String get kAskIvyTooltip;
+  String get kTabIrrigation;
+  String get kTabRotation;
+  String get kTabPlantingGdd;
+  String get kTabVigorNdvi;
+  String get kTabRisks;
+  String get kTabNutrition;
+  String get kPredictionContext;
+  String get kWhatIfSimulator;
+  String get kWholeFarmGeneral;
+  String get kCropPrefix;
+  String get kSoilPrefix;
+  String get kMetricRootMoisture;
+  String get kMetricRootMoistureSub;
+  String get kMetric7dDeficit;
+  String get kMetric7dDeficitSub;
+  String get kMetricReserveDays;
+  String get kMetricReserveDaysSub;
+  String get kMetricRequiredDepth;
+  String get kMetricRequiredDepthSub;
+  String get kSoilImpactTitle;
+  String get kSoilImpactDescription;
+  String get kCorridorRiskTitle;
+  String get kCorridorRiskDescription;
+  String get kAgroJustificationTitle;
+  String get kAlternativeCropsTitle;
+  String get kOptimalCropPrefix;
+  String get kMetricThermalSumGdd;
+  String get kMetricThermalSumGddSub;
+  String get kMetricDaysToFlowering;
+  String get kRecommendedRangePrefix;
+  String get kMetricNdviProxy;
+  String get kMetricNdviProxySub;
+  String get kMetricRelativeYield;
+  String get kMetricRelativeYieldSub;
+  String get kMetricBiologicalNFixation;
+  String get kMetricNBalancePerHa;
+  String get kMetricUreaSavings;
+  String get kMetricSoilHealthScore;
+  String get kMetricSoilHealthScoreSub;
+  String get kSimulatorTitle;
+  String get kSimulatorCropQuestion;
+  String get kSimulatorSoilQuestion;
+  String get kSimulatorApplyButton;
+  String get kAskIvyButton;
+  String get kIvyCopilotTitle;
+  String get kIvyAnalyzingScenario;
+  String get kIvyInputHint;
+  String get kIvyErrorMessage;
+  String get kStatusAttentionRequired;
+  String get kStatusPlanIrrigation;
+  String get kStatusOptimalMoisture;
+  String get kSynergyLabel;
+  String get kBiologicalNFixationPerHa;
+  String get kUreaSavingsShort;
+  String get kDaysUnit;
+  String get kIvyInitialPrompt;
+  String get kVisualParcelView;
+  String get kCompactListView;
+  String get kSoilBalancedDesc;
+  String get kSoilClayDesc;
+  String get kSoilSandyDesc;
+  String get kSoilSiltDesc;
+  String get kActiveSubplotBadge;
+  String get kTapToInspectSubplot;
+
+  // Prediction Engine Localized Messages
+  String get kIrrigationUrgentTitle;
+  String get kIrrigationModerateTitle;
+  String get kIrrigationOptimalTitle;
+  String kIrrigationUrgentRec(Object moisture, Object soil, Object crop, Object kc, Object waterMm);
+  String kIrrigationModerateRec(Object soil, Object days, Object waterMm);
+  String kIrrigationOptimalRec(Object moisture, Object crop, Object soil);
+
+  String get kCompatibilityHigh;
+  String get kCompatibilityMedium;
+  String get kCompatibilityDiscouraged;
+  String get kCropBeansLegume;
+  String get kCropCornSorghumGrass;
+  String get kCropRedBeansLegume;
+  String get kCropDroughtBeansSorghum;
+  String get kCropCrotalariaManure;
+  String get kCropSoybean;
+  String get kCropTolerantSorghum;
+  String get kCropCrotalariaGreenManure;
+  String get kCropVegetables;
+  String get kCropSesame;
+  String get kCropSunflower;
+  String get kFamilyUnknown;
+  String kRotationCorridorRiskExp(Object family, Object crop);
+  String kRotationStandardExp(Object currentCrop, Object suggestedCrop);
+
+  String get kWindowStatusOptimal;
+  String get kWindowStatusWaitMoisture;
+  String get kDateRangeNext10To14Days;
+  String get kDateRangePostponeUntilRain;
+  String kThermalAdviceFavorable(Object gdd);
+  String kThermalAdviceMoistureLow(Object moisturePct);
+
+  String get kVigorStatusExcellent;
+  String get kVigorStatusNormal;
+  String get kVigorStatusWaterStress;
+  String get kBiomassConditionDense;
+  String get kBiomassConditionNormal;
+  String kBiomassConditionStress(Object lossPct);
+
+  String get kRiskAlertFlashDroughtTitle;
+  String get kRiskAlertWaterloggingTitle;
+  String get kRiskAlertHeatStressTitle;
+  String get kRiskAlertNoneTitle;
+  String get kRiskAdviceFlashDroughtSandy;
+  String get kRiskAdviceFlashDroughtStandard;
+  String get kRiskAdviceWaterloggingClay;
+  String get kRiskAdviceWaterloggingStandard;
+  String get kRiskAdviceHeatStress;
+  String get kRiskAdviceNone;
+
+  String kSoilNutritionDiagnosisLegumeSandy(Object nGain, Object ureaSavings);
+  String kSoilNutritionDiagnosisLegumeStandard(Object nGain, Object ureaSavings);
+  String get kSoilNutritionDiagnosisCerealSandy;
+  String get kSoilNutritionDiagnosisCerealStandard;
+
+  String get kDefaultCropName;
+  String get kDefaultSoilName;
 }
 
 class EngStrings implements AppStrings {
@@ -710,6 +838,259 @@ class EngStrings implements AppStrings {
   String get kCategoryCommercial => eng.kCategoryCommercial;
   @override
   String get kCropUpdatedSuccessfully => eng.kCropUpdatedSuccessfully;
+
+  // Agroclimatic Predictions Screen
+  @override
+  String get kPredictionsTitle => eng.kPredictionsTitle;
+  @override
+  String get kPredictionsSubtitle => eng.kPredictionsSubtitle;
+  @override
+  String get kAskIvyTooltip => eng.kAskIvyTooltip;
+  @override
+  String get kTabIrrigation => eng.kTabIrrigation;
+  @override
+  String get kTabRotation => eng.kTabRotation;
+  @override
+  String get kTabPlantingGdd => eng.kTabPlantingGdd;
+  @override
+  String get kTabVigorNdvi => eng.kTabVigorNdvi;
+  @override
+  String get kTabRisks => eng.kTabRisks;
+  @override
+  String get kTabNutrition => eng.kTabNutrition;
+  @override
+  String get kPredictionContext => eng.kPredictionContext;
+  @override
+  String get kWhatIfSimulator => eng.kWhatIfSimulator;
+  @override
+  String get kWholeFarmGeneral => eng.kWholeFarmGeneral;
+  @override
+  String get kCropPrefix => eng.kCropPrefix;
+  @override
+  String get kSoilPrefix => eng.kSoilPrefix;
+  @override
+  String get kMetricRootMoisture => eng.kMetricRootMoisture;
+  @override
+  String get kMetricRootMoistureSub => eng.kMetricRootMoistureSub;
+  @override
+  String get kMetric7dDeficit => eng.kMetric7dDeficit;
+  @override
+  String get kMetric7dDeficitSub => eng.kMetric7dDeficitSub;
+  @override
+  String get kMetricReserveDays => eng.kMetricReserveDays;
+  @override
+  String get kMetricReserveDaysSub => eng.kMetricReserveDaysSub;
+  @override
+  String get kMetricRequiredDepth => eng.kMetricRequiredDepth;
+  @override
+  String get kMetricRequiredDepthSub => eng.kMetricRequiredDepthSub;
+  @override
+  String get kSoilImpactTitle => eng.kSoilImpactTitle;
+  @override
+  String get kSoilImpactDescription => eng.kSoilImpactDescription;
+  @override
+  String get kCorridorRiskTitle => eng.kCorridorRiskTitle;
+  @override
+  String get kCorridorRiskDescription => eng.kCorridorRiskDescription;
+  @override
+  String get kAgroJustificationTitle => eng.kAgroJustificationTitle;
+  @override
+  String get kAlternativeCropsTitle => eng.kAlternativeCropsTitle;
+  @override
+  String get kOptimalCropPrefix => eng.kOptimalCropPrefix;
+  @override
+  String get kMetricThermalSumGdd => eng.kMetricThermalSumGdd;
+  @override
+  String get kMetricThermalSumGddSub => eng.kMetricThermalSumGddSub;
+  @override
+  String get kMetricDaysToFlowering => eng.kMetricDaysToFlowering;
+  @override
+  String get kRecommendedRangePrefix => eng.kRecommendedRangePrefix;
+  @override
+  String get kMetricNdviProxy => eng.kMetricNdviProxy;
+  @override
+  String get kMetricNdviProxySub => eng.kMetricNdviProxySub;
+  @override
+  String get kMetricRelativeYield => eng.kMetricRelativeYield;
+  @override
+  String get kMetricRelativeYieldSub => eng.kMetricRelativeYieldSub;
+  @override
+  String get kMetricBiologicalNFixation => eng.kMetricBiologicalNFixation;
+  @override
+  String get kMetricNBalancePerHa => eng.kMetricNBalancePerHa;
+  @override
+  String get kMetricUreaSavings => eng.kMetricUreaSavings;
+  @override
+  String get kMetricSoilHealthScore => eng.kMetricSoilHealthScore;
+  @override
+  String get kMetricSoilHealthScoreSub => eng.kMetricSoilHealthScoreSub;
+  @override
+  String get kSimulatorTitle => eng.kSimulatorTitle;
+  @override
+  String get kSimulatorCropQuestion => eng.kSimulatorCropQuestion;
+  @override
+  String get kSimulatorSoilQuestion => eng.kSimulatorSoilQuestion;
+  @override
+  String get kSimulatorApplyButton => eng.kSimulatorApplyButton;
+  @override
+  String get kAskIvyButton => eng.kAskIvyButton;
+  @override
+  String get kIvyCopilotTitle => eng.kIvyCopilotTitle;
+  @override
+  String get kIvyAnalyzingScenario => eng.kIvyAnalyzingScenario;
+  @override
+  String get kIvyInputHint => eng.kIvyInputHint;
+  @override
+  String get kIvyErrorMessage => eng.kIvyErrorMessage;
+  @override
+  String get kStatusAttentionRequired => eng.kStatusAttentionRequired;
+  @override
+  String get kStatusPlanIrrigation => eng.kStatusPlanIrrigation;
+  @override
+  String get kStatusOptimalMoisture => eng.kStatusOptimalMoisture;
+  @override
+  String get kSynergyLabel => eng.kSynergyLabel;
+  @override
+  String get kBiologicalNFixationPerHa => eng.kBiologicalNFixationPerHa;
+  @override
+  String get kUreaSavingsShort => eng.kUreaSavingsShort;
+  @override
+  String get kDaysUnit => eng.kDaysUnit;
+  @override
+  String get kIvyInitialPrompt => eng.kIvyInitialPrompt;
+  @override
+  String get kVisualParcelView => eng.kVisualParcelView;
+  @override
+  String get kCompactListView => eng.kCompactListView;
+  @override
+  String get kSoilBalancedDesc => eng.kSoilBalancedDesc;
+  @override
+  String get kSoilClayDesc => eng.kSoilClayDesc;
+  @override
+  String get kSoilSandyDesc => eng.kSoilSandyDesc;
+  @override
+  String get kSoilSiltDesc => eng.kSoilSiltDesc;
+  @override
+  String get kActiveSubplotBadge => eng.kActiveSubplotBadge;
+  @override
+  String get kTapToInspectSubplot => eng.kTapToInspectSubplot;
+
+  // Prediction Engine Localized Messages
+  @override
+  String get kIrrigationUrgentTitle => eng.kIrrigationUrgentTitle;
+  @override
+  String get kIrrigationModerateTitle => eng.kIrrigationModerateTitle;
+  @override
+  String get kIrrigationOptimalTitle => eng.kIrrigationOptimalTitle;
+  @override
+  String kIrrigationUrgentRec(Object moisture, Object soil, Object crop, Object kc, Object waterMm) =>
+      eng.kIrrigationUrgentRec(moisture, soil, crop, kc, waterMm);
+  @override
+  String kIrrigationModerateRec(Object soil, Object days, Object waterMm) =>
+      eng.kIrrigationModerateRec(soil, days, waterMm);
+  @override
+  String kIrrigationOptimalRec(Object moisture, Object crop, Object soil) =>
+      eng.kIrrigationOptimalRec(moisture, crop, soil);
+
+  @override
+  String get kCompatibilityHigh => eng.kCompatibilityHigh;
+  @override
+  String get kCompatibilityMedium => eng.kCompatibilityMedium;
+  @override
+  String get kCompatibilityDiscouraged => eng.kCompatibilityDiscouraged;
+  @override
+  String get kCropBeansLegume => eng.kCropBeansLegume;
+  @override
+  String get kCropCornSorghumGrass => eng.kCropCornSorghumGrass;
+  @override
+  String get kCropRedBeansLegume => eng.kCropRedBeansLegume;
+  @override
+  String get kCropDroughtBeansSorghum => eng.kCropDroughtBeansSorghum;
+  @override
+  String get kCropCrotalariaManure => eng.kCropCrotalariaManure;
+  @override
+  String get kCropSoybean => eng.kCropSoybean;
+  @override
+  String get kCropTolerantSorghum => eng.kCropTolerantSorghum;
+  @override
+  String get kCropCrotalariaGreenManure => eng.kCropCrotalariaGreenManure;
+  @override
+  String get kCropVegetables => eng.kCropVegetables;
+  @override
+  String get kCropSesame => eng.kCropSesame;
+  @override
+  String get kCropSunflower => eng.kCropSunflower;
+  @override
+  String get kFamilyUnknown => eng.kFamilyUnknown;
+  @override
+  String kRotationCorridorRiskExp(Object family, Object crop) =>
+      eng.kRotationCorridorRiskExp(family, crop);
+  @override
+  String kRotationStandardExp(Object currentCrop, Object suggestedCrop) =>
+      eng.kRotationStandardExp(currentCrop, suggestedCrop);
+
+  @override
+  String get kWindowStatusOptimal => eng.kWindowStatusOptimal;
+  @override
+  String get kWindowStatusWaitMoisture => eng.kWindowStatusWaitMoisture;
+  @override
+  String get kDateRangeNext10To14Days => eng.kDateRangeNext10To14Days;
+  @override
+  String get kDateRangePostponeUntilRain => eng.kDateRangePostponeUntilRain;
+  @override
+  String kThermalAdviceFavorable(Object gdd) => eng.kThermalAdviceFavorable(gdd);
+  @override
+  String kThermalAdviceMoistureLow(Object moisturePct) => eng.kThermalAdviceMoistureLow(moisturePct);
+
+  @override
+  String get kVigorStatusExcellent => eng.kVigorStatusExcellent;
+  @override
+  String get kVigorStatusNormal => eng.kVigorStatusNormal;
+  @override
+  String get kVigorStatusWaterStress => eng.kVigorStatusWaterStress;
+  @override
+  String get kBiomassConditionDense => eng.kBiomassConditionDense;
+  @override
+  String get kBiomassConditionNormal => eng.kBiomassConditionNormal;
+  @override
+  String kBiomassConditionStress(Object lossPct) => eng.kBiomassConditionStress(lossPct);
+
+  @override
+  String get kRiskAlertFlashDroughtTitle => eng.kRiskAlertFlashDroughtTitle;
+  @override
+  String get kRiskAlertWaterloggingTitle => eng.kRiskAlertWaterloggingTitle;
+  @override
+  String get kRiskAlertHeatStressTitle => eng.kRiskAlertHeatStressTitle;
+  @override
+  String get kRiskAlertNoneTitle => eng.kRiskAlertNoneTitle;
+  @override
+  String get kRiskAdviceFlashDroughtSandy => eng.kRiskAdviceFlashDroughtSandy;
+  @override
+  String get kRiskAdviceFlashDroughtStandard => eng.kRiskAdviceFlashDroughtStandard;
+  @override
+  String get kRiskAdviceWaterloggingClay => eng.kRiskAdviceWaterloggingClay;
+  @override
+  String get kRiskAdviceWaterloggingStandard => eng.kRiskAdviceWaterloggingStandard;
+  @override
+  String get kRiskAdviceHeatStress => eng.kRiskAdviceHeatStress;
+  @override
+  String get kRiskAdviceNone => eng.kRiskAdviceNone;
+
+  @override
+  String kSoilNutritionDiagnosisLegumeSandy(Object nGain, Object ureaSavings) =>
+      eng.kSoilNutritionDiagnosisLegumeSandy(nGain, ureaSavings);
+  @override
+  String kSoilNutritionDiagnosisLegumeStandard(Object nGain, Object ureaSavings) =>
+      eng.kSoilNutritionDiagnosisLegumeStandard(nGain, ureaSavings);
+  @override
+  String get kSoilNutritionDiagnosisCerealSandy => eng.kSoilNutritionDiagnosisCerealSandy;
+  @override
+  String get kSoilNutritionDiagnosisCerealStandard => eng.kSoilNutritionDiagnosisCerealStandard;
+
+  @override
+  String get kDefaultCropName => eng.kDefaultCropName;
+  @override
+  String get kDefaultSoilName => eng.kDefaultSoilName;
 }
 
 class SpaStrings implements AppStrings {
@@ -1166,6 +1547,259 @@ class SpaStrings implements AppStrings {
   String get kCategoryCommercial => spa.kCategoryCommercial;
   @override
   String get kCropUpdatedSuccessfully => spa.kCropUpdatedSuccessfully;
+
+  // Agroclimatic Predictions Screen
+  @override
+  String get kPredictionsTitle => spa.kPredictionsTitle;
+  @override
+  String get kPredictionsSubtitle => spa.kPredictionsSubtitle;
+  @override
+  String get kAskIvyTooltip => spa.kAskIvyTooltip;
+  @override
+  String get kTabIrrigation => spa.kTabIrrigation;
+  @override
+  String get kTabRotation => spa.kTabRotation;
+  @override
+  String get kTabPlantingGdd => spa.kTabPlantingGdd;
+  @override
+  String get kTabVigorNdvi => spa.kTabVigorNdvi;
+  @override
+  String get kTabRisks => spa.kTabRisks;
+  @override
+  String get kTabNutrition => spa.kTabNutrition;
+  @override
+  String get kPredictionContext => spa.kPredictionContext;
+  @override
+  String get kWhatIfSimulator => spa.kWhatIfSimulator;
+  @override
+  String get kWholeFarmGeneral => spa.kWholeFarmGeneral;
+  @override
+  String get kCropPrefix => spa.kCropPrefix;
+  @override
+  String get kSoilPrefix => spa.kSoilPrefix;
+  @override
+  String get kMetricRootMoisture => spa.kMetricRootMoisture;
+  @override
+  String get kMetricRootMoistureSub => spa.kMetricRootMoistureSub;
+  @override
+  String get kMetric7dDeficit => spa.kMetric7dDeficit;
+  @override
+  String get kMetric7dDeficitSub => spa.kMetric7dDeficitSub;
+  @override
+  String get kMetricReserveDays => spa.kMetricReserveDays;
+  @override
+  String get kMetricReserveDaysSub => spa.kMetricReserveDaysSub;
+  @override
+  String get kMetricRequiredDepth => spa.kMetricRequiredDepth;
+  @override
+  String get kMetricRequiredDepthSub => spa.kMetricRequiredDepthSub;
+  @override
+  String get kSoilImpactTitle => spa.kSoilImpactTitle;
+  @override
+  String get kSoilImpactDescription => spa.kSoilImpactDescription;
+  @override
+  String get kCorridorRiskTitle => spa.kCorridorRiskTitle;
+  @override
+  String get kCorridorRiskDescription => spa.kCorridorRiskDescription;
+  @override
+  String get kAgroJustificationTitle => spa.kAgroJustificationTitle;
+  @override
+  String get kAlternativeCropsTitle => spa.kAlternativeCropsTitle;
+  @override
+  String get kOptimalCropPrefix => spa.kOptimalCropPrefix;
+  @override
+  String get kMetricThermalSumGdd => spa.kMetricThermalSumGdd;
+  @override
+  String get kMetricThermalSumGddSub => spa.kMetricThermalSumGddSub;
+  @override
+  String get kMetricDaysToFlowering => spa.kMetricDaysToFlowering;
+  @override
+  String get kRecommendedRangePrefix => spa.kRecommendedRangePrefix;
+  @override
+  String get kMetricNdviProxy => spa.kMetricNdviProxy;
+  @override
+  String get kMetricNdviProxySub => spa.kMetricNdviProxySub;
+  @override
+  String get kMetricRelativeYield => spa.kMetricRelativeYield;
+  @override
+  String get kMetricRelativeYieldSub => spa.kMetricRelativeYieldSub;
+  @override
+  String get kMetricBiologicalNFixation => spa.kMetricBiologicalNFixation;
+  @override
+  String get kMetricNBalancePerHa => spa.kMetricNBalancePerHa;
+  @override
+  String get kMetricUreaSavings => spa.kMetricUreaSavings;
+  @override
+  String get kMetricSoilHealthScore => spa.kMetricSoilHealthScore;
+  @override
+  String get kMetricSoilHealthScoreSub => spa.kMetricSoilHealthScoreSub;
+  @override
+  String get kSimulatorTitle => spa.kSimulatorTitle;
+  @override
+  String get kSimulatorCropQuestion => spa.kSimulatorCropQuestion;
+  @override
+  String get kSimulatorSoilQuestion => spa.kSimulatorSoilQuestion;
+  @override
+  String get kSimulatorApplyButton => spa.kSimulatorApplyButton;
+  @override
+  String get kAskIvyButton => spa.kAskIvyButton;
+  @override
+  String get kIvyCopilotTitle => spa.kIvyCopilotTitle;
+  @override
+  String get kIvyAnalyzingScenario => spa.kIvyAnalyzingScenario;
+  @override
+  String get kIvyInputHint => spa.kIvyInputHint;
+  @override
+  String get kIvyErrorMessage => spa.kIvyErrorMessage;
+  @override
+  String get kStatusAttentionRequired => spa.kStatusAttentionRequired;
+  @override
+  String get kStatusPlanIrrigation => spa.kStatusPlanIrrigation;
+  @override
+  String get kStatusOptimalMoisture => spa.kStatusOptimalMoisture;
+  @override
+  String get kSynergyLabel => spa.kSynergyLabel;
+  @override
+  String get kBiologicalNFixationPerHa => spa.kBiologicalNFixationPerHa;
+  @override
+  String get kUreaSavingsShort => spa.kUreaSavingsShort;
+  @override
+  String get kDaysUnit => spa.kDaysUnit;
+  @override
+  String get kIvyInitialPrompt => spa.kIvyInitialPrompt;
+  @override
+  String get kVisualParcelView => spa.kVisualParcelView;
+  @override
+  String get kCompactListView => spa.kCompactListView;
+  @override
+  String get kSoilBalancedDesc => spa.kSoilBalancedDesc;
+  @override
+  String get kSoilClayDesc => spa.kSoilClayDesc;
+  @override
+  String get kSoilSandyDesc => spa.kSoilSandyDesc;
+  @override
+  String get kSoilSiltDesc => spa.kSoilSiltDesc;
+  @override
+  String get kActiveSubplotBadge => spa.kActiveSubplotBadge;
+  @override
+  String get kTapToInspectSubplot => spa.kTapToInspectSubplot;
+
+  // Prediction Engine Localized Messages
+  @override
+  String get kIrrigationUrgentTitle => spa.kIrrigationUrgentTitle;
+  @override
+  String get kIrrigationModerateTitle => spa.kIrrigationModerateTitle;
+  @override
+  String get kIrrigationOptimalTitle => spa.kIrrigationOptimalTitle;
+  @override
+  String kIrrigationUrgentRec(Object moisture, Object soil, Object crop, Object kc, Object waterMm) =>
+      spa.kIrrigationUrgentRec(moisture, soil, crop, kc, waterMm);
+  @override
+  String kIrrigationModerateRec(Object soil, Object days, Object waterMm) =>
+      spa.kIrrigationModerateRec(soil, days, waterMm);
+  @override
+  String kIrrigationOptimalRec(Object moisture, Object crop, Object soil) =>
+      spa.kIrrigationOptimalRec(moisture, crop, soil);
+
+  @override
+  String get kCompatibilityHigh => spa.kCompatibilityHigh;
+  @override
+  String get kCompatibilityMedium => spa.kCompatibilityMedium;
+  @override
+  String get kCompatibilityDiscouraged => spa.kCompatibilityDiscouraged;
+  @override
+  String get kCropBeansLegume => spa.kCropBeansLegume;
+  @override
+  String get kCropCornSorghumGrass => spa.kCropCornSorghumGrass;
+  @override
+  String get kCropRedBeansLegume => spa.kCropRedBeansLegume;
+  @override
+  String get kCropDroughtBeansSorghum => spa.kCropDroughtBeansSorghum;
+  @override
+  String get kCropCrotalariaManure => spa.kCropCrotalariaManure;
+  @override
+  String get kCropSoybean => spa.kCropSoybean;
+  @override
+  String get kCropTolerantSorghum => spa.kCropTolerantSorghum;
+  @override
+  String get kCropCrotalariaGreenManure => spa.kCropCrotalariaGreenManure;
+  @override
+  String get kCropVegetables => spa.kCropVegetables;
+  @override
+  String get kCropSesame => spa.kCropSesame;
+  @override
+  String get kCropSunflower => spa.kCropSunflower;
+  @override
+  String get kFamilyUnknown => spa.kFamilyUnknown;
+  @override
+  String kRotationCorridorRiskExp(Object family, Object crop) =>
+      spa.kRotationCorridorRiskExp(family, crop);
+  @override
+  String kRotationStandardExp(Object currentCrop, Object suggestedCrop) =>
+      spa.kRotationStandardExp(currentCrop, suggestedCrop);
+
+  @override
+  String get kWindowStatusOptimal => spa.kWindowStatusOptimal;
+  @override
+  String get kWindowStatusWaitMoisture => spa.kWindowStatusWaitMoisture;
+  @override
+  String get kDateRangeNext10To14Days => spa.kDateRangeNext10To14Days;
+  @override
+  String get kDateRangePostponeUntilRain => spa.kDateRangePostponeUntilRain;
+  @override
+  String kThermalAdviceFavorable(Object gdd) => spa.kThermalAdviceFavorable(gdd);
+  @override
+  String kThermalAdviceMoistureLow(Object moisturePct) => spa.kThermalAdviceMoistureLow(moisturePct);
+
+  @override
+  String get kVigorStatusExcellent => spa.kVigorStatusExcellent;
+  @override
+  String get kVigorStatusNormal => spa.kVigorStatusNormal;
+  @override
+  String get kVigorStatusWaterStress => spa.kVigorStatusWaterStress;
+  @override
+  String get kBiomassConditionDense => spa.kBiomassConditionDense;
+  @override
+  String get kBiomassConditionNormal => spa.kBiomassConditionNormal;
+  @override
+  String kBiomassConditionStress(Object lossPct) => spa.kBiomassConditionStress(lossPct);
+
+  @override
+  String get kRiskAlertFlashDroughtTitle => spa.kRiskAlertFlashDroughtTitle;
+  @override
+  String get kRiskAlertWaterloggingTitle => spa.kRiskAlertWaterloggingTitle;
+  @override
+  String get kRiskAlertHeatStressTitle => spa.kRiskAlertHeatStressTitle;
+  @override
+  String get kRiskAlertNoneTitle => spa.kRiskAlertNoneTitle;
+  @override
+  String get kRiskAdviceFlashDroughtSandy => spa.kRiskAdviceFlashDroughtSandy;
+  @override
+  String get kRiskAdviceFlashDroughtStandard => spa.kRiskAdviceFlashDroughtStandard;
+  @override
+  String get kRiskAdviceWaterloggingClay => spa.kRiskAdviceWaterloggingClay;
+  @override
+  String get kRiskAdviceWaterloggingStandard => spa.kRiskAdviceWaterloggingStandard;
+  @override
+  String get kRiskAdviceHeatStress => spa.kRiskAdviceHeatStress;
+  @override
+  String get kRiskAdviceNone => spa.kRiskAdviceNone;
+
+  @override
+  String kSoilNutritionDiagnosisLegumeSandy(Object nGain, Object ureaSavings) =>
+      spa.kSoilNutritionDiagnosisLegumeSandy(nGain, ureaSavings);
+  @override
+  String kSoilNutritionDiagnosisLegumeStandard(Object nGain, Object ureaSavings) =>
+      spa.kSoilNutritionDiagnosisLegumeStandard(nGain, ureaSavings);
+  @override
+  String get kSoilNutritionDiagnosisCerealSandy => spa.kSoilNutritionDiagnosisCerealSandy;
+  @override
+  String get kSoilNutritionDiagnosisCerealStandard => spa.kSoilNutritionDiagnosisCerealStandard;
+
+  @override
+  String get kDefaultCropName => spa.kDefaultCropName;
+  @override
+  String get kDefaultSoilName => spa.kDefaultSoilName;
 }
 
 class AppLanguage {
