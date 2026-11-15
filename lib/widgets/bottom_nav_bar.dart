@@ -5,6 +5,7 @@ import '../languages/app_strings.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/lots_screen.dart';
 import '../screens/predictions_screen.dart';
+import '../screens/lot_map_screen.dart';
 import '../screens/settings_screen.dart';
 
 /// Available animation styles for bottom navigation transitions.
@@ -149,6 +150,14 @@ class CustomBottomNavBar extends StatelessWidget {
                   animationType: animationType,
                 ),
               );
+            } else if (index == 3) {
+              Navigator.of(context).pushReplacement(
+                createBottomNavPageRoute(
+                  const LotMapScreen(),
+                  fromLeft: index < currentIndex,
+                  animationType: animationType,
+                ),
+              );
             } else if (index == 4) {
               Navigator.of(context).push(
                 CupertinoPageRoute(
@@ -184,9 +193,9 @@ class CustomBottomNavBar extends StatelessWidget {
               label: s.kNavRotations,
             ),
             BottomNavigationBarItem(
-              icon: const Icon(CupertinoIcons.person_2),
-              activeIcon: const Icon(CupertinoIcons.person_2_fill),
-              label: s.kNavCommunity,
+              icon: const Icon(CupertinoIcons.map),
+              activeIcon: const Icon(CupertinoIcons.map_fill),
+              label: s.kNavMap,
             ),
             BottomNavigationBarItem(
               icon: const Icon(CupertinoIcons.ellipsis),

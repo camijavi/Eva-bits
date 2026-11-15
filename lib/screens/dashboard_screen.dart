@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
@@ -13,6 +14,14 @@ import 'farm_info.dart';
 import 'lots_screen.dart';
 import 'predictions_screen.dart';
 import 'settings_screen.dart';
+
+enum DayPeriod {
+  madrugada,
+  manana,
+  mediodia,
+  tarde,
+  noche,
+}
 
 class DashboardScreen extends StatefulWidget {
   final String? farmName;
@@ -39,11 +48,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
   SubplotGraph? _farmGraph;
   List<Map<String, dynamic>> _farmSubplots = [];
   FarmPredictionsReport? _cachedReport;
+  DayPeriod? _userSelectedPeriod;
 
   @override
   void initState() {
     super.initState();
     _loadLatestFarm();
+  }
+
+  DayPeriod get _effectiveDayPeriod {
+    if (_userSelectedPeriod != null) return _userSelectedPeriod!;
+    final hour = DateTime.now().hour;
+    if (hour >= 4 && hour < 7) {
+      return DayPeriod.madrugada;
+    } else if (hour >= 7 && hour < 12) {
+      return DayPeriod.manana;
+    } else if (hour >= 12 && hour < 15) {
+      return DayPeriod.mediodia;
+    } else if (hour >= 15 && hour < 19) {
+      return DayPeriod.tarde;
+    } else {
+      return DayPeriod.noche;
+    }
+  }
+
+  void _cycleDayPeriod() {
+    setState(() {
+      if (_userSelectedPeriod == null) {
+        final cur = _effectiveDayPeriod;
+        final nextIdx = (cur.index + 1) % DayPeriod.values.length;
+        _userSelectedPeriod = DayPeriod.values[nextIdx];
+      } else {
+        final nextIdx = (_userSelectedPeriod!.index + 1) % (DayPeriod.values.length + 1);
+        if (nextIdx >= DayPeriod.values.length) {
+          _userSelectedPeriod = null;
+        } else {
+          _userSelectedPeriod = DayPeriod.values[nextIdx];
+        }
+      }
+    });
+  }
+
+  String _getDayPeriodName(DayPeriod period, AppStrings s) {
+    final isEs = s.kDashboardWhatToDo == '¿Qué quieres hacer hoy?';
+    switch (period) {
+      case DayPeriod.madrugada:
+        return isEs ? 'Madrugada' : 'Dawn';
+      case DayPeriod.manana:
+        return isEs ? 'Mañana' : 'Morning';
+      case DayPeriod.mediodia:
+        return isEs ? 'Medio día' : 'Midday';
+      case DayPeriod.tarde:
+        return isEs ? 'Tarde' : 'Afternoon';
+      case DayPeriod.noche:
+        return isEs ? 'Noche' : 'Night';
+    }
+  }
+
+  IconData _getDayPeriodIcon(DayPeriod period) {
+    switch (period) {
+      case DayPeriod.madrugada:
+        return Icons.nights_stay_outlined;
+      case DayPeriod.manana:
+        return Icons.wb_sunny_rounded;
+      case DayPeriod.mediodia:
+        return Icons.light_mode_rounded;
+      case DayPeriod.tarde:
+        return Icons.wb_twilight_rounded;
+      case DayPeriod.noche:
+        return Icons.bedtime_rounded;
+    }
   }
 
   Future<void> _loadLatestFarm() async {
@@ -188,6 +262,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ? '${_dbFarm!['total_surface']} ${_dbFarm!['surface_unit'] ?? 'ha'}'
                 : '2.5 ha');
 
+        final report = _getPredictionsReport();
+
         return Scaffold(
           backgroundColor: scaffoldBg,
           body: RefreshIndicator(
@@ -206,9 +282,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         const SizedBox(height: 6),
                         _buildHeroWeatherCard(context, s),
-                        const SizedBox(height: 12),
-                        _buildEnvironmentalStatusBanner(context, s),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 18),
+                        _buildNasaClimateSection(context, s),
+                        const SizedBox(height: 22),
                         Center(
                           child: Container(
                             width: 44,
@@ -221,7 +297,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         Text(
                           s.kDashboardWhatToDo == '¿Qué quieres hacer hoy?'
                               ? 'Gestiona tu campo'
@@ -236,12 +312,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 14),
                         _buildFieldsGrid(context, s, displaySurface),
                         const SizedBox(height: 24),
+                        _buildPredictionsSection(context, s, report),
+                        const SizedBox(height: 26),
                         Text(
                           s.kDashboardWhatToDo,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 17,
                             fontWeight: FontWeight.bold,
                             color: textColor,
+                            letterSpacing: -0.2,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -295,7 +374,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
@@ -314,7 +393,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'unit': 'ha',
                 },
             nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
-            report: _getPredictionsReport(),
+            report: report,
             graph: _farmGraph,
             subplots: _farmSubplots,
           ),
@@ -344,6 +423,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           bottom: 12,
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: 44,
@@ -377,12 +457,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     farmNameText,
                     style: TextStyle(
-                      fontSize: 19,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                       letterSpacing: -0.3,
+                      height: 1.18,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
+                    softWrap: true,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
@@ -399,6 +481,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
+            const SizedBox(width: 6),
             IconButton(
               icon: Icon(
                 Icons.settings_outlined,
@@ -414,15 +497,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
-            CircleAvatar(
-              radius: 19,
-              backgroundColor: isDark
-                  ? const Color(0xFF1E2822)
-                  : const Color(0xFFE8F5E9),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1E2822)
+                    : const Color(0xFFE8F5E9),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF2E4D38)
+                      : const Color(0xFFC8E6C9),
+                  width: 1.2,
+                ),
+              ),
               child: IconButton(
                 padding: EdgeInsets.zero,
+                tooltip: s.kDashboardYourFarm,
                 icon: Icon(
-                  Icons.person_outline_rounded,
+                  Icons.cottage_rounded,
                   color: isDark
                       ? AppColors.primaryLight
                       : const Color(0xFF2E7D32),
@@ -452,6 +546,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         (summary['root_soil_moisture_index'] as num?)?.toDouble() ?? 0.58;
     final isLive = _nasaData?['source']?.toString().contains('Live') == true;
 
+    final effectivePeriod = _effectiveDayPeriod;
+
     final moistureLabel = soilMoisture < 0.40
         ? 'Baja'
         : (soilMoisture > 0.75 ? 'Alta' : 'Óptima');
@@ -459,23 +555,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? 'Baja'
         : (rainMm > 15.0 ? 'Alta' : '${rainMm.toStringAsFixed(1)} mm');
 
+    final List<Color> gradientColors;
+    final Color periodTextColor;
+    final Color periodSubtextColor;
+    final Color shadowColor;
+    final String conditionText;
+    final bool isPeriodDark;
+
+    switch (effectivePeriod) {
+      case DayPeriod.madrugada:
+        gradientColors = const [
+          Color(0xFF1E1B38),
+          Color(0xFF38325C),
+          Color(0xFF6B4B70),
+          Color(0xFF986278),
+        ];
+        periodTextColor = Colors.white;
+        periodSubtextColor = const Color(0xFFE2D9EB);
+        shadowColor = const Color(0xFF38325C).withValues(alpha: 0.35);
+        conditionText = isLive ? 'NASA Live - Alba' : 'Amanecer fresco';
+        isPeriodDark = true;
+        break;
+      case DayPeriod.manana:
+        gradientColors = const [
+          Color(0xFFFFDF9E),
+          Color(0xFFFED285),
+          Color(0xFFF9A84D),
+        ];
+        periodTextColor = const Color(0xFF2E1C0C);
+        periodSubtextColor = const Color(0xFF4E342E).withValues(alpha: 0.9);
+        shadowColor = const Color(0xFFF9A84D).withValues(alpha: 0.32);
+        conditionText = isLive ? 'NASA Live - Soleado' : 'Parcialmente soleado';
+        isPeriodDark = false;
+        break;
+      case DayPeriod.mediodia:
+        gradientColors = const [
+          Color(0xFF64B5F6),
+          Color(0xFF42A5F5),
+          Color(0xFF1976D2),
+        ];
+        periodTextColor = Colors.white;
+        periodSubtextColor = const Color(0xFFE3F2FD);
+        shadowColor = const Color(0xFF1976D2).withValues(alpha: 0.35);
+        conditionText = isLive ? 'NASA Live - Cenit' : 'Sol radiante';
+        isPeriodDark = true;
+        break;
+      case DayPeriod.tarde:
+        gradientColors = const [
+          Color(0xFFFFB74D),
+          Color(0xFFFF7043),
+          Color(0xFFD84315),
+        ];
+        periodTextColor = Colors.white;
+        periodSubtextColor = const Color(0xFFFFE082);
+        shadowColor = const Color(0xFFD84315).withValues(alpha: 0.35);
+        conditionText = isLive ? 'NASA Live - Ocaso' : 'Atardecer cálido';
+        isPeriodDark = true;
+        break;
+      case DayPeriod.noche:
+        gradientColors = const [
+          Color(0xFF0F172A),
+          Color(0xFF1E293B),
+          Color(0xFF2C3E50),
+        ];
+        periodTextColor = Colors.white;
+        periodSubtextColor = const Color(0xFFCBD5E1);
+        shadowColor = const Color(0xFF0F172A).withValues(alpha: 0.45);
+        conditionText = isLive ? 'NASA Live - Nocturno' : 'Cielo sereno';
+        isPeriodDark = true;
+        break;
+    }
+
+    final pillLabelColor = isPeriodDark
+        ? Colors.white.withValues(alpha: 0.92)
+        : const Color(0xFF3E2723).withValues(alpha: 0.85);
+
     return Container(
       width: double.infinity,
-      height: 185,
+      height: 215,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFEDBA8),
-            Color(0xFFFDC27D),
-            Color(0xFFF9A84D),
-          ],
+          colors: gradientColors,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFF9A84D).withValues(alpha: 0.28),
+            color: shadowColor,
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -487,11 +654,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Positioned.fill(
               child: CustomPaint(
-                painter: _WeatherCardLandscapePainter(),
+                painter: _WeatherCardLandscapePainter(period: effectivePeriod),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -513,10 +680,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   : '${((tempC * 9 / 5) + 32).toStringAsFixed(1)}°F';
                               return Text(
                                 tVal,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF2E1C0C),
+                                  color: periodTextColor,
                                   letterSpacing: -0.5,
                                 ),
                               );
@@ -528,14 +695,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Text(
                                 _isLoadingNasa
                                     ? 'Sincronizando...'
-                                    : (isLive
-                                        ? 'NASA Live'
-                                        : 'Parcialmente soleado'),
+                                    : conditionText,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF4E342E)
-                                      .withValues(alpha: 0.9),
+                                  color: periodSubtextColor,
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -546,17 +710,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   padding: const EdgeInsets.all(2),
                                   child: Icon(
                                     Icons.refresh_rounded,
-                                    size: 16,
-                                    color: const Color(0xFF4E342E)
-                                        .withValues(alpha: 0.8),
+                                    size: 15,
+                                    color: periodSubtextColor,
                                   ),
                                 ),
                               ),
                             ],
                           ),
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: _cycleDayPeriod,
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (isPeriodDark ? Colors.white : Colors.black)
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: (isPeriodDark
+                                          ? Colors.white
+                                          : Colors.black)
+                                      .withValues(alpha: 0.2),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _getDayPeriodIcon(effectivePeriod),
+                                    size: 12,
+                                    color: periodTextColor.withValues(alpha: 0.9),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _userSelectedPeriod == null
+                                        ? '${_getDayPeriodName(effectivePeriod, s)} (Auto)'
+                                        : _getDayPeriodName(effectivePeriod, s),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: periodTextColor.withValues(alpha: 0.95),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Icon(
+                                    Icons.touch_app_outlined,
+                                    size: 11,
+                                    color: periodTextColor.withValues(alpha: 0.75),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      _buildSunCloudGraphic(),
+                      _WeatherSkyArtwork(period: effectivePeriod),
                     ],
                   ),
                   Row(
@@ -566,6 +779,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           label: 'Humedad',
                           value: '${(soilMoisture * 100).toInt()}%',
                           valueColor: const Color(0xFF2E7D32),
+                          labelColor: pillLabelColor,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -574,6 +788,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           label: 'Humedad Radicular',
                           value: moistureLabel,
                           valueColor: const Color(0xFF2E7D32),
+                          labelColor: pillLabelColor,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -582,6 +797,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           label: 'Precipitación',
                           value: rainLabel,
                           valueColor: const Color(0xFF1565C0),
+                          labelColor: pillLabelColor,
                         ),
                       ),
                     ],
@@ -599,6 +815,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String label,
     required String value,
     required Color valueColor,
+    required Color labelColor,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -607,24 +824,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF3E2723).withValues(alpha: 0.85),
+            color: labelColor,
+            letterSpacing: -0.1,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 5),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.white.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 4,
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 5,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -633,9 +851,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
                 color: valueColor,
+                letterSpacing: -0.2,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -646,67 +865,265 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSunCloudGraphic() {
-    return SizedBox(
-      width: 86,
-      height: 54,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            top: 2,
-            right: 22,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const RadialGradient(
-                  colors: [Color(0xFFFFEE58), Color(0xFFFFA000)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFFA000).withValues(alpha: 0.45),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 2,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
+  Widget _buildNasaClimateSection(BuildContext context, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final textColor = AppColors.getTextPrimary(context);
+    final subtextColor = AppColors.getTextMuted(context);
+
+    final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
+    final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
+    final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
+    final avgSolar =
+        (summary['avg_solar_radiation_mj'] as num?)?.toDouble() ?? 18.5;
+    final soilMoisture =
+        (summary['root_soil_moisture_index'] as num?)?.toDouble() ?? 0.58;
+    final isLive = _nasaData?['source']?.toString().contains('Live') == true;
+
+    final solarKwh = avgSolar / 3.6;
+
+    final moistureLabel = soilMoisture < 0.40
+        ? 'Déficit radicular'
+        : (soilMoisture > 0.75 ? 'Saturación alta' : 'Nivel óptimo');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.cloud_rounded,
-                    color: Color(0xFFECEFF1),
-                    size: 22,
+                  Text(
+                    'Datos NASA & Clima',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      letterSpacing: -0.2,
+                    ),
                   ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.wb_sunny_rounded,
-                    color: Color(0xFFFFB300),
-                    size: 16,
+                  const SizedBox(height: 2),
+                  Text(
+                    isLive
+                        ? 'Telemetría satelital en tiempo real'
+                        : 'Observaciones agroclimáticas satelitales',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subtextColor,
+                    ),
                   ),
                 ],
               ),
             ),
+            InkWell(
+              onTap: _isLoadingNasa ? null : _loadNasaData,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1B2B20)
+                      : const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF2E7D32)
+                        : const Color(0xFFA5D6A7),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: isLive
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFFF9800),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _isLoadingNasa
+                          ? 'Sincronizando...'
+                          : (isLive ? 'NASA Live' : 'Sincronizar'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.primaryLight
+                            : const Color(0xFF2E7D32),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.refresh_rounded,
+                      size: 14,
+                      color: isDark
+                          ? AppColors.primaryLight
+                          : const Color(0xFF2E7D32),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildEnvironmentalStatusBanner(context, s),
+        const SizedBox(height: 12),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.35,
+          children: [
+            _buildTelemetryCard(
+              context: context,
+              title: 'Radiación Solar',
+              value: '${solarKwh.toStringAsFixed(1)} kWh/m²',
+              subtitle: 'Fotosíntesis activa',
+              icon: Icons.wb_sunny_rounded,
+              iconColor: const Color(0xFFFFA000),
+              iconBgColor: const Color(0xFFFFF8E1),
+            ),
+            _buildTelemetryCard(
+              context: context,
+              title: 'Humedad SMAP',
+              value: '${(soilMoisture * 100).toInt()}%',
+              subtitle: moistureLabel,
+              icon: Icons.water_drop_rounded,
+              iconColor: const Color(0xFF1976D2),
+              iconBgColor: const Color(0xFFE3F2FD),
+            ),
+            _buildTelemetryCard(
+              context: context,
+              title: 'Rango Térmico',
+              value: '${tempC.toStringAsFixed(1)} °C',
+              subtitle: 'Sensor T2M NASA',
+              icon: Icons.thermostat_rounded,
+              iconColor: const Color(0xFFE64A19),
+              iconBgColor: const Color(0xFFFBE9E7),
+            ),
+            _buildTelemetryCard(
+              context: context,
+              title: 'Precipitación',
+              value: rainMm < 0.1
+                  ? '0.0 mm/día'
+                  : '${rainMm.toStringAsFixed(1)} mm/día',
+              subtitle: rainMm < 1.0 ? 'Sin lluvia reciente' : 'Aporte hídrico pluvial',
+              icon: Icons.grain_rounded,
+              iconColor: const Color(0xFF00897B),
+              iconBgColor: const Color(0xFFE0F2F1),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTelemetryCard({
+    required BuildContext context,
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+  }) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderColor = AppColors.getBorder(context);
+    final textColor = AppColors.getTextPrimary(context);
+    final subtextColor = AppColors.getTextMuted(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? iconBgColor.withValues(alpha: 0.22)
+                      : iconBgColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: isDark ? AppColors.primaryLight : iconColor,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.trending_flat_rounded,
+                size: 16,
+                color: subtextColor.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                  letterSpacing: -0.3,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: subtextColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ],
       ),
@@ -785,6 +1202,344 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPredictionsSection(
+    BuildContext context,
+    AppStrings s,
+    FarmPredictionsReport report,
+  ) {
+    final isDark = AppColors.isDark(context);
+    final textColor = AppColors.getTextPrimary(context);
+    final subtextColor = AppColors.getTextMuted(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Predicciones de Eve',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Modelos biofísicos y agroecológicos de tu finca',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subtextColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  createBottomNavPageRoute(
+                    const PredictionsScreen(initialTab: 0),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+              label: const Text(
+                'Ver todas',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildPredictionCard(
+          context: context,
+          badgeText: report.irrigation.status == 'critical'
+              ? 'Atención'
+              : (report.irrigation.status == 'moderate' ? 'Moderado' : 'Óptimo'),
+          badgeColor: report.irrigation.status == 'critical'
+              ? const Color(0xFFC62828)
+              : (report.irrigation.status == 'moderate'
+                  ? const Color(0xFFF57F17)
+                  : const Color(0xFF2E7D32)),
+          badgeBgColor: report.irrigation.status == 'critical'
+              ? (isDark ? const Color(0xFF3E1E1E) : const Color(0xFFFFEBEE))
+              : (report.irrigation.status == 'moderate'
+                  ? (isDark ? const Color(0xFF3E321E) : const Color(0xFFFFF8E1))
+                  : (isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9))),
+          icon: Icons.water_drop_rounded,
+          title: 'Gestor de Riego a 7 Días',
+          subtitle: report.irrigation.actionTitle,
+          details: report.irrigation.actionRecommendation,
+          metricPill1:
+              'Déficit: ${report.irrigation.weeklyDeficitMm.toStringAsFixed(1)} mm',
+          metricPill2:
+              'Sin estrés: ${report.irrigation.daysUntilStress} días',
+          onTap: () {
+            Navigator.of(context).pushReplacement(
+              createBottomNavPageRoute(
+                const PredictionsScreen(initialTab: 0),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildPredictionCard(
+          context: context,
+          badgeText: '${report.rotation.score}% Compatibilidad',
+          badgeColor: const Color(0xFF2E7D32),
+          badgeBgColor:
+              isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9),
+          icon: Icons.sync_alt_rounded,
+          title: 'Rotación y Sucesión Botánica',
+          subtitle: 'Sucesión recomendada: ${report.rotation.suggestedCrop}',
+          details: report.rotation.explanation,
+          metricPill1: 'Nivel: ${report.rotation.compatibilityLevel}',
+          metricPill2: report.rotation.hasSpatialCorridorRisk
+              ? 'Alerta plagas'
+              : 'Bajo riesgo biológico',
+          onTap: () {
+            Navigator.of(context).pushReplacement(
+              createBottomNavPageRoute(
+                const PredictionsScreen(initialTab: 1),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildPredictionCard(
+          context: context,
+          badgeText: report.calendar.windowStatus,
+          badgeColor: report.calendar.isWindowOpen
+              ? const Color(0xFF2E7D32)
+              : const Color(0xFFE65100),
+          badgeBgColor: report.calendar.isWindowOpen
+              ? (isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9))
+              : (isDark ? const Color(0xFF3E281E) : const Color(0xFFFFF3E0)),
+          icon: Icons.calendar_month_rounded,
+          title: 'Ventana de Siembra & GDD',
+          subtitle: 'Fechas ideales: ${report.calendar.recommendedDateRange}',
+          details: report.calendar.thermalAdvice,
+          metricPill1:
+              'GDD 7d: ${report.calendar.accumulatedGdd7d.toInt()} °C',
+          metricPill2:
+              'Floración: ~${report.calendar.estimatedDaysToFlowering} d',
+          onTap: () {
+            Navigator.of(context).pushReplacement(
+              createBottomNavPageRoute(
+                const PredictionsScreen(initialTab: 2),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildPredictionCard(
+          context: context,
+          badgeText: '${report.nutrition.soilHealthScore}/100 Salud',
+          badgeColor: const Color(0xFF00796B),
+          badgeBgColor:
+              isDark ? const Color(0xFF1B3330) : const Color(0xFFE0F2F1),
+          icon: Icons.eco_rounded,
+          title: 'Salud del Suelo & Fijación Biológica',
+          subtitle: 'Vigor vegetal: ${report.health.vigorStatus}',
+          details:
+              'Fijación biológica estimada de nitrógeno: +${report.nutrition.projectedNitrogenGainKgPerHa.toStringAsFixed(1)} kg N/ha con cobertura vegetal.',
+          metricPill1:
+              '+${report.nutrition.projectedNitrogenGainKgPerHa.toStringAsFixed(1)} kg N/ha',
+          metricPill2:
+              'NDVI Proxy: ${(report.health.estimatedNdviProxy * 100).toInt()}%',
+          onTap: () {
+            Navigator.of(context).pushReplacement(
+              createBottomNavPageRoute(
+                const PredictionsScreen(initialTab: 5),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPredictionCard({
+    required BuildContext context,
+    required String badgeText,
+    required Color badgeColor,
+    required Color badgeBgColor,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String details,
+    required String metricPill1,
+    required String metricPill2,
+    required VoidCallback onTap,
+  }) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderColor = AppColors.getBorder(context);
+    final textColor = AppColors.getTextPrimary(context);
+    final subtextColor = AppColors.getTextMuted(context);
+
+    return Material(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(18),
+      elevation: isDark ? 1.5 : 1.0,
+      shadowColor: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: badgeBgColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Icon(icon, color: badgeColor, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeBgColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: badgeColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      badgeText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: badgeColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                details,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: subtextColor,
+                  height: 1.35,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF243329)
+                          : const Color(0xFFF1F8F3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      metricPill1,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.primaryLight
+                            : const Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF243329)
+                          : const Color(0xFFF1F8F3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      metricPill2,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.primaryLight
+                            : const Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 13,
+                    color: subtextColor,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1025,23 +1780,362 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class _WeatherCardLandscapePainter extends CustomPainter {
+class _WeatherSkyArtwork extends StatelessWidget {
+  final DayPeriod period;
+
+  const _WeatherSkyArtwork({required this.period});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 100,
+      height: 64,
+      child: CustomPaint(
+        painter: _WeatherSkyPainter(period: period),
+      ),
+    );
+  }
+}
+
+class _WeatherSkyPainter extends CustomPainter {
+  final DayPeriod period;
+
+  const _WeatherSkyPainter({required this.period});
+
   @override
   void paint(Canvas canvas, Size size) {
+    switch (period) {
+      case DayPeriod.madrugada:
+        _drawDawn(canvas, size);
+        break;
+      case DayPeriod.manana:
+        _drawMorning(canvas, size);
+        break;
+      case DayPeriod.mediodia:
+        _drawMidday(canvas, size);
+        break;
+      case DayPeriod.tarde:
+        _drawSunset(canvas, size);
+        break;
+      case DayPeriod.noche:
+        _drawNight(canvas, size);
+        break;
+    }
+  }
+
+  void _drawMorning(Canvas canvas, Size size) {
+    final sunCenter = Offset(size.width * 0.65, size.height * 0.36);
+    const sunRadius = 13.0;
+
+    final rayPaint = Paint()
+      ..color = const Color(0xFFFFA000).withValues(alpha: 0.85)
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 8; i++) {
+      final angle = i * (2 * math.pi / 8);
+      final start = Offset(
+        sunCenter.dx + (sunRadius + 3) * math.cos(angle),
+        sunCenter.dy + (sunRadius + 3) * math.sin(angle),
+      );
+      final end = Offset(
+        sunCenter.dx + (sunRadius + 9) * math.cos(angle),
+        sunCenter.dy + (sunRadius + 9) * math.sin(angle),
+      );
+      canvas.drawLine(start, end, rayPaint);
+    }
+
+    final sunPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [Color(0xFFFFEE58), Color(0xFFFFA000)],
+      ).createShader(Rect.fromCircle(center: sunCenter, radius: sunRadius));
+    canvas.drawCircle(sunCenter, sunRadius, sunPaint);
+
+    final cloudPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.94)
+      ..style = PaintingStyle.fill;
+
+    final cloudRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width * 0.35, size.height * 0.44, 58, 17),
+      const Radius.circular(10),
+    );
+    canvas.drawRRect(cloudRect, cloudPaint);
+    canvas.drawCircle(
+      Offset(size.width * 0.52, size.height * 0.41),
+      12,
+      cloudPaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.68, size.height * 0.45),
+      9,
+      cloudPaint,
+    );
+
+    final smallCloudPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.75)
+      ..style = PaintingStyle.fill;
+    final smallRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width * 0.05, size.height * 0.28, 36, 11),
+      const Radius.circular(6),
+    );
+    canvas.drawRRect(smallRect, smallCloudPaint);
+    canvas.drawCircle(
+      Offset(size.width * 0.18, size.height * 0.26),
+      7,
+      smallCloudPaint,
+    );
+  }
+
+  void _drawMidday(Canvas canvas, Size size) {
+    final sunCenter = Offset(size.width * 0.62, size.height * 0.30);
+    const sunRadius = 14.5;
+
+    final coronaPaint = Paint()
+      ..color = const Color(0xFFFFF9C4).withValues(alpha: 0.45)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(sunCenter, sunRadius + 10, coronaPaint);
+
+    final rayPaint = Paint()
+      ..color = const Color(0xFFFFD54F)
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 10; i++) {
+      final angle = i * (2 * math.pi / 10);
+      final start = Offset(
+        sunCenter.dx + (sunRadius + 3) * math.cos(angle),
+        sunCenter.dy + (sunRadius + 3) * math.sin(angle),
+      );
+      final end = Offset(
+        sunCenter.dx + (sunRadius + 11) * math.cos(angle),
+        sunCenter.dy + (sunRadius + 11) * math.sin(angle),
+      );
+      canvas.drawLine(start, end, rayPaint);
+    }
+
+    final sunPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [Colors.white, Color(0xFFFFEE58), Color(0xFFFFB300)],
+      ).createShader(Rect.fromCircle(center: sunCenter, radius: sunRadius));
+    canvas.drawCircle(sunCenter, sunRadius, sunPaint);
+
+    final cloudPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.96)
+      ..style = PaintingStyle.fill;
+    final cloudRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width * 0.28, size.height * 0.46, 62, 16),
+      const Radius.circular(9),
+    );
+    canvas.drawRRect(cloudRect, cloudPaint);
+    canvas.drawCircle(
+      Offset(size.width * 0.46, size.height * 0.43),
+      11,
+      cloudPaint,
+    );
+  }
+
+  void _drawSunset(Canvas canvas, Size size) {
+    final sunCenter = Offset(size.width * 0.66, size.height * 0.46);
+    const sunRadius = 14.0;
+
+    final rayPaint = Paint()
+      ..color = const Color(0xFFFFCC80).withValues(alpha: 0.75)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 7; i++) {
+      final angle = -math.pi * 0.85 + (i * (math.pi * 0.7 / 6));
+      final start = Offset(
+        sunCenter.dx + (sunRadius + 3) * math.cos(angle),
+        sunCenter.dy + (sunRadius + 3) * math.sin(angle),
+      );
+      final end = Offset(
+        sunCenter.dx + (sunRadius + 12) * math.cos(angle),
+        sunCenter.dy + (sunRadius + 12) * math.sin(angle),
+      );
+      canvas.drawLine(start, end, rayPaint);
+    }
+
+    final sunPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [Color(0xFFFFF3E0), Color(0xFFFF9800), Color(0xFFE64A19)],
+      ).createShader(Rect.fromCircle(center: sunCenter, radius: sunRadius));
+    canvas.drawCircle(sunCenter, sunRadius, sunPaint);
+
+    final sunsetCloudPaint = Paint()
+      ..color = const Color(0xFFFFE0B2).withValues(alpha: 0.90)
+      ..style = PaintingStyle.fill;
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width * 0.22, size.height * 0.48, 68, 16),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(rrect, sunsetCloudPaint);
+    canvas.drawCircle(
+      Offset(size.width * 0.42, size.height * 0.45),
+      10,
+      sunsetCloudPaint,
+    );
+  }
+
+  void _drawDawn(Canvas canvas, Size size) {
+    final sunCenter = Offset(size.width * 0.68, size.height * 0.52);
+    const sunRadius = 13.0;
+
+    final dawnGlow = Paint()
+      ..color = const Color(0xFFFF80AB).withValues(alpha: 0.45)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    canvas.drawCircle(sunCenter, sunRadius + 8, dawnGlow);
+
+    final sunPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [Color(0xFFFFD180), Color(0xFFFF4081)],
+      ).createShader(Rect.fromCircle(center: sunCenter, radius: sunRadius));
+    canvas.drawCircle(sunCenter, sunRadius, sunPaint);
+
+    final moonCenter = Offset(size.width * 0.25, size.height * 0.26);
+    final moonPaint = Paint()
+      ..color = const Color(0xFFEDE7F6).withValues(alpha: 0.85)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(moonCenter, 7, moonPaint);
+    final shadowCutPaint = Paint()
+      ..color = const Color(0xFF38325C)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+      Offset(moonCenter.dx + 2.5, moonCenter.dy - 1.5),
+      6,
+      shadowCutPaint,
+    );
+
+    final mistPaint = Paint()
+      ..color = const Color(0xFFF8BBD0).withValues(alpha: 0.65)
+      ..style = PaintingStyle.fill;
+    final mistRRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width * 0.38, size.height * 0.48, 56, 12),
+      const Radius.circular(6),
+    );
+    canvas.drawRRect(mistRRect, mistPaint);
+  }
+
+  void _drawNight(Canvas canvas, Size size) {
+    final moonCenter = Offset(size.width * 0.65, size.height * 0.34);
+    const moonRadius = 14.0;
+
+    final moonHalo = Paint()
+      ..color = const Color(0xFF90CAF9).withValues(alpha: 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9);
+    canvas.drawCircle(moonCenter, moonRadius + 6, moonHalo);
+
+    final moonPaint = Paint()
+      ..color = const Color(0xFFFFFDE7)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(moonCenter, moonRadius, moonPaint);
+
+    final shadowCutPaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+      Offset(moonCenter.dx + 4.5, moonCenter.dy - 2.5),
+      moonRadius - 1,
+      shadowCutPaint,
+    );
+
+    final cloudPaint = Paint()
+      ..color = const Color(0xFF475569).withValues(alpha: 0.80)
+      ..style = PaintingStyle.fill;
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width * 0.25, size.height * 0.45, 54, 14),
+      const Radius.circular(7),
+    );
+    canvas.drawRRect(rrect, cloudPaint);
+    canvas.drawCircle(
+      Offset(size.width * 0.42, size.height * 0.42),
+      9,
+      cloudPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _WeatherSkyPainter oldDelegate) =>
+      oldDelegate.period != period;
+}
+
+class _WeatherCardLandscapePainter extends CustomPainter {
+  final DayPeriod period;
+
+  const _WeatherCardLandscapePainter({required this.period});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (period == DayPeriod.noche || period == DayPeriod.madrugada) {
+      final starPaint = Paint()
+        ..color = Colors.white.withValues(
+          alpha: period == DayPeriod.noche ? 0.75 : 0.45,
+        );
+      final stars = [
+        Offset(size.width * 0.12, size.height * 0.22),
+        Offset(size.width * 0.26, size.height * 0.14),
+        Offset(size.width * 0.40, size.height * 0.26),
+        Offset(size.width * 0.54, size.height * 0.16),
+        Offset(size.width * 0.78, size.height * 0.28),
+        Offset(size.width * 0.88, size.height * 0.12),
+        Offset(size.width * 0.32, size.height * 0.38),
+        Offset(size.width * 0.82, size.height * 0.42),
+      ];
+      for (int i = 0; i < stars.length; i++) {
+        final r = (i % 3 == 0) ? 1.8 : 1.2;
+        canvas.drawCircle(stars[i], r, starPaint);
+      }
+    }
+
+    final Color backHillColor;
+    final Color frontHillColor;
+    final Color foliageColor;
+
+    switch (period) {
+      case DayPeriod.madrugada:
+        backHillColor = const Color(0xFF2A5043).withValues(alpha: 0.7);
+        frontHillColor = const Color(0xFF1B3D32).withValues(alpha: 0.85);
+        foliageColor = const Color(0xFF112C24);
+        break;
+      case DayPeriod.manana:
+        backHillColor = const Color(0xFF5CB85C).withValues(alpha: 0.65);
+        frontHillColor = const Color(0xFF388E3C).withValues(alpha: 0.85);
+        foliageColor = const Color(0xFF1B5E20);
+        break;
+      case DayPeriod.mediodia:
+        backHillColor = const Color(0xFF66BB6A).withValues(alpha: 0.6);
+        frontHillColor = const Color(0xFF2E7D32).withValues(alpha: 0.85);
+        foliageColor = const Color(0xFF1B5E20);
+        break;
+      case DayPeriod.tarde:
+        backHillColor = const Color(0xFF688A4E).withValues(alpha: 0.65);
+        frontHillColor = const Color(0xFF4A6836).withValues(alpha: 0.85);
+        foliageColor = const Color(0xFF2E461E);
+        break;
+      case DayPeriod.noche:
+        backHillColor = const Color(0xFF1F382B).withValues(alpha: 0.7);
+        frontHillColor = const Color(0xFF14291E).withValues(alpha: 0.9);
+        foliageColor = const Color(0xFF0C1B13);
+        break;
+    }
+
     final backHillPaint = Paint()
-      ..color = const Color(0xFF43A047).withValues(alpha: 0.6)
+      ..color = backHillColor
       ..style = PaintingStyle.fill;
     final backHillPath = Path()
       ..moveTo(0, size.height)
-      ..lineTo(0, size.height * 0.85)
+      ..lineTo(0, size.height * 0.86)
       ..quadraticBezierTo(
-        size.width * 0.45,
-        size.height * 0.72,
-        size.width * 0.80,
+        size.width * 0.40,
+        size.height * 0.74,
+        size.width * 0.75,
         size.height * 0.88,
       )
       ..quadraticBezierTo(
-        size.width * 0.92,
+        size.width * 0.90,
         size.height * 0.92,
         size.width,
         size.height * 0.94,
@@ -1051,28 +2145,59 @@ class _WeatherCardLandscapePainter extends CustomPainter {
     canvas.drawPath(backHillPath, backHillPaint);
 
     final frontHillPaint = Paint()
-      ..color = const Color(0xFF2E7D32).withValues(alpha: 0.75)
+      ..color = frontHillColor
       ..style = PaintingStyle.fill;
     final frontHillPath = Path()
       ..moveTo(0, size.height)
-      ..lineTo(0, size.height * 0.94)
+      ..lineTo(0, size.height * 0.95)
       ..quadraticBezierTo(
         size.width * 0.35,
         size.height * 0.96,
-        size.width * 0.62,
-        size.height * 0.84,
+        size.width * 0.60,
+        size.height * 0.86,
       )
       ..quadraticBezierTo(
         size.width * 0.82,
-        size.height * 0.76,
+        size.height * 0.78,
         size.width,
-        size.height * 0.82,
+        size.height * 0.83,
       )
       ..lineTo(size.width, size.height)
       ..close();
     canvas.drawPath(frontHillPath, frontHillPaint);
+
+    final leafPaint = Paint()
+      ..color = foliageColor
+      ..style = PaintingStyle.fill;
+    final leafBase = Offset(size.width * 0.95, size.height * 0.99);
+
+    _drawLeaf(canvas, leafBase, -math.pi * 0.52, size.height * 0.25, leafPaint);
+    _drawLeaf(canvas, leafBase, -math.pi * 0.68, size.height * 0.22, leafPaint);
+    _drawLeaf(canvas, leafBase, -math.pi * 0.82, size.height * 0.18, leafPaint);
+    _drawLeaf(canvas, leafBase, -math.pi * 0.38, size.height * 0.21, leafPaint);
+    _drawLeaf(canvas, leafBase, -math.pi * 0.22, size.height * 0.16, leafPaint);
+  }
+
+  void _drawLeaf(
+    Canvas canvas,
+    Offset base,
+    double angle,
+    double length,
+    Paint paint,
+  ) {
+    canvas.save();
+    canvas.translate(base.dx, base.dy);
+    canvas.rotate(angle);
+    final path = Path()
+      ..moveTo(0, 0)
+      ..quadraticBezierTo(-length * 0.20, length * 0.5, 0, length)
+      ..quadraticBezierTo(length * 0.20, length * 0.5, 0, 0)
+      ..close();
+    canvas.drawPath(path, paint);
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _WeatherCardLandscapePainter oldDelegate) =>
+      oldDelegate.period != period;
 }

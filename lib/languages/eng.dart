@@ -130,6 +130,7 @@ const String kDashboardAction3 = 'View personalized recommendations';
 const String kNavHome = 'Home';
 const String kNavLots = 'Lots';
 const String kNavRotations = 'Rotations';
+const String kNavMap = 'Map';
 const String kNavCommunity = 'Community';
 const String kNavMore = 'More';
 

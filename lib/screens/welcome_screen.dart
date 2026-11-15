@@ -182,295 +182,334 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
           ];
 
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Top Bar: Decorative App Brand Pill on left, Language on right
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+          return MediaQuery.withClampedTextScaling(
+            minScaleFactor: 0.9,
+            maxScaleFactor: 1.2,
+            child: Scaffold(
+              backgroundColor: Colors.white,
+              body: SafeArea(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final availableWidth = constraints.maxWidth;
+                    final availableHeight = constraints.maxHeight;
+                    final isNarrow = availableWidth < 360;
+                    final isShort = availableHeight < 680;
+                    final isTablet = availableWidth >= 600;
+
+                    final textScaler = MediaQuery.textScalerOf(context);
+                    final carouselHeight =
+                        (98.0 * textScaler.scale(1.0)).clamp(96.0, 134.0);
+
+                    return SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 540),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isNarrow ? 16 : (isTablet ? 32 : 22),
+                              vertical: isShort ? 8 : 12,
                             ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F8E9),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFFC8E6C9),
-                                width: 1,
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.eco_rounded,
-                                  size: 15,
-                                  color: Color(0xFF2E7D32),
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Eva Bits',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1B5E20),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: AppLanguage.toggleLanguage,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFFE2E8F0),
-                                  width: 1,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.03),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.language_rounded,
-                                    size: 16,
-                                    color: Color(0xFF2E7D32),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    isSpanish ? 'Español' : 'English',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF374151),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-
-                      // Eve Stage (Bigger Eve + Rich Decorations)
-                      _buildEveDecoratedStage(),
-
-                      const SizedBox(height: 28),
-
-                      // Headline Title (Moved lower for comfortable breathing room)
-                      Text(
-                        headline,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF111827),
-                          height: 1.18,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Subtitle
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          subtitle,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14.5,
-                            color: Color(0xFF4B5563),
-                            height: 1.45,
-                            letterSpacing: -0.1,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Feature Card Carousel
-                      SizedBox(
-                        height: 96,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: featureItems.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentPage = index;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            final item = featureItems[index];
-                            return Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 2),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(22),
-                                border: Border.all(
-                                  color: const Color(0xFFF1F5F9),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black
-                                        .withValues(alpha: 0.04),
-                                    blurRadius: 14,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 52,
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                      color: item.iconBgColor,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        item.icon,
-                                        color: item.iconColor,
-                                        size: 26,
+                                // Top Bar: Decorative App Brand Pill on left, Language on right
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isNarrow ? 10 : 12,
+                                        vertical: isNarrow ? 5 : 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF1F8E9),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: const Color(0xFFC8E6C9),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.eco_rounded,
+                                            size: isNarrow ? 14 : 15,
+                                            color: const Color(0xFF2E7D32),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            'Eva Bits',
+                                            style: TextStyle(
+                                              fontSize: isNarrow ? 11.5 : 12.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: const Color(0xFF1B5E20),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: AppLanguage.toggleLanguage,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isNarrow ? 10 : 13,
+                                          vertical: isNarrow ? 5 : 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: const Color(0xFFE2E8F0),
+                                            width: 1,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withValues(alpha: 0.03),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.language_rounded,
+                                              size: isNarrow ? 15 : 16,
+                                              color: const Color(0xFF2E7D32),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              isSpanish ? 'Español' : 'English',
+                                              style: TextStyle(
+                                                fontSize: isNarrow ? 12 : 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF374151),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: isShort ? 12 : 16),
+
+                                // Eve Stage (Responsively scaled for all screens)
+                                _buildEveDecoratedStage(
+                                  availableWidth: availableWidth,
+                                  isShort: isShort,
+                                ),
+
+                                SizedBox(height: isShort ? 16 : 24),
+
+                                // Headline Title
+                                Text(
+                                  headline,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: isShort || isNarrow ? 23 : 26,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF111827),
+                                    height: 1.2,
+                                    letterSpacing: -0.4,
                                   ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                ),
+                                SizedBox(height: isShort ? 8 : 12),
+
+                                // Subtitle
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4),
+                                  child: Text(
+                                    subtitle,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: isShort || isNarrow ? 13 : 14,
+                                      color: const Color(0xFF374151),
+                                      height: 1.45,
+                                      letterSpacing: -0.1,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: isShort ? 16 : 22),
+
+                                // Feature Card Carousel
+                                SizedBox(
+                                  height: carouselHeight,
+                                  child: PageView.builder(
+                                    controller: _pageController,
+                                    itemCount: featureItems.length,
+                                    onPageChanged: (index) {
+                                      setState(() {
+                                        _currentPage = index;
+                                      });
+                                    },
+                                    itemBuilder: (context, index) {
+                                      final item = featureItems[index];
+                                      return Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 2),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: const Color(0xFFF1F5F9),
+                                            width: 1.5,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withValues(alpha: 0.04),
+                                              blurRadius: 14,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 48,
+                                              height: 48,
+                                              decoration: BoxDecoration(
+                                                color: item.iconBgColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              child: Center(
+                                                child: Icon(
+                                                  item.icon,
+                                                  color: item.iconColor,
+                                                  size: 24,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    item.title,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Color(0xFF111827),
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 3),
+                                                  Text(
+                                                    item.description,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Color(0xFF4B5563),
+                                                      height: 1.25,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Page Indicator Dots
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    featureItems.length,
+                                    (index) {
+                                      final isActive = _currentPage == index;
+                                      return AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 250),
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        width: isActive ? 8 : 6,
+                                        height: isActive ? 8 : 6,
+                                        decoration: BoxDecoration(
+                                          color: isActive
+                                              ? const Color(0xFF1E6F38)
+                                              : const Color(0xFFD6DCD6),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                SizedBox(height: isShort ? 16 : 22),
+
+                                // Bottom CTA Pill Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1E6F38),
+                                      foregroundColor: Colors.white,
+                                      elevation: 2.5,
+                                      shadowColor: const Color(0xFF1E6F38)
+                                          .withValues(alpha: 0.35),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(28),
+                                      ),
+                                    ),
+                                    onPressed: _onGetStartedPressed,
+                                    child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          item.title,
+                                          buttonText,
                                           style: const TextStyle(
-                                            fontSize: 15,
+                                            fontSize: 15.5,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF111827),
+                                            letterSpacing: -0.2,
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          item.description,
-                                          style: TextStyle(
-                                            fontSize: 12.5,
-                                            color: Colors.grey.shade600,
-                                            height: 1.25,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                        const SizedBox(width: 8),
+                                        const Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 19,
                                         ),
                                       ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Page Indicator Dots
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          featureItems.length,
-                          (index) {
-                            final isActive = _currentPage == index;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: isActive ? 8 : 6,
-                              height: isActive ? 8 : 6,
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? const Color(0xFF1E6F38)
-                                    : const Color(0xFFD6DCD6),
-                                shape: BoxShape.circle,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Bottom CTA Pill Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1E6F38),
-                            foregroundColor: Colors.white,
-                            elevation: 2.5,
-                            shadowColor: const Color(0xFF1E6F38)
-                                .withValues(alpha: 0.35),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
+                                ),
+                                const SizedBox(height: 14),
+                              ],
                             ),
                           ),
-                          onPressed: _onGetStartedPressed,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                buttonText,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 20,
-                              ),
-                            ],
-                          ),
                         ),
                       ),
-                      const SizedBox(height: 14),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -480,19 +519,27 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  Widget _buildEveDecoratedStage() {
+  Widget _buildEveDecoratedStage({
+    required double availableWidth,
+    required bool isShort,
+  }) {
+    final maxStageW = isShort ? 230.0 : 280.0;
+    final stageWidth = (availableWidth * 0.74).clamp(190.0, maxStageW);
+    final stageHeight = stageWidth * (260.0 / 280.0);
+    final scale = stageWidth / 280.0;
+
     return Center(
       child: SizedBox(
-        width: 290,
-        height: 275,
+        width: stageWidth,
+        height: stageHeight,
         child: Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
             // Soft Outer Ambient Glow Ring
             Container(
-              width: 275,
-              height: 260,
+              width: 265 * scale,
+              height: 250 * scale,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFFE8F5E9).withValues(alpha: 0.35),
@@ -501,14 +548,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
             // Main Soft Pastel Organic Backdrop (Graduated Mint to Butter Yellow)
             Container(
-              width: 255,
-              height: 245,
+              width: 245 * scale,
+              height: 235 * scale,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(125),
-                  topRight: Radius.circular(105),
-                  bottomLeft: Radius.circular(115),
-                  bottomRight: Radius.circular(135),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(120 * scale),
+                  topRight: Radius.circular(100 * scale),
+                  bottomLeft: Radius.circular(110 * scale),
+                  bottomRight: Radius.circular(130 * scale),
                 ),
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
@@ -522,8 +569,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFFC8E6C9).withValues(alpha: 0.45),
-                    blurRadius: 22,
-                    spreadRadius: 4,
+                    blurRadius: 20 * scale,
+                    spreadRadius: 3 * scale,
                   ),
                 ],
               ),
@@ -531,62 +578,62 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
             // Decorative Floating Badge 1: Top-Left (Sun / Climate)
             Positioned(
-              top: 8,
-              left: 10,
+              top: 6 * scale,
+              left: 8 * scale,
               child: _buildDecorativeOrb(
                 icon: Icons.wb_sunny_rounded,
                 iconColor: const Color(0xFFFFA000),
                 bgColor: const Color(0xFFFFF8E1),
                 borderColor: const Color(0xFFFFECB3),
-                size: 38,
+                size: 36 * scale,
               ),
             ),
 
             // Decorative Floating Badge 2: Top-Right (Leaf / Agroecology)
             Positioned(
-              top: 14,
-              right: 12,
+              top: 12 * scale,
+              right: 10 * scale,
               child: _buildDecorativeOrb(
                 icon: Icons.eco_rounded,
                 iconColor: const Color(0xFF2E7D32),
                 bgColor: const Color(0xFFE8F5E9),
                 borderColor: const Color(0xFFC8E6C9),
-                size: 36,
+                size: 34 * scale,
               ),
             ),
 
             // Decorative Floating Badge 3: Mid-Left (Water / Irrigation)
             Positioned(
-              bottom: 48,
-              left: 2,
+              bottom: 44 * scale,
+              left: 2 * scale,
               child: _buildDecorativeOrb(
                 icon: Icons.water_drop_rounded,
                 iconColor: const Color(0xFF1976D2),
                 bgColor: const Color(0xFFE3F2FD),
                 borderColor: const Color(0xFFBBDEFB),
-                size: 34,
+                size: 32 * scale,
               ),
             ),
 
             // Decorative Floating Badge 4: Mid-Right (Satellite Earth Sensor)
             Positioned(
-              bottom: 54,
-              right: 4,
+              bottom: 50 * scale,
+              right: 4 * scale,
               child: _buildDecorativeOrb(
                 icon: Icons.satellite_alt_rounded,
                 iconColor: const Color(0xFF00897B),
                 bgColor: const Color(0xFFE0F2F1),
                 borderColor: const Color(0xFFB2DFDB),
-                size: 36,
+                size: 34 * scale,
               ),
             ),
 
-            // Eve Animated Avatar (Bigger size 225, waving with gentle smile, isSpeaking = false)
-            const Positioned(
-              bottom: 8,
+            // Eve Animated Avatar (Scale proportionally)
+            Positioned(
+              bottom: 6 * scale,
               child: EveAnimatedAvatar(
                 emote: EveEmote.greeting,
-                size: 225,
+                size: (215 * scale).clamp(150.0, 225.0),
                 isSpeaking: false,
               ),
             ),

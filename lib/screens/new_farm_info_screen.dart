@@ -5,6 +5,7 @@ import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
+import '../widgets/eve_animated_avatar.dart';
 import 'dashboard_screen.dart';
 import 'welcome_screen.dart';
 
@@ -276,15 +277,223 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
   }
 
+  bool _isShowingGpsDialog = false;
+
+  void _showEveGpsPermissionDialog(
+    AppStrings s, {
+    bool isPermanentlyDenied = false,
+    bool isServiceDisabled = false,
+  }) {
+    if (!mounted || _isShowingGpsDialog) return;
+    _isShowingGpsDialog = true;
+
+    final isSpanish = AppLanguage.isSpanish;
+
+    final dialogTitle = isServiceDisabled
+        ? (isSpanish
+            ? 'Activa tu GPS para continuar'
+            : 'Enable your GPS to continue')
+        : (isSpanish
+            ? 'Eve necesita tu ubicación'
+            : 'Eve needs your location');
+
+    final dialogExplanation = isSpanish
+        ? 'Para calcular datos agroecológicos precisos y consultar la radiación solar, lluvia y humedad del suelo de la NASA, necesito conocer las coordenadas de tu finca.'
+        : 'To calculate accurate agroecological metrics and query NASA solar radiation, rainfall, and soil moisture, I need access to your farm coordinates.';
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFE8F5E9),
+                      border: Border.all(
+                        color: const Color(0xFFC8E6C9),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC8E6C9).withValues(alpha: 0.5),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: EveAnimatedAvatar(
+                        emote: EveEmote.alert,
+                        size: 88,
+                        isSpeaking: false,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    dialogTitle,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    dialogExplanation,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      color: Color(0xFF374151),
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 18,
+                          color: Color(0xFF16A34A),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isSpanish
+                                    ? 'Tus datos son privados'
+                                    : 'Your data is private',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF166534),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isSpanish
+                                    ? 'Las coordenadas se guardan únicamente en tu dispositivo para los cálculos locales y nunca se comparten con terceros.'
+                                    : 'Coordinates are saved only on your device for local calculations and are never shared with third parties.',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Colors.green.shade900,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isServiceDisabled
+                        ? (isSpanish
+                            ? 'Por favor, activa el servicio de ubicación en los ajustes de tu teléfono.'
+                            : 'Please turn on the location service in your phone settings.')
+                        : (isSpanish
+                            ? 'Ve a la Configuración de la aplicación para permitir el permiso de ubicación.'
+                            : 'Go to App Settings to enable location permission.'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        if (isServiceDisabled) {
+                          await Geolocator.openLocationSettings();
+                        } else {
+                          await Geolocator.openAppSettings();
+                        }
+                      },
+                      icon: const Icon(Icons.settings_outlined, size: 18),
+                      label: Text(
+                        isSpanish ? 'Ir a Configuración' : 'Open Settings',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(
+                      isSpanish
+                          ? 'Ahora no / Usar zona predefinida'
+                          : 'Not now / Use preset zone',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      _isShowingGpsDialog = false;
+    });
+  }
+
   Future<Position?> _determinePosition(AppStrings s) async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.orange.shade900,
-            content: Text(s.kGpsServiceDisabled),
-          ),
+        _showEveGpsPermissionDialog(
+          s,
+          isServiceDisabled: true,
         );
       }
       return null;
@@ -295,11 +504,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.orange.shade900,
-              content: Text(s.kGpsPermissionDenied),
-            ),
+          _showEveGpsPermissionDialog(
+            s,
+            isPermanentlyDenied: false,
           );
         }
         return null;
@@ -308,11 +515,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
     if (permission == LocationPermission.deniedForever) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.red.shade900,
-            content: Text(s.kGpsPermissionDeniedPermanently),
-          ),
+        _showEveGpsPermissionDialog(
+          s,
+          isPermanentlyDenied: true,
         );
       }
       return null;
@@ -510,67 +715,83 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
           final s = AppLanguage.strings;
           final unitShort = _getUnitShortName(_selectedUnit, s);
 
-          return Scaffold(
-            backgroundColor: AppColors.getBackground(context),
-            appBar: AppBar(
-              backgroundColor: AppColors.getHeaderBg(context),
-              foregroundColor: Colors.white,
-              elevation: 1,
-              title: Text(
-                s.kFarmInfoTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
-              ),
-              actions: [
-                TextButton.icon(
-                  onPressed: AppLanguage.toggleLanguage,
-                  icon: const Icon(Icons.language, color: Colors.white, size: 18),
-                  label: Text(
-                    AppLanguage.isSpanish ? s.kEnglish : s.kSpanish,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
+          return MediaQuery.withClampedTextScaling(
+            minScaleFactor: 0.9,
+            maxScaleFactor: 1.2,
+            child: Scaffold(
+              backgroundColor: AppColors.getBackground(context),
+              appBar: AppBar(
+                backgroundColor: AppColors.getHeaderBg(context),
+                foregroundColor: Colors.white,
+                elevation: 1,
+                title: Text(
+                  s.kFarmInfoTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 17,
                   ),
                 ),
-                const SizedBox(width: 4),
-              ],
-            ),
-            body: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  _buildStepIndicator(s),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                actions: [
+                  TextButton.icon(
+                    onPressed: AppLanguage.toggleLanguage,
+                    icon: const Icon(Icons.language,
+                        color: Colors.white, size: 18),
+                    label: Text(
+                      AppLanguage.isSpanish ? s.kEnglish : s.kSpanish,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ),
+              body: SafeArea(
+                bottom: false,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 640),
+                    child: Column(
                       children: [
-                        if (_currentStep == 0)
-                          _buildStep1FarmInfo(s, unitShort)
-                        else if (_currentStep == 1)
-                          _buildStep2LotsInfo(s, unitShort)
-                        else
-                          _buildStep3Summary(s, unitShort),
+                        _buildStepIndicator(s),
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            children: [
+                              if (_currentStep == 0)
+                                _buildStep1FarmInfo(s, unitShort)
+                              else if (_currentStep == 1)
+                                _buildStep2LotsInfo(s, unitShort)
+                              else
+                                _buildStep3Summary(s, unitShort),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
+              floatingActionButton: _currentStep == 1
+                  ? FloatingActionButton(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      shape: const CircleBorder(),
+                      tooltip: s.kAddLot,
+                      onPressed: () => _addLot(s),
+                      child: const Icon(Icons.add_rounded, size: 28),
+                    )
+                  : null,
+              bottomNavigationBar: _buildBottomNavigationBar(s),
             ),
-            floatingActionButton: _currentStep == 1
-                ? FloatingActionButton(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 4,
-                    shape: const CircleBorder(),
-                    tooltip: s.kAddLot,
-                    onPressed: () => _addLot(s),
-                    child: const Icon(Icons.add_rounded, size: 28),
-                  )
-                : null,
-            bottomNavigationBar: _buildBottomNavigationBar(s),
           );
         },
       ),
@@ -601,16 +822,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 11,
+                    radius: 10,
                     backgroundColor: isDone
                         ? AppColors.primary
                         : (isActive ? AppColors.primaryLight : Colors.grey.shade300),
                     child: isDone
-                        ? const Icon(Icons.check, size: 12, color: Colors.white)
+                        ? const Icon(Icons.check, size: 11, color: Colors.white)
                         : Text(
                             '${index + 1}',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10.5,
                               color: isActive ? Colors.white : Colors.black54,
                               fontWeight: FontWeight.bold,
                             ),
@@ -623,20 +844,20 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 11.5,
                         fontWeight:
-                            isActive ? FontWeight.bold : FontWeight.normal,
+                            isActive ? FontWeight.bold : FontWeight.w500,
                         color: isActive
                             ? AppColors.primaryDark
-                            : (isDone ? Colors.black87 : Colors.grey),
+                            : (isDone ? Colors.black87 : Colors.grey.shade600),
                       ),
                     ),
                   ),
                   if (index < steps.length - 1)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 1),
                       child: Icon(Icons.chevron_right,
-                          size: 14, color: Colors.grey.shade400),
+                          size: 13, color: Colors.grey.shade400),
                     ),
                 ],
               ),
@@ -668,12 +889,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     children: [
                       const Icon(Icons.eco, color: AppColors.primary),
                       const SizedBox(width: 8),
-                      Text(
-                        s.kGeneralInfoSection,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                      Expanded(
+                        child: Text(
+                          s.kGeneralInfoSection,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -839,12 +1064,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                                     CircularProgressIndicator(strokeWidth: 2),
                               ),
                               const SizedBox(width: 10),
-                              Text(
-                                s.kGettingGpsLocation,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade700,
-                                  fontStyle: FontStyle.italic,
+                              Expanded(
+                                child: Text(
+                                  s.kGettingGpsLocation,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: Colors.grey.shade700,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -867,8 +1096,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                                 Expanded(
                                   child: Text(
                                     '${s.kLatitudeLabel}: ${_latitude!.toStringAsFixed(6)}   |   ${s.kLongitudeLabel}: ${_longitude!.toStringAsFixed(6)}',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.textPrimary,
                                     ),
@@ -1210,13 +1441,15 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
         Row(
           children: [
             const Icon(Icons.subdirectory_arrow_right,
-                color: AppColors.accent, size: 20),
+                color: AppColors.accent, size: 18),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 s.kSubplotsSectionTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
@@ -1224,8 +1457,15 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             ),
             TextButton.icon(
               onPressed: () => _addSubplot(lot, s),
-              icon: const Icon(Icons.add, size: 16),
-              label: Text(s.kAddSubplot),
+              icon: const Icon(Icons.add, size: 15),
+              label: Text(
+                s.kAddSubplot,
+                style: const TextStyle(fontSize: 12),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ],
         ),
@@ -1341,12 +1581,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   children: [
                     const Icon(Icons.check_circle, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    Text(
-                      s.kSummaryTitle,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryDark,
+                    Expanded(
+                      child: Text(
+                        s.kSummaryTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                     ),
                   ],
@@ -1418,12 +1662,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   children: [
                     const Icon(Icons.public, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    Text(
-                      s.kNasaDataReady,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryDark,
+                    Expanded(
+                      child: Text(
+                        s.kNasaDataReady,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                     ),
                   ],
@@ -1477,116 +1725,132 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   Widget _buildBottomNavigationBar(AppStrings s) {
     return SafeArea(
       top: false,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            if (_currentStep > 0)
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+            child: Row(
+              children: [
+                if (_currentStep > 0)
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 12),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() => _currentStep--);
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.arrow_back, size: 18),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              s.kPreviousStep,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  onPressed: () {
-                    setState(() => _currentStep--);
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.arrow_back, size: 18),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          s.kPreviousStep,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                if (_currentStep > 0) const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 12),
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            if (_currentStep > 0) const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  if (_currentStep == 0) {
-                    if (_step1FormKey.currentState!.validate()) {
-                      if (_latitude == null || _longitude == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: Colors.orange.shade900,
-                            content: Text(s.kLocationRequired),
-                          ),
-                        );
-                        _getCurrentLocation(s);
-                        return;
+                    ),
+                    onPressed: () {
+                      if (_currentStep == 0) {
+                        if (_step1FormKey.currentState!.validate()) {
+                          if (_latitude == null || _longitude == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: Colors.orange.shade900,
+                                content: Text(s.kLocationRequired),
+                              ),
+                            );
+                            _getCurrentLocation(s);
+                            return;
+                          }
+                          setState(() => _currentStep = 1);
+                        }
+                      } else if (_currentStep == 1) {
+                        setState(() => _currentStep = 2);
+                      } else {
+                        _saveFarmDataToDatabase(s);
                       }
-                      setState(() => _currentStep = 1);
-                    }
-                  } else if (_currentStep == 1) {
-                    setState(() => _currentStep = 2);
-                  } else {
-                    _saveFarmDataToDatabase(s);
-                  }
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_isSaving)
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    else ...[
-                      Flexible(
-                        child: Text(
-                          _currentStep == 2 ? s.kSave : s.kNextStep,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        _currentStep == 2 ? Icons.save : Icons.arrow_forward,
-                        size: 18,
-                      ),
-                    ],
-                  ],
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isSaving)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        else ...[
+                          Flexible(
+                            child: Text(
+                              _currentStep == 2 ? s.kSave : s.kNextStep,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            _currentStep == 2
+                                ? Icons.save
+                                : Icons.arrow_forward,
+                            size: 18,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

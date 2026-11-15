@@ -250,6 +250,11 @@ class AgroPredictionEngine {
     'manzana': 'Rosaceae',
   };
 
+  static String getBotanicalFamily(String cropName) {
+    final lower = cropName.toLowerCase().trim();
+    return _botanicalFamilies[lower] ?? 'Desconocida';
+  }
+
   /// FAO-56 Crop Coefficient (Kc mid-season) for crop water demand
   static const Map<String, double> _cropKc = {
     'corn': 1.15,

@@ -450,7 +450,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                       const DropdownMenuItem<String>(
                         value: AgriculturalLocation.customId,
                         child: Text(
-                          '🌐 Otra región / Coordenadas mundiales',
+                          'Otra región / Coordenadas mundiales',
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
