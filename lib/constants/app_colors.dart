@@ -26,6 +26,11 @@ class AppColors {
   static const Color dividerLight = Color(0xFFE0E0E0);
   static const Color headerBgLight = Color(0xFF0F5A37);
   static const Color inputBgLight = Color(0xFFF9FBF8);
+  static const Color chipBgLight = Color(0xFFF1F5F2);
+  static const Color chipBorderLight = Color(0xFFE2E8F0);
+  static const Color badgeBgLight = Color(0xFFE8F5E9);
+  static const Color modalBgLight = Color(0xFFFFFFFF);
+  static const Color navBarBgLight = Color(0xFFFFFFFF);
 
   // Dark Palette (Agro-Slate deep dark, comfortable for OLED/LCD)
   static const Color backgroundDark = Color(0xFF121814); // Deep agro dark
@@ -41,6 +46,11 @@ class AppColors {
   static const Color dividerDark = Color(0xFF25332A);
   static const Color headerBgDark = Color(0xFF152219);
   static const Color inputBgDark = Color(0xFF18221B);
+  static const Color chipBgDark = Color(0xFF202E25);
+  static const Color chipBorderDark = Color(0xFF2E4235);
+  static const Color badgeBgDark = Color(0xFF1E3024);
+  static const Color modalBgDark = Color(0xFF1A261F);
+  static const Color navBarBgDark = Color(0xFF141C16);
 
   // Backward-compatible static constants for legacy calls
   static const Color background = backgroundLight;
@@ -90,6 +100,33 @@ class AppColors {
 
   static Color getInputBg(BuildContext context) =>
       isDark(context) ? inputBgDark : inputBgLight;
+
+  static Color getModalBg(BuildContext context) =>
+      isDark(context) ? modalBgDark : modalBgLight;
+
+  static Color getNavBarBg(BuildContext context) =>
+      isDark(context) ? navBarBgDark : navBarBgLight;
+
+  static Color getBadgeBg(BuildContext context) =>
+      isDark(context) ? badgeBgDark : badgeBgLight;
+
+  static Color getChipBg(BuildContext context, {bool isSelected = false}) {
+    if (isSelected) {
+      return isDark(context) ? primary : const Color(0xFF0F5A37);
+    }
+    return isDark(context) ? chipBgDark : chipBgLight;
+  }
+
+  static Color getChipBorder(BuildContext context, {bool isSelected = false}) {
+    if (isSelected) {
+      return isDark(context) ? primaryLight : const Color(0xFF0F5A37);
+    }
+    return isDark(context) ? chipBorderDark : chipBorderLight;
+  }
+
+  static Color getIconContainerBg(BuildContext context, Color baseColor) {
+    return isDark(context) ? baseColor.withValues(alpha: 0.22) : baseColor;
+  }
 
   // Complete Material 3 Light Theme
   static ThemeData get lightTheme {
@@ -144,6 +181,7 @@ class AppColors {
       brightness: Brightness.dark,
       primaryColor: primaryLight,
       scaffoldBackgroundColor: backgroundDark,
+      canvasColor: backgroundDark,
       cardColor: cardBgDark,
       dividerColor: dividerDark,
       colorScheme: ColorScheme.fromSeed(
@@ -177,9 +215,26 @@ class AppColors {
         modalBackgroundColor: cardBgDark,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: surfaceDark,
+        backgroundColor: navBarBgDark,
         selectedItemColor: primaryLight,
         unselectedItemColor: Colors.white60,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: inputBgDark,
+        hintStyle: const TextStyle(color: textMutedDark),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: borderDark),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: borderDark),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(14)),
+          borderSide: BorderSide(color: primaryLight, width: 2),
+        ),
       ),
       useMaterial3: true,
     );

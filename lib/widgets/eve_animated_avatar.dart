@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/agro_prediction_engine.dart';
@@ -2025,6 +2026,8 @@ class _EveDuolingoConversationStageState
       isSpanish: isSpanish,
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -2035,13 +2038,17 @@ class _EveDuolingoConversationStageState
       ),
       decoration: BoxDecoration(
         gradient: widget.showEveStage
-            ? const LinearGradient(
-                colors: [Color(0xFFF9FCF9), Color(0xFFF1F8E9)],
+            ? LinearGradient(
+                colors: isDark
+                    ? const [Color(0xFF131D16), Color(0xFF18231C)]
+                    : const [Color(0xFFF9FCF9), Color(0xFFF1F8E9)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               )
             : null,
-        color: widget.showEveStage ? null : Colors.white,
+        color: widget.showEveStage
+            ? null
+            : (isDark ? const Color(0xFF18231C) : Colors.white),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2052,8 +2059,8 @@ class _EveDuolingoConversationStageState
               Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2E7D32),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -2066,10 +2073,10 @@ class _EveDuolingoConversationStageState
                       widget.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E2D24),
+                        color: isDark ? AppColors.textPrimaryDark : const Color(0xFF1E2D24),
                       ),
                     ),
                     Text(
@@ -2078,7 +2085,7 @@ class _EveDuolingoConversationStageState
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 10.5,
-                        color: Colors.grey.shade600,
+                        color: isDark ? AppColors.textMutedDark : Colors.grey.shade600,
                       ),
                     ),
                   ],
@@ -2097,11 +2104,11 @@ class _EveDuolingoConversationStageState
                       ),
                       decoration: BoxDecoration(
                         color: widget.isNormalChatFolded
-                            ? const Color(0xFF1B5E20)
-                            : const Color(0xFFE8F5E9),
+                            ? (isDark ? AppColors.primary : const Color(0xFF1B5E20))
+                            : (isDark ? const Color(0xFF223126) : const Color(0xFFE8F5E9)),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFA5D6A7),
+                          color: isDark ? AppColors.borderDark : const Color(0xFFA5D6A7),
                         ),
                       ),
                       child: Row(
@@ -2114,7 +2121,7 @@ class _EveDuolingoConversationStageState
                             size: 15,
                             color: widget.isNormalChatFolded
                                 ? Colors.white
-                                : const Color(0xFF1B5E20),
+                                : (isDark ? AppColors.primaryLight : const Color(0xFF1B5E20)),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -2124,7 +2131,7 @@ class _EveDuolingoConversationStageState
                               fontWeight: FontWeight.bold,
                               color: widget.isNormalChatFolded
                                   ? Colors.white
-                                  : const Color(0xFF1B5E20),
+                                  : (isDark ? AppColors.primaryLight : const Color(0xFF1B5E20)),
                             ),
                           ),
                         ],
@@ -2201,15 +2208,15 @@ class _EveDuolingoConversationStageState
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF1A261F) : Colors.white,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: const Color(0xFFE0E0E0),
+                            color: isDark ? AppColors.borderDark : const Color(0xFFE0E0E0),
                             width: 2.0,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
+                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -2219,12 +2226,12 @@ class _EveDuolingoConversationStageState
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const SizedBox(
+                                  SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Color(0xFF2E7D32),
+                                      color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -2233,7 +2240,7 @@ class _EveDuolingoConversationStageState
                                       widget.loadingText,
                                       style: TextStyle(
                                         fontSize: 12.5,
-                                        color: Colors.grey.shade800,
+                                        color: isDark ? AppColors.textPrimaryDark : Colors.grey.shade800,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -2252,11 +2259,11 @@ class _EveDuolingoConversationStageState
                                     child: SingleChildScrollView(
                                       child: Text(
                                         visibleChunkText,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13.5,
                                           height: 1.4,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF2C3E35),
+                                          color: isDark ? AppColors.textPrimaryDark : const Color(0xFF2C3E35),
                                         ),
                                       ),
                                     ),
@@ -2911,6 +2918,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
     return ValueListenableBuilder<bool>(
       valueListenable: AppSettings.showEve,
       builder: (context, showEve, _) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final effectiveFolded = showEve && _isNormalChatFolded;
 
         return AnimatedBuilder(
@@ -2923,9 +2931,9 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                 maxHeight: maxModalHeight,
               ),
               margin: EdgeInsets.only(bottom: bottomInset),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.modalBgDark : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 mainAxisSize:
@@ -2936,7 +2944,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                     width: 48,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: isDark ? AppColors.borderDark : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -2954,7 +2962,10 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                     selectedCropFilter: _selectedCropFilter,
                     onCropFilterChanged: _onCropFilterSelected,
                   ),
-                  const Divider(height: 1),
+                  Divider(
+                    height: 1,
+                    color: isDark ? AppColors.borderDark : const Color(0xFFE0E0E0),
+                  ),
 
                   // Foldable "Normal" Chat Section (3D paper fold animation)
                   if (foldFactor > 0.01)
@@ -2990,23 +3001,28 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 16, vertical: 12),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFF1F8E9),
+                                            color: isDark
+                                                ? const Color(0xFF1E2822)
+                                                : const Color(0xFFF1F8E9),
                                             borderRadius:
                                                 BorderRadius.circular(16),
                                             border: Border.all(
-                                                color:
-                                                    const Color(0xFFDCEDC8)),
+                                                color: isDark
+                                                    ? AppColors.borderDark
+                                                    : const Color(0xFFDCEDC8)),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const SizedBox(
+                                              SizedBox(
                                                 width: 16,
                                                 height: 16,
                                                 child:
                                                     CircularProgressIndicator(
                                                   strokeWidth: 2,
-                                                  color: Color(0xFF2E7D32),
+                                                  color: isDark
+                                                      ? AppColors.primaryLight
+                                                      : const Color(0xFF2E7D32),
                                                 ),
                                               ),
                                               const SizedBox(width: 10),
@@ -3015,8 +3031,9 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                                                   s.kIvyAnalyzingScenario,
                                                   style: TextStyle(
                                                     fontSize: 12,
-                                                    color:
-                                                        Colors.grey.shade800,
+                                                    color: isDark
+                                                        ? AppColors.textPrimaryDark
+                                                        : Colors.grey.shade800,
                                                     fontStyle: FontStyle.italic,
                                                   ),
                                                 ),
@@ -3049,8 +3066,12 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                                             horizontal: 16, vertical: 12),
                                         decoration: BoxDecoration(
                                           color: isUser
-                                              ? const Color(0xFF1B5E20)
-                                              : const Color(0xFFF7FAF7),
+                                              ? (isDark
+                                                  ? AppColors.primary
+                                                  : const Color(0xFF1B5E20))
+                                              : (isDark
+                                                  ? const Color(0xFF1E2822)
+                                                  : const Color(0xFFF7FAF7)),
                                           borderRadius: BorderRadius.only(
                                             topLeft: const Radius.circular(18),
                                             topRight: const Radius.circular(18),
@@ -3064,8 +3085,9 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                                           border: isUser
                                               ? null
                                               : Border.all(
-                                                  color:
-                                                      const Color(0xFFE0E0E0)),
+                                                  color: isDark
+                                                      ? AppColors.borderDark
+                                                      : const Color(0xFFE0E0E0)),
                                         ),
                                         child: Text(
                                           cleanMsgText,
@@ -3074,7 +3096,9 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                                             height: 1.4,
                                             color: isUser
                                                 ? Colors.white
-                                                : const Color(0xFF1E2D24),
+                                                : (isDark
+                                                    ? AppColors.textPrimaryDark
+                                                    : const Color(0xFF1E2D24)),
                                           ),
                                         ),
                                       ),
@@ -3110,9 +3134,12 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                   Container(
                     padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      border:
-                          Border(top: BorderSide(color: Colors.grey.shade200)),
+                      color: isDark ? AppColors.modalBgDark : Colors.white,
+                      border: Border(
+                          top: BorderSide(
+                              color: isDark
+                                  ? AppColors.borderDark
+                                  : Colors.grey.shade200)),
                     ),
                     child: Row(
                       children: [
@@ -3120,14 +3147,25 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                           child: TextField(
                             controller: _controller,
                             textInputAction: TextInputAction.send,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark
+                                  ? AppColors.textPrimaryDark
+                                  : Colors.black87,
+                            ),
                             decoration: InputDecoration(
                               hintText: s.kIvyInputHint,
                               hintStyle: TextStyle(
-                                  fontSize: 13, color: Colors.grey.shade500),
+                                  fontSize: 13,
+                                  color: isDark
+                                      ? AppColors.textMutedDark
+                                      : Colors.grey.shade500),
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 12),
                               filled: true,
-                              fillColor: const Color(0xFFF1F6F2),
+                              fillColor: isDark
+                                  ? AppColors.inputBgDark
+                                  : const Color(0xFFF1F6F2),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(24),
                                 borderSide: BorderSide.none,
@@ -3144,8 +3182,10 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                         ),
                         const SizedBox(width: 6),
                         IconButton(
-                          icon: const Icon(Icons.send_rounded,
-                              color: Color(0xFF1B5E20)),
+                          icon: Icon(Icons.send_rounded,
+                              color: isDark
+                                  ? AppColors.primaryLight
+                                  : const Color(0xFF1B5E20)),
                           onPressed: () {
                             final q = _controller.text.trim();
                             if (q.isNotEmpty && !_isLoading) {
@@ -3167,18 +3207,24 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
   }
 
   Widget _buildQuickChip(IconData icon, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
-        avatar: Icon(icon, size: 15, color: const Color(0xFF1B5E20)),
-        backgroundColor: const Color(0xFFEAF5EC),
-        side: const BorderSide(color: Color(0xFFC8E6C9)),
+        avatar: Icon(icon,
+            size: 15,
+            color: isDark ? AppColors.primaryLight : const Color(0xFF1B5E20)),
+        backgroundColor:
+            isDark ? AppColors.chipBgDark : const Color(0xFFEAF5EC),
+        side: BorderSide(
+            color: isDark ? AppColors.chipBorderDark : const Color(0xFFC8E6C9)),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         label: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: Color(0xFF1B5E20),
+            color: isDark ? AppColors.textPrimaryDark : const Color(0xFF1B5E20),
             fontWeight: FontWeight.w600,
           ),
         ),

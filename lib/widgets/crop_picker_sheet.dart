@@ -79,13 +79,15 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
     final screenHeight = MediaQuery.of(context).size.height;
     final filtered = _filteredCrops;
 
+    final isDark = AppColors.isDark(context);
+
     return Container(
       constraints: BoxConstraints(
         maxHeight: screenHeight * 0.85,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: AppColors.getModalBg(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         left: 20,
@@ -103,7 +105,7 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
               width: 44,
               height: 5,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: isDark ? AppColors.borderDark : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -116,14 +118,16 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
               Container(
                 width: 42,
                 height: 42,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF5EC),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.primary.withValues(alpha: 0.22)
+                      : const Color(0xFFEAF5EC),
                   shape: BoxShape.circle,
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.eco_rounded,
-                    color: Color(0xFF2E7D32),
+                    color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
                     size: 24,
                   ),
                 ),
@@ -135,10 +139,10 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
                   children: [
                     Text(
                       s.kAssignCrop,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B2E1C),
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -146,7 +150,7 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
                       s.kCropHint,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: AppColors.getTextMuted(context),
                       ),
                     ),
                   ],
@@ -172,26 +176,34 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
           // Quick Search Field
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FBF8),
+              color: AppColors.getInputBg(context),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.getBorder(context)),
             ),
             child: TextField(
               controller: _searchController,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.getTextPrimary(context),
+              ),
               decoration: InputDecoration(
                 hintText: s.kSearchCropHint,
                 hintStyle: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: AppColors.getTextMuted(context),
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: AppColors.primary,
+                  color: isDark ? AppColors.primaryLight : AppColors.primary,
                   size: 20,
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 18),
+                        icon: Icon(
+                          Icons.clear_rounded,
+                          size: 18,
+                          color: AppColors.getTextMuted(context),
+                        ),
                         onPressed: () => _searchController.clear(),
                       )
                     : null,
@@ -272,15 +284,23 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFEAF5EC) : Colors.white,
+                            color: isSelected
+                                ? (isDark
+                                    ? const Color(0xFF1E3324)
+                                    : const Color(0xFFEAF5EC))
+                                : AppColors.getCardBg(context),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFE5E7EB),
+                              color: isSelected
+                                  ? (isDark
+                                      ? AppColors.primaryLight
+                                      : const Color(0xFF0F5A37))
+                                  : AppColors.getBorder(context),
                               width: isSelected ? 1.8 : 1.2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
+                                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -292,14 +312,16 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  color: crop.bgColor,
+                                  color: isDark
+                                      ? crop.color.withValues(alpha: 0.24)
+                                      : crop.bgColor,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Center(
                                   child: Icon(
                                     crop.icon,
                                     size: 18,
-                                    color: crop.textColor,
+                                    color: isDark ? AppColors.primaryLight : crop.textColor,
                                   ),
                                 ),
                               ),
@@ -310,17 +332,19 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                    color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFF1B2E1C),
+                                    color: isSelected
+                                        ? (isDark ? AppColors.primaryLight : const Color(0xFF0F5A37))
+                                        : AppColors.getTextPrimary(context),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (isSelected)
-                                const Icon(
+                                Icon(
                                   Icons.check_circle_rounded,
                                   size: 18,
-                                  color: Color(0xFF0F5A37),
+                                  color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
                                 ),
                             ],
                           ),
@@ -339,6 +363,8 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = AppColors.isDark(context);
+
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
@@ -346,10 +372,10 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFF1F5F2),
+          color: AppColors.getChipBg(context, isSelected: isSelected),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFE2E8F0),
+            color: AppColors.getChipBorder(context, isSelected: isSelected),
           ),
         ),
         child: Text(
@@ -357,7 +383,9 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF4A5568),
+            color: isSelected
+                ? Colors.white
+                : (isDark ? AppColors.textPrimaryDark : const Color(0xFF4A5568)),
           ),
         ),
       ),

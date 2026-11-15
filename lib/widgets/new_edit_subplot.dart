@@ -263,20 +263,21 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.getCardBg(ctx),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           s.kDeleteSubplotConfirm,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B2E1C),
+            color: AppColors.getTextPrimary(ctx),
           ),
         ),
         content: Text(
           s.kDeleteSubplotWarning,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey.shade700,
+            color: AppColors.getTextMuted(ctx),
             height: 1.35,
           ),
         ),
@@ -286,7 +287,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
             child: Text(
               s.kCancel,
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: AppColors.getTextMuted(ctx),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -351,10 +352,16 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final s = AppLanguage.strings;
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final inputBg = AppColors.getInputBg(context);
+    final borderColor = AppColors.getBorder(context);
+    final textPrimary = AppColors.getTextPrimary(context);
+    final textMuted = AppColors.getTextMuted(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.getCardBg(context),
+        color: cardBg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
@@ -376,7 +383,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? AppColors.borderDark : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -390,7 +397,9 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF5EC),
+                      color: isDark
+                          ? AppColors.primary.withValues(alpha: 0.22)
+                          : const Color(0xFFEAF5EC),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -398,7 +407,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                         widget.isEditing
                             ? Icons.edit_note_rounded
                             : Icons.grid_view_rounded,
-                        color: AppColors.primary,
+                        color: isDark ? AppColors.primaryLight : AppColors.primary,
                         size: 24,
                       ),
                     ),
@@ -410,10 +419,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                       children: [
                         Text(
                           widget.isEditing ? s.kEditSubplot : s.kAddNewSubplot,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B2E1C),
+                            color: textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -421,7 +430,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                           s.kSubplotSurfaceHint,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: textMuted,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -446,10 +455,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               // Subplot Name Field
               Text(
                 s.kSubplotNameLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -457,32 +466,33 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   hintText: s.kSubplotNameHint,
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: const Color(0xFFF9FBF8),
-                  prefixIcon: const Icon(
+                  fillColor: inputBg,
+                  prefixIcon: Icon(
                     Icons.tag_rounded,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.primaryLight : AppColors.primary,
                       width: 2,
                     ),
                   ),
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
@@ -496,10 +506,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               // Surface Area Field
               Text(
                 '${s.kSubplotSurfaceLabel} (${widget.effectiveSurfaceUnit})',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -509,38 +519,39 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   hintText: s.kSubplotSurfaceHint,
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: const Color(0xFFF9FBF8),
-                  prefixIcon: const Icon(
+                  fillColor: inputBg,
+                  prefixIcon: Icon(
                     Icons.square_foot_rounded,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                   ),
                   suffixText: widget.effectiveSurfaceUnit,
-                  suffixStyle: const TextStyle(
+                  suffixStyle: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                     fontSize: 15,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.primaryLight : AppColors.primary,
                       width: 2,
                     ),
                   ),
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
@@ -558,35 +569,37 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               // Soil Type Selector
               Text(
                 s.kSoilTypeLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _selectedSoilType,
+                dropdownColor: cardBg,
                 decoration: InputDecoration(
                   hintText: s.kSoilTypeHint,
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: const Color(0xFFF9FBF8),
-                  prefixIcon: const Icon(
+                  fillColor: inputBg,
+                  prefixIcon: Icon(
                     Icons.terrain_rounded,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.primaryLight : AppColors.primary,
                       width: 2,
                     ),
                   ),
@@ -608,10 +621,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                         const SizedBox(width: 8),
                         Text(
                           soil.label(s),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1B2E1C),
+                            color: textPrimary,
                           ),
                         ),
                       ],
@@ -629,10 +642,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               // Crop Selector
               Text(
                 s.kCropLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -650,7 +663,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.grey.shade400),
+                        side: BorderSide(color: borderColor),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -661,7 +674,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
+                          color: textMuted,
                         ),
                       ),
                     ),
@@ -671,7 +684,9 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     flex: 2,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F5A37),
+                        backgroundColor: isDark
+                            ? AppColors.primary
+                            : const Color(0xFF0F5A37),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 1,
@@ -724,6 +739,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
 
   Widget _buildCropSelector(AppStrings s) {
     final isSpanish = AppLanguage.isSpanish;
+    final isDark = AppColors.isDark(context);
     final crop = CropTypes.getByKey(_selectedCrop);
 
     return InkWell(
@@ -742,9 +758,9 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FBF8),
+          color: AppColors.getInputBg(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: AppColors.getBorder(context)),
         ),
         child: Row(
           children: [
@@ -753,14 +769,16 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: crop.bgColor,
+                  color: isDark
+                      ? crop.color.withValues(alpha: 0.24)
+                      : crop.bgColor,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Icon(
                     crop.icon,
                     size: 18,
-                    color: crop.textColor,
+                    color: isDark ? AppColors.primaryLight : crop.textColor,
                   ),
                 ),
               ),
@@ -768,32 +786,34 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               Expanded(
                 child: Text(
                   crop.localizedName(isSpanish),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B2E1C),
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF5EC),
+                  color: isDark
+                      ? AppColors.primary.withValues(alpha: 0.22)
+                      : const Color(0xFFEAF5EC),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   s.kChangeCrop,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F5A37),
+                    color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
                   ),
                 ),
               ),
             ] else ...[
-              const Icon(
+              Icon(
                 Icons.eco_outlined,
-                color: AppColors.primary,
+                color: isDark ? AppColors.primaryLight : AppColors.primary,
                 size: 22,
               ),
               const SizedBox(width: 10),
@@ -802,13 +822,13 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                   s.kCropHint,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: AppColors.getTextMuted(context),
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: Colors.grey,
+                color: AppColors.getTextMuted(context),
                 size: 22,
               ),
             ],
@@ -819,12 +839,19 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
   }
 
   Widget _buildNeighborSelector(AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final textPrimary = AppColors.getTextPrimary(context);
+    final textMuted = AppColors.getTextMuted(context);
+    final borderColor = AppColors.getBorder(context);
+    final inputBg = AppColors.getInputBg(context);
+    final cardBg = AppColors.getCardBg(context);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAF8),
+        color: isDark ? const Color(0xFF16221A) : const Color(0xFFF9FAF8),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,25 +862,27 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF5EC),
+                  color: isDark
+                      ? AppColors.primary.withValues(alpha: 0.22)
+                      : const Color(0xFFEAF5EC),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.hub_outlined,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                     size: 18,
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   '¿Con cuál otro sublote colinda este terreno?',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B2E1C),
+                    color: textPrimary,
                   ),
                 ),
               ),
@@ -864,7 +893,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
             'Enlazar parcelas vecinas permite al motor analítico y a Ivy evaluar barreras biológicas, escorrentía y evitar corredores de plagas.',
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey.shade600,
+              color: textMuted,
               height: 1.35,
             ),
           ),
@@ -887,18 +916,18 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: borderColor),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
+                  Icon(Icons.info_outline, size: 16, color: textMuted),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'No hay otros sublotes creados todavía. Al agregar más parcelas, podrás conectarlas aquí.',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                      style: TextStyle(fontSize: 11, color: textMuted),
                     ),
                   ),
                 ],
@@ -908,13 +937,15 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
             DropdownButtonFormField<int?>(
               initialValue: _selectedNeighborId,
               isExpanded: true,
+              dropdownColor: cardBg,
               decoration: InputDecoration(
                 labelText: 'Sublote vecino',
+                labelStyle: TextStyle(color: textMuted),
                 filled: true,
-                fillColor: Colors.white,
-                prefixIcon: const Icon(
+                fillColor: inputBg,
+                prefixIcon: Icon(
                   Icons.grid_view_rounded,
-                  color: AppColors.primary,
+                  color: isDark ? AppColors.primaryLight : AppColors.primary,
                   size: 20,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
@@ -923,26 +954,26 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: borderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                     width: 2,
                   ),
                 ),
               ),
               items: [
-                const DropdownMenuItem<int?>(
+                DropdownMenuItem<int?>(
                   value: null,
                   child: Text(
                     'Ninguno (Sublote aislado / sin colindancia)',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                    style: TextStyle(fontSize: 13, color: textMuted),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -959,10 +990,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     value: id,
                     child: Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B2E1C),
+                        color: textPrimary,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -980,13 +1011,15 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedRelationshipType,
                 isExpanded: true,
+                dropdownColor: cardBg,
                 decoration: InputDecoration(
                   labelText: 'Tipo de colindancia',
+                  labelStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(
+                  fillColor: inputBg,
+                  prefixIcon: Icon(
                     Icons.alt_route_rounded,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                     size: 20,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -995,16 +1028,16 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.primaryLight : AppColors.primary,
                       width: 2,
                     ),
                   ),
@@ -1015,7 +1048,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     child: Text(
                       SubplotRelationshipType.getLabel(
                           SubplotRelationshipType.neighbor),
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12, color: textPrimary),
                     ),
                   ),
                   DropdownMenuItem<String>(
@@ -1023,7 +1056,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     child: Text(
                       SubplotRelationshipType.getLabel(
                           SubplotRelationshipType.downhillFlow),
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12, color: textPrimary),
                     ),
                   ),
                   DropdownMenuItem<String>(
@@ -1031,7 +1064,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     child: Text(
                       SubplotRelationshipType.getLabel(
                           SubplotRelationshipType.bufferProtected),
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12, color: textPrimary),
                     ),
                   ),
                 ],

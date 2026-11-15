@@ -166,14 +166,13 @@ class CustomBottomNavBar extends StatelessWidget {
               );
             }
           },
-          backgroundColor:
-              isDark ? const Color(0xFF161F1A) : Colors.white,
+          backgroundColor: AppColors.getNavBarBg(context),
           activeColor: isDark ? AppColors.primaryLight : AppColors.primary,
           inactiveColor: isDark ? Colors.white60 : CupertinoColors.systemGrey,
           iconSize: 24,
           border: Border(
             top: BorderSide(
-              color: isDark ? const Color(0xFF2C3E33) : const Color(0x22000000),
+              color: isDark ? AppColors.borderDark : const Color(0x22000000),
               width: 0.5,
             ),
           ),

@@ -409,13 +409,15 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // ===========================================================================
   Widget _buildInteractiveContextBar(
       FarmPredictionsReport report, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.getCardBg(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -430,8 +432,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               children: [
                 _buildIconBadge(
                   icon: Icons.landscape_rounded,
-                  color: const Color(0xFF1B5E20),
-                  bgColor: const Color(0xFFE8F5E9),
+                  color: isDark ? AppColors.primaryLight : const Color(0xFF1B5E20),
+                  bgColor: isDark ? const Color(0xFF1E3024) : const Color(0xFFE8F5E9),
                   size: 16,
                   containerSize: 28,
                 ),
@@ -441,10 +443,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     s.kPredictionContext,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E2D24),
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                 ),
@@ -461,27 +463,34 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFE8F5E9), Color(0xFFC8E6C9)],
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? const [Color(0xFF1E3024), Color(0xFF263D2E)]
+                                : const [Color(0xFFE8F5E9), Color(0xFFC8E6C9)],
                           ),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFA5D6A7)),
+                          border: Border.all(
+                            color: isDark ? AppColors.borderDark : const Color(0xFFA5D6A7),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.tune_rounded,
-                                size: 14, color: Color(0xFF1B5E20)),
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 14,
+                              color: isDark ? AppColors.primaryLight : const Color(0xFF1B5E20),
+                            ),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
                                 s.kWhatIfSimulator,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1B5E20),
+                                  color: isDark ? AppColors.primaryLight : const Color(0xFF1B5E20),
                                 ),
                               ),
                             ),
@@ -508,29 +517,37 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E1),
+                  color: isDark ? const Color(0xFF2E2414) : const Color(0xFFFFF8E1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFE082)),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF4A381E) : const Color(0xFFFFE082),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications_active_rounded,
-                        size: 16, color: Color(0xFFE65100)),
+                    Icon(
+                      Icons.notifications_active_rounded,
+                      size: 16,
+                      color: isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         s.kWeeklyNotificationBannerTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF5D4037),
+                          color: isDark ? const Color(0xFFFFCC80) : const Color(0xFF5D4037),
                         ),
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded,
-                        size: 18, color: Color(0xFFE65100)),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100),
+                    ),
                   ],
                 ),
               ),
@@ -539,12 +556,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         ],
       ),
     );
+    );
   }
 
   // ===========================================================================
   // LOT & SUBPLOT DROPDOWN FIELD
   // ===========================================================================
   Widget _buildLotSubplotDropdown(AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final textPrimary = AppColors.getTextPrimary(context);
+    final textMuted = AppColors.getTextMuted(context);
+
     final validValues = <String>{'farm'};
     for (final lot in _lots) {
       validValues.add('lot:${lot['id']}');
@@ -565,7 +587,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B5E20),
+                color: isDark ? const Color(0xFF24362B) : const Color(0xFF1B5E20),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -584,10 +606,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     s.kWholeFarmGeneral,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E2D24),
+                      color: textPrimary,
                     ),
                   ),
                   Text(
@@ -596,7 +618,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color: textMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -624,13 +646,15 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0F2F1),
+                  color: isDark ? const Color(0xFF1B3028) : const Color(0xFFE0F2F1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFB2DFDB)),
+                  border: Border.all(
+                    color: isDark ? AppColors.borderDark : const Color(0xFFB2DFDB),
+                  ),
                 ),
                 child: Icon(
                   lotIcon,
-                  color: const Color(0xFF00695C),
+                  color: isDark ? const Color(0xFF80CBC4) : const Color(0xFF00695C),
                   size: 18,
                 ),
               ),
@@ -644,10 +668,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       '${s.kLot}: $lotName',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E2D24),
+                        color: textPrimary,
                       ),
                     ),
                     Text(
@@ -656,7 +680,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: textMuted,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -682,56 +706,58 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           DropdownMenuItem<String>(
             value: 'sub:$spId',
             child: Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFC8E6C9)),
-                  ),
-                  child: Icon(
-                    spIcon,
-                    color: const Color(0xFF2E7D32),
-                    size: 18,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E3024) : const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? AppColors.borderDark : const Color(0xFFC8E6C9),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '$lotName › $spName',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E2D24),
-                        ),
-                      ),
-                      Text(
-                        '$spCrop ($spSoil) • $spSurface ha',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: Icon(
+                  spIcon,
+                  color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
+                  size: 18,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$lotName › $spName',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '$spCrop ($spSoil) • $spSurface ha',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        );
-      }
+        ),
+      );
     }
+  }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
@@ -739,10 +765,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF4F8F5),
+          color: AppColors.getInputBg(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFFA5D6A7),
+            color: isDark ? AppColors.borderDark : const Color(0xFFA5D6A7),
             width: 1.4,
           ),
         ),
@@ -754,16 +780,16 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             icon: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: isDark ? AppColors.primary.withValues(alpha: 0.22) : const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.keyboard_arrow_down_rounded,
-                color: Color(0xFF1B5E20),
+                color: isDark ? AppColors.primaryLight : const Color(0xFF1B5E20),
                 size: 20,
               ),
             ),
-            dropdownColor: Colors.white,
+            dropdownColor: AppColors.getCardBg(context),
             borderRadius: BorderRadius.circular(16),
             items: items,
             onChanged: _onContextDropdownChanged,
@@ -777,6 +803,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // 1. PREDICCIÓN DE RIEGO Y DÉFICIT
   // ===========================================================================
   Widget _buildIrrigationTab(IrrigationPrediction item, AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final Color statusColor;
     final IconData statusIcon;
     final String statusLabel;
@@ -889,7 +916,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                         Text(
                           '${s.kCropPrefix} $_selectedCrop • ${s.kSoilPrefix} $_selectedSoil',
                           style: TextStyle(
-                              fontSize: 11, color: Colors.grey.shade700),
+                              fontSize: 11,
+                              color: isDark ? AppColors.textMutedDark : Colors.grey.shade700),
                         ),
                       ],
                     ),
@@ -901,15 +929,16 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.getCardBg(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(
+                      color: isDark ? AppColors.borderDark : Colors.grey.shade200),
                 ),
                 child: Text(
                   item.actionRecommendation,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade800,
+                    color: AppColors.getTextPrimary(context),
                     height: 1.35,
                   ),
                 ),
@@ -977,9 +1006,11 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFFAF6F0),
+            color: isDark ? const Color(0xFF221C16) : const Color(0xFFFAF6F0),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE0D7C6)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF3E3228) : const Color(0xFFE0D7C6),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -987,7 +1018,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               _buildIconBadge(
                 icon: Icons.terrain_rounded,
                 color: const Color(0xFF5D4037),
-                bgColor: const Color(0xFFEFEBE9),
+                bgColor: isDark ? const Color(0xFF33261C) : const Color(0xFFEFEBE9),
                 size: 22,
                 containerSize: 40,
               ),
@@ -998,10 +1029,12 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   children: [
                     Text(
                       s.kSoilImpactTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF4A3E2C),
+                        color: isDark
+                            ? const Color(0xFFE5D5C5)
+                            : const Color(0xFF4A3E2C),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1009,7 +1042,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       EveKnowledgeBase.getSoilScientificConcept(_selectedSoil),
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade800,
+                        color: AppColors.getTextPrimary(context),
                         height: 1.35,
                       ),
                     ),
@@ -1029,6 +1062,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
 
   Widget _buildIrrigationSystemsCatalog(
       IrrigationPrediction item, AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final systems = EveKnowledgeBase.getIrrigationSystemsForSoil(
       soilType: _selectedSoil,
       recommendedWaterMm: item.recommendedWaterMm,
@@ -1039,7 +1073,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       decoration: BoxDecoration(
         color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFC8E6C9)),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFFC8E6C9),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1049,7 +1085,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               _buildIconBadge(
                 icon: Icons.opacity_rounded,
                 color: const Color(0xFF0277BD),
-                bgColor: const Color(0xFFE1F5FE),
+                bgColor: isDark ? const Color(0xFF162D3D) : const Color(0xFFE1F5FE),
                 size: 20,
                 containerSize: 36,
               ),
@@ -1060,17 +1096,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   children: [
                     Text(
                       s.kIrrigationSystemsSectionTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E2D24),
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Text(
                       s.kIrrigationSystemsSectionSub,
                       style: TextStyle(
                         fontSize: 10.5,
-                        color: Colors.grey.shade600,
+                        color: AppColors.getTextMuted(context),
                       ),
                     ),
                   ],
@@ -1086,13 +1122,13 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isRec
-                    ? const Color(0xFFF1F8E9)
-                    : const Color(0xFFF9FAFB),
+                    ? (isDark ? const Color(0xFF1B2F21) : const Color(0xFFF1F8E9))
+                    : (isDark ? const Color(0xFF1A261F) : const Color(0xFFF9FAFB)),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isRec
                       ? const Color(0xFF2E7D32)
-                      : Colors.grey.shade200,
+                      : (isDark ? AppColors.borderDark : Colors.grey.shade200),
                   width: isRec ? 1.5 : 1.0,
                 ),
               ),
@@ -1107,7 +1143,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                             : Icons.water_drop_outlined,
                         size: 16,
                         color: isRec
-                            ? const Color(0xFF1B5E20)
+                            ? (isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20))
                             : const Color(0xFF0277BD),
                       ),
                       const SizedBox(width: 6),
@@ -1118,8 +1154,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
                             color: isRec
-                                ? const Color(0xFF1B5E20)
-                                : const Color(0xFF1E2D24),
+                                ? (isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20))
+                                : AppColors.getTextPrimary(context),
                           ),
                         ),
                       ),
@@ -1160,7 +1196,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                         style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade700,
+                          color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
                         ),
                       ),
                     ],
@@ -1170,7 +1206,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     sys.description,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade800,
+                      color: AppColors.getTextPrimary(context),
                       height: 1.35,
                     ),
                   ),
@@ -1196,6 +1232,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // 2. PREDICCIÓN DE ROTACIÓN Y COMPATIBILIDAD ESPACIAL
   // ===========================================================================
   Widget _buildRotationTab(RotationCompatibilityPrediction item, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
@@ -1203,13 +1241,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE8F5E9), Color(0xFFF1F8E9)],
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF1B2F22), const Color(0xFF14241A)]
+                  : [const Color(0xFFE8F5E9), const Color(0xFFF1F8E9)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFC8E6C9)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2E4E36) : const Color(0xFFC8E6C9),
+            ),
           ),
           child: Row(
             children: [
@@ -1223,7 +1265,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     child: CircularProgressIndicator(
                       value: item.score / 100.0,
                       strokeWidth: 8,
-                      backgroundColor: Colors.white,
+                      backgroundColor: isDark ? const Color(0xFF26382C) : Colors.white,
                       color: const Color(0xFF2E7D32),
                     ),
                   ),
@@ -1232,10 +1274,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     children: [
                       Text(
                         '${item.score}%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1B5E20),
+                          color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                         ),
                       ),
                       Text(
@@ -1256,10 +1298,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   children: [
                     Text(
                       item.compatibilityLevel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B5E20),
+                        color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1278,7 +1320,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           child: Text(
                             '${s.kCropPrefix} $_selectedCrop',
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade700),
+                                fontSize: 11,
+                                color: isDark ? AppColors.textMutedDark : Colors.grey.shade700),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1290,10 +1333,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                         Flexible(
                           child: Text(
                             item.suggestedCrop,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B5E20),
+                              color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1314,19 +1357,23 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF332014), const Color(0xFF26180E)]
+                    : [const Color(0xFFFFF3E0), const Color(0xFFFFE0B2)],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFFFB74D)),
+              border: Border.all(
+                color: isDark ? const Color(0xFF6B3A1A) : const Color(0xFFFFB74D),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildIconBadge(
                   icon: Icons.pest_control_rounded,
-                  color: const Color(0xFFE65100),
-                  bgColor: Colors.white,
+                  color: isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100),
+                  bgColor: isDark ? const Color(0xFF45220E) : Colors.white,
                   size: 24,
                   containerSize: 42,
                 ),
@@ -1337,17 +1384,18 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     children: [
                       Text(
                         s.kCorridorRiskTitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: Color(0xFFE65100),
+                          color: isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         s.kCorridorRiskDescription,
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF5D4037)),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFFE2C4A8) : const Color(0xFF5D4037)),
                       ),
                     ],
                   ),
@@ -1364,7 +1412,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           decoration: BoxDecoration(
             color: AppColors.getCardBg(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(
+                color: isDark ? AppColors.borderDark : Colors.grey.shade200),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1374,7 +1423,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   _buildIconBadge(
                     icon: Icons.agriculture_rounded,
                     color: const Color(0xFF2E7D32),
-                    bgColor: const Color(0xFFE8F5E9),
+                    bgColor: isDark ? const Color(0xFF1E3024) : const Color(0xFFE8F5E9),
                     size: 18,
                     containerSize: 30,
                   ),
@@ -1382,10 +1431,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   Expanded(
                     child: Text(
                       s.kAgroJustificationTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: Color(0xFF1E2D24),
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                   ),
@@ -1396,7 +1445,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 item.explanation,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade800,
+                  color: AppColors.getTextPrimary(context),
                   height: 1.4,
                 ),
               ),
@@ -1406,7 +1455,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   _buildIconBadge(
                     icon: Icons.auto_awesome_rounded,
                     color: const Color(0xFF2E7D32),
-                    bgColor: const Color(0xFFE8F5E9),
+                    bgColor: isDark ? const Color(0xFF1E3024) : const Color(0xFFE8F5E9),
                     size: 16,
                     containerSize: 28,
                   ),
@@ -1414,10 +1463,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   Expanded(
                     child: Text(
                       s.kAlternativeCropsTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
-                        color: Color(0xFF1E2D24),
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                   ),
@@ -1434,20 +1483,23 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
+                      color: isDark ? AppColors.chipBgDark : const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFC8E6C9)),
+                      border: Border.all(
+                          color: isDark ? AppColors.chipBorderDark : const Color(0xFFC8E6C9)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(altCropIcon, size: 14, color: const Color(0xFF1B5E20)),
+                        Icon(altCropIcon,
+                            size: 14,
+                            color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20)),
                         const SizedBox(width: 6),
                         Text(
                           c,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF1B5E20),
+                            color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1467,6 +1519,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // 3. PREDICCIÓN DE SIEMBRA, GDD Y PROYECCIÓN TRI-SEMANAL (21 DÍAS)
   // ===========================================================================
   Widget _buildCalendarTab(FarmPredictionsReport report, AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final item = report.calendar;
     final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
     final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
@@ -1492,16 +1545,20 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: item.isWindowOpen
-                  ? [const Color(0xFFE8F5E9), const Color(0xFFC8E6C9)]
-                  : [const Color(0xFFFFF8E1), const Color(0xFFFFECB3)],
+                  ? (isDark
+                      ? [const Color(0xFF1E3324), const Color(0xFF16261B)]
+                      : [const Color(0xFFE8F5E9), const Color(0xFFC8E6C9)])
+                  : (isDark
+                      ? [const Color(0xFF332A15), const Color(0xFF241D0E)]
+                      : [const Color(0xFFFFF8E1), const Color(0xFFFFECB3)]),
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: item.isWindowOpen
-                  ? const Color(0xFFA5D6A7)
-                  : const Color(0xFFFFD54F),
+                  ? (isDark ? const Color(0xFF2E5A38) : const Color(0xFFA5D6A7))
+                  : (isDark ? const Color(0xFF6B5820) : const Color(0xFFFFD54F)),
             ),
           ),
           child: Column(
@@ -1514,9 +1571,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                         ? Icons.calendar_month_rounded
                         : Icons.schedule_rounded,
                     color: item.isWindowOpen
-                        ? const Color(0xFF1B5E20)
-                        : const Color(0xFFE65100),
-                    bgColor: Colors.white,
+                        ? (isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20))
+                        : (isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100)),
+                    bgColor: isDark ? const Color(0xFF26382C) : Colors.white,
                     size: 26,
                     containerSize: 46,
                   ),
@@ -1531,8 +1588,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: item.isWindowOpen
-                                ? const Color(0xFF1B5E20)
-                                : const Color(0xFFE65100),
+                                ? (isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20))
+                                : (isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100)),
                           ),
                         ),
                         Text(
@@ -1540,7 +1597,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade900,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ],
@@ -1553,12 +1610,12 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: isDark ? const Color(0xFF1E2821) : Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   item.thermalAdvice,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade800),
+                  style: TextStyle(fontSize: 11, color: AppColors.getTextPrimary(context)),
                 ),
               ),
             ],
@@ -1572,7 +1629,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               child: _buildMetricCard(
                 icon: Icons.thermostat_rounded,
                 color: const Color(0xFFD84315),
-                bgColor: const Color(0xFFFBE9E7),
+                bgColor: isDark ? const Color(0xFF35201B) : const Color(0xFFFBE9E7),
                 title: s.kMetricThermalSumGdd,
                 value: '${item.accumulatedGdd7d} GDD',
                 subtitle: s.kMetricThermalSumGddSub,
@@ -1583,7 +1640,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               child: _buildMetricCard(
                 icon: Icons.local_florist_rounded,
                 color: const Color(0xFF6A1B9A),
-                bgColor: const Color(0xFFF3E5F5),
+                bgColor: isDark ? const Color(0xFF2E1C38) : const Color(0xFFF3E5F5),
                 title: s.kMetricDaysToFlowering,
                 value: '~${item.estimatedDaysToFlowering} ${s.kDaysUnit}',
                 subtitle: '${s.kCropPrefix} $_selectedCrop',
@@ -1599,7 +1656,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           decoration: BoxDecoration(
             color: AppColors.getCardBg(context),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFC8E6C9)),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : const Color(0xFFC8E6C9),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1609,7 +1668,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   _buildIconBadge(
                     icon: Icons.date_range_rounded,
                     color: const Color(0xFF1B5E20),
-                    bgColor: const Color(0xFFE8F5E9),
+                    bgColor: isDark ? const Color(0xFF1E3024) : const Color(0xFFE8F5E9),
                     size: 20,
                     containerSize: 36,
                   ),
@@ -1620,10 +1679,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       children: [
                         Text(
                           s.kThreeWeekProjectionTitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E2D24),
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                         Text(
@@ -1631,7 +1690,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade600,
+                            color: AppColors.getTextMuted(context),
                           ),
                         ),
                       ],
@@ -1645,9 +1704,11 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7FAF7),
+                    color: isDark ? const Color(0xFF1B271F) : const Color(0xFFF7FAF7),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE0E7E1)),
+                    border: Border.all(
+                      color: isDark ? AppColors.borderDark : const Color(0xFFE0E7E1),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1674,10 +1735,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           Expanded(
                             child: Text(
                               phase.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1B5E20),
+                                color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                               ),
                             ),
                           ),
@@ -1697,7 +1758,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                         phase.recommendedAction,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade800,
+                          color: AppColors.getTextPrimary(context),
                           height: 1.35,
                         ),
                       ),
@@ -1711,7 +1772,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 style: TextStyle(
                   fontSize: 10.5,
                   fontStyle: FontStyle.italic,
-                  color: Colors.grey.shade700,
+                  color: AppColors.getTextMuted(context),
                 ),
               ),
             ],
@@ -2347,15 +2408,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     required String value,
     required String subtitle,
   }) {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.getBorder(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -2368,8 +2431,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             children: [
               _buildIconBadge(
                 icon: icon,
-                color: color,
-                bgColor: bgColor,
+                color: isDark ? AppColors.primaryLight : color,
+                bgColor: isDark ? color.withValues(alpha: 0.22) : bgColor,
                 size: 16,
                 containerSize: 32,
               ),
@@ -2380,7 +2443,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
               ),
@@ -2389,16 +2452,16 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E2D24),
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 9, color: AppColors.getTextMuted(context)),
           ),
         ],
       ),
