@@ -50,6 +50,19 @@ class DatabaseManager {
       if (!hasLotCrop) {
         await db.execute('ALTER TABLE lots ADD COLUMN crop TEXT');
       }
+
+      // Ensure subplot_adjacencies table exists for graph topology
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS subplot_adjacencies (
+          source_subplot_id INTEGER NOT NULL,
+          target_subplot_id INTEGER NOT NULL,
+          relationship_type TEXT NOT NULL DEFAULT 'neighbor',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (source_subplot_id, target_subplot_id),
+          FOREIGN KEY (source_subplot_id) REFERENCES subplots (id) ON DELETE CASCADE,
+          FOREIGN KEY (target_subplot_id) REFERENCES subplots (id) ON DELETE CASCADE
+        )
+      ''');
     } catch (_) {}
   }
 
@@ -102,6 +115,19 @@ class DatabaseManager {
         crop TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (lot_id) REFERENCES lots (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Subplot Adjacencies Table (Graph Topology Edges)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS subplot_adjacencies (
+        source_subplot_id INTEGER NOT NULL,
+        target_subplot_id INTEGER NOT NULL,
+        relationship_type TEXT NOT NULL DEFAULT 'neighbor',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (source_subplot_id, target_subplot_id),
+        FOREIGN KEY (source_subplot_id) REFERENCES subplots (id) ON DELETE CASCADE,
+        FOREIGN KEY (target_subplot_id) REFERENCES subplots (id) ON DELETE CASCADE
       )
     ''');
   }
@@ -449,6 +475,125 @@ class DatabaseManager {
       where: 'id = ?',
       whereArgs: [subplotId],
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Subplot Graph & Adjacencies Operations
+  // ---------------------------------------------------------------------------
+
+  /// Adds a neighbor connection between two subplots.
+  /// If [bidirectional] is true, both (source -> target) and (target -> source) are recorded.
+  Future<void> addSubplotNeighbor(
+    int sourceSubplotId,
+    int targetSubplotId, {
+    String relationshipType = 'neighbor',
+    bool bidirectional = true,
+  }) async {
+    final Database db = await database;
+    await db.transaction((txn) async {
+      await txn.insert(
+        'subplot_adjacencies',
+        {
+          'source_subplot_id': sourceSubplotId,
+          'target_subplot_id': targetSubplotId,
+          'relationship_type': relationshipType,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      if (bidirectional) {
+        await txn.insert(
+          'subplot_adjacencies',
+          {
+            'source_subplot_id': targetSubplotId,
+            'target_subplot_id': sourceSubplotId,
+            'relationship_type': relationshipType,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  /// Sets the primary neighbor for a subplot, replacing any previous adjacency.
+  Future<void> setSubplotNeighbor(
+    int sourceSubplotId,
+    int targetSubplotId, {
+    String relationshipType = 'neighbor',
+  }) async {
+    final Database db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        'subplot_adjacencies',
+        where: 'source_subplot_id = ? OR target_subplot_id = ?',
+        whereArgs: [sourceSubplotId, sourceSubplotId],
+      );
+
+      await txn.insert(
+        'subplot_adjacencies',
+        {
+          'source_subplot_id': sourceSubplotId,
+          'target_subplot_id': targetSubplotId,
+          'relationship_type': relationshipType,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await txn.insert(
+        'subplot_adjacencies',
+        {
+          'source_subplot_id': targetSubplotId,
+          'target_subplot_id': sourceSubplotId,
+          'relationship_type': relationshipType,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+  }
+
+  /// Removes any adjacent neighbors connected to [subplotId].
+  Future<void> clearSubplotNeighbors(int subplotId) async {
+    final Database db = await database;
+    await db.delete(
+      'subplot_adjacencies',
+      where: 'source_subplot_id = ? OR target_subplot_id = ?',
+      whereArgs: [subplotId, subplotId],
+    );
+  }
+
+  /// Returns all subplots that are adjacent to [subplotId].
+  Future<List<Map<String, dynamic>>> getSubplotAdjacencies(int subplotId) async {
+    final Database db = await database;
+    return await db.rawQuery('''
+      SELECT a.source_subplot_id, a.target_subplot_id, a.relationship_type,
+             s.name as target_name, s.crop as target_crop, s.soil_type as target_soil_type,
+             s.lot_id as target_lot_id
+      FROM subplot_adjacencies a
+      JOIN subplots s ON a.target_subplot_id = s.id
+      WHERE a.source_subplot_id = ?
+    ''', [subplotId]);
+  }
+
+  /// Returns all candidate neighbor subplots within the same farm.
+  Future<List<Map<String, dynamic>>> getCandidateNeighbors(int currentLotId) async {
+    final Database db = await database;
+    final lot = await db.query(
+      'lots',
+      columns: ['farm_id'],
+      where: 'id = ?',
+      whereArgs: [currentLotId],
+      limit: 1,
+    );
+    if (lot.isEmpty) return await getSubplotsByLot(currentLotId);
+    final farmId = lot.first['farm_id'];
+
+    return await db.rawQuery('''
+      SELECT s.id, s.name, s.crop, s.soil_type, s.lot_id, l.name as lot_name
+      FROM subplots s
+      JOIN lots l ON s.lot_id = l.id
+      WHERE l.farm_id = ?
+      ORDER BY l.id ASC, s.id ASC
+    ''', [farmId]);
   }
 
   // ---------------------------------------------------------------------------
