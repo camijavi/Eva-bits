@@ -260,27 +260,7 @@ class _LotsScreenState extends State<LotsScreen> {
               );
             }
           },
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.arrow_back_rounded,
-              color: Color(0xFF0F5A37),
-              size: 24,
-            ),
-          ),
+          
         ),
         // Plus icon button to add new lots
         Material(
