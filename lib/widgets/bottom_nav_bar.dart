@@ -123,30 +123,26 @@ class CustomBottomNavBar extends StatelessWidget {
             if (index == currentIndex) return;
 
             if (index == 0) {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                Navigator.of(context).pushReplacement(
-                  createBottomNavPageRoute(
-                    const DashboardScreen(),
-                    fromLeft: true,
-                    animationType: animationType,
-                  ),
-                );
-              }
+              Navigator.of(context).pushReplacement(
+                createBottomNavPageRoute(
+                  const DashboardScreen(),
+                  fromLeft: true,
+                  animationType: animationType,
+                ),
+              );
             } else if (index == 1) {
-              Navigator.of(context).push(
+              Navigator.of(context).pushReplacement(
                 createBottomNavPageRoute(
                   const LotsScreen(),
-                  fromLeft: false,
+                  fromLeft: index < currentIndex,
                   animationType: animationType,
                 ),
               );
             } else if (index == 2) {
-              Navigator.of(context).push(
+              Navigator.of(context).pushReplacement(
                 createBottomNavPageRoute(
                   const PredictionsScreen(),
-                  fromLeft: false,
+                  fromLeft: index < currentIndex,
                   animationType: animationType,
                 ),
               );

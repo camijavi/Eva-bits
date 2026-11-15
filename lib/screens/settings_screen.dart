@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
+import '../widgets/eve_animated_avatar.dart';
 import 'dashboard_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -12,6 +13,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  EveEmote _previewEmote = EveEmote.greeting;
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +83,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 12),
                       _buildUnitsSelector(s, cardBg, borderColor, textColor, subtextColor),
+                      const SizedBox(height: 24),
+
+                      // 4. Eve Virtual Assistant Visibility (Show Eve / Hide Eve) & Emote Preview
+                      _buildSectionTitle(
+                        icon: Icons.auto_awesome_rounded,
+                        title: s.kEveVisibilitySectionTitle,
+                        subtitle: s.kEveVisibilitySectionSubtitle,
+                        textColor: textColor,
+                        subtextColor: subtextColor,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEveVisibilitySelector(s, cardBg, borderColor, textColor, subtextColor),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -87,6 +102,105 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildEveVisibilitySelector(
+    AppStrings s,
+    Color cardBg,
+    Color borderColor,
+    Color textColor,
+    Color subtextColor,
+  ) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppSettings.showEve,
+      builder: (context, isEveVisible, _) {
+        return Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor, width: 1.2),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildOptionTile(
+                title: s.kShowEveOption,
+                subtitle: s.kShowEveSubtitle,
+                isSelected: isEveVisible,
+                onTap: () => AppSettings.setShowEve(true),
+                textColor: textColor,
+              ),
+              Divider(height: 1, color: borderColor),
+              _buildOptionTile(
+                title: s.kHideEveOption,
+                subtitle: s.kHideEveSubtitle,
+                isSelected: !isEveVisible,
+                onTap: () => AppSettings.setShowEve(false),
+                textColor: textColor,
+              ),
+              if (isEveVisible) ...[
+                Divider(height: 1, color: borderColor),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F8E9),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFC8E6C9)),
+                            ),
+                            child: EveAnimatedAvatar(
+                              emote: _previewEmote,
+                              size: 74,
+                              onTap: () {
+                                final nextIdx = (_previewEmote.index + 1) %
+                                    EveEmote.values.length;
+                                setState(() {
+                                  _previewEmote = EveEmote.values[nextIdx];
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  s.kEvePreviewEmoteLabel,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                EveEmotePreviewSelector(
+                                  selectedEmote: _previewEmote,
+                                  s: s,
+                                  onEmoteSelected: (emote) {
+                                    setState(() => _previewEmote = emote);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
         );
       },
     );
@@ -325,12 +439,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               size: 26,
             ),
             const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? const Color(0xFF0F5A37) : textColor,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? const Color(0xFF0F5A37) : textColor,
+                ),
               ),
             ),
           ],
@@ -368,20 +487,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.square_foot_rounded, color: Color(0xFF0F5A37), size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            s.kSurfaceUnitsTitle,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(Icons.square_foot_rounded, color: Color(0xFF0F5A37), size: 20),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                s.kSurfaceUnitsTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       // Current unit badge as shown on new_edit_plot.dart
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -460,12 +586,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const Icon(Icons.thermostat_rounded, color: Color(0xFF0F5A37), size: 20),
               const SizedBox(width: 8),
-              Text(
-                s.kTemperatureUnitsTitle,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
+              Expanded(
+                child: Text(
+                  s.kTemperatureUnitsTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
               ),
             ],
@@ -531,6 +661,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Center(
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,

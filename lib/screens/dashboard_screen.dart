@@ -4,11 +4,11 @@ import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/eve_animated_avatar.dart';
 import '../services/app_settings.dart';
 import '../services/nasa_power_service.dart';
 import '../services/agro_prediction_engine.dart';
 import '../services/subplot_graph_service.dart';
-import '../services/azure_ai_service.dart';
 import 'farm_info.dart';
 import 'predictions_screen.dart';
 import 'settings_screen.dart';
@@ -63,10 +63,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               await DatabaseManager().getAllLotsWithSubplots(farmId: farmId);
           final List<Map<String, dynamic>> flatSubplots = [];
           for (final lot in lotsWithSubplots) {
+            final lotCrop = lot['crop']?.toString();
             final spList = lot['subplots'] as List<dynamic>? ?? [];
+            if (spList.isEmpty && lotCrop != null && lotCrop.isNotEmpty) {
+              flatSubplots.add({
+                'name': lot['name'] ?? 'Lote',
+                'crop': lotCrop,
+                'soil_type': 'Franco',
+              });
+            }
             for (final sp in spList) {
               if (sp is Map<String, dynamic>) {
-                flatSubplots.add(sp);
+                final copy = Map<String, dynamic>.from(sp);
+                if ((copy['crop'] == null ||
+                        copy['crop'].toString().trim().isEmpty) &&
+                    lotCrop != null &&
+                    lotCrop.isNotEmpty) {
+                  copy['crop'] = lotCrop;
+                }
+                flatSubplots.add(copy);
               }
             }
           }
@@ -214,10 +229,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: s.kDashboardAction1,
                           chevronColor: const Color(0xFF4A7C59),
                           onTap: () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) =>
-                                    const PredictionsScreen(initialTab: 1),
+                            Navigator.of(context).pushReplacement(
+                              createBottomNavPageRoute(
+                                const PredictionsScreen(initialTab: 1),
                               ),
                             );
                           },
@@ -231,10 +245,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: s.kDashboardAction2,
                           chevronColor: const Color(0xFF5B8FB9),
                           onTap: () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) =>
-                                    const PredictionsScreen(initialTab: 0),
+                            Navigator.of(context).pushReplacement(
+                              createBottomNavPageRoute(
+                                const PredictionsScreen(initialTab: 0),
                               ),
                             );
                           },
@@ -248,10 +261,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: s.kDashboardAction3,
                           chevronColor: const Color(0xFFBCA05A),
                           onTap: () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) =>
-                                    const PredictionsScreen(initialTab: 5),
+                            Navigator.of(context).pushReplacement(
+                              createBottomNavPageRoute(
+                                const PredictionsScreen(initialTab: 5),
                               ),
                             );
                           },
@@ -265,16 +277,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF1B5E20),
-          foregroundColor: Colors.white,
-          elevation: 3,
-          icon: const Icon(Icons.auto_awesome_rounded, size: 20),
-          label: const Text(
-            'Preguntar a Ivy',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-          onPressed: () => _showIvyConsultationSheet(context),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: EveFloatingLauncherButton(
+          tooltip: s.kAskIvyTooltip,
+          farmData: _dbFarm ??
+              {
+                'name': widget.farmName ?? 'Mi Finca',
+                'zone': widget.location ?? 'Nicaragua',
+                'total_surface': 2.5,
+                'unit': 'ha',
+              },
+          nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
+          report: _getPredictionsReport(),
+          graph: _farmGraph,
+          subplots: _farmSubplots,
         ),
         bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
         );
@@ -930,404 +946,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // ACTION MODALS (IVY AI)
-  // ===========================================================================
-
-  void _showIvyConsultationSheet(BuildContext context, {String? initialQuery}) {
-    final report = _getPredictionsReport();
-    final query = initialQuery ??
-        '¿Cuáles son las recomendaciones agroecológicas prioritarias para mi finca hoy?';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return _IvyChatModal(
-          initialQuery: query,
-          farmData: _dbFarm ?? {
-            'name': widget.farmName ?? 'Mi Finca',
-            'zone': widget.location ?? 'Nicaragua',
-            'total_surface': 2.5,
-            'unit': 'ha',
-          },
-          nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
-          report: report,
-          graph: _farmGraph,
-          subplots: _farmSubplots,
-        );
-      },
-    );
-  }
-}
-
-// =============================================================================
-// IVY AI CHAT BOTTOM SHEET (GPT-5-MINI GROUNDED)
-// =============================================================================
-
-class _IvyChatModal extends StatefulWidget {
-  final String initialQuery;
-  final Map<String, dynamic> farmData;
-  final Map<String, dynamic> nasaData;
-  final FarmPredictionsReport report;
-  final SubplotGraph? graph;
-  final List<Map<String, dynamic>> subplots;
-
-  const _IvyChatModal({
-    required this.initialQuery,
-    required this.farmData,
-    required this.nasaData,
-    required this.report,
-    required this.graph,
-    required this.subplots,
-  });
-
-  @override
-  State<_IvyChatModal> createState() => _IvyChatModalState();
-}
-
-class _IvyChatModalState extends State<_IvyChatModal> {
-  final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final List<Map<String, String>> _messages = [];
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _askIvy(widget.initialQuery);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _askIvy(String userQuery) async {
-    setState(() {
-      _messages.add({'role': 'user', 'text': userQuery});
-      _isLoading = true;
-    });
-    _scrollToBottom();
-
-    try {
-      final response = await AzureAiService.askIvy(
-        userQuery: userQuery,
-        farmData: widget.farmData,
-        nasaData: widget.nasaData,
-        predictionsReport: widget.report,
-        graph: widget.graph,
-        subplots: widget.subplots,
-      );
-
-      if (mounted) {
-        setState(() {
-          _messages.add({'role': 'assistant', 'text': response});
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _messages.add({
-            'role': 'assistant',
-            'text':
-                'Ocurrió un error al consultar a Ivy. Por favor intenta de nuevo.'
-          });
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      }
-    }
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.90,
-      margin: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 48,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1B5E20),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.auto_awesome_rounded,
-                        color: Colors.white, size: 24),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Ivy • Copiloto Agroclimático',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E2D24),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2E7D32),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'gpt-5-mini • Grounding NASA',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-
-          // Message list
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: _messages.length + (_isLoading ? 1 : 0),
-              itemBuilder: (ctx, index) {
-                if (index == _messages.length && _isLoading) {
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F8E9),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFDCEDC8)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFF2E7D32),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Ivy está analizando tus datos satelitales...',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade800,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                final msg = _messages[index];
-                final isUser = msg['role'] == 'user';
-
-                return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.82,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isUser
-                          ? const Color(0xFF1B5E20)
-                          : const Color(0xFFF7FAF7),
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(18),
-                        topRight: const Radius.circular(18),
-                        bottomLeft: isUser
-                            ? const Radius.circular(18)
-                            : const Radius.circular(4),
-                        bottomRight: isUser
-                            ? const Radius.circular(4)
-                            : const Radius.circular(18),
-                      ),
-                      border: isUser
-                          ? null
-                          : Border.all(color: const Color(0xFFE0E0E0)),
-                    ),
-                    child: Text(
-                      msg['text'] ?? '',
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: isUser ? Colors.white : const Color(0xFF1E2D24),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Quick Chips
-          SizedBox(
-            height: 38,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildQuickChip('🌾 ¿Qué rotación me conviene?'),
-                _buildQuickChip('💧 ¿Cuánta agua regar?'),
-                _buildQuickChip('⚡ ¿Hay alertas climáticas?'),
-                _buildQuickChip('🧪 ¿Aporte de nitrógeno?'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Input field
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(color: Colors.grey.shade200),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    textInputAction: TextInputAction.send,
-                    decoration: InputDecoration(
-                      hintText: 'Pregunta a Ivy sobre tu finca...',
-                      hintStyle: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade500),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      filled: true,
-                      fillColor: const Color(0xFFF1F6F2),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onSubmitted: (text) {
-                      final q = text.trim();
-                      if (q.isNotEmpty && !_isLoading) {
-                        _controller.clear();
-                        _askIvy(q);
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 6),
-                IconButton(
-                  icon: const Icon(Icons.send_rounded,
-                      color: Color(0xFF1B5E20)),
-                  onPressed: () {
-                    final q = _controller.text.trim();
-                    if (q.isNotEmpty && !_isLoading) {
-                      _controller.clear();
-                      _askIvy(q);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickChip(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
-        backgroundColor: const Color(0xFFEAF5EC),
-        side: const BorderSide(color: Color(0xFFC8E6C9)),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        label: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFF1B5E20),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        onPressed: _isLoading
-            ? null
-            : () {
-                _askIvy(label);
-              },
       ),
     );
   }

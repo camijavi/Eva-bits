@@ -4,6 +4,7 @@ import '../constants/crop_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/eve_animated_avatar.dart';
 import '../widgets/new_edit_plot.dart';
 import '../services/app_settings.dart';
 import 'subplot_screen.dart';
@@ -251,14 +252,11 @@ class _LotsScreenState extends State<LotsScreen> {
               ),
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: const Color(0xFF0F5A37),
-            foregroundColor: Colors.white,
-            elevation: 4,
-            shape: const CircleBorder(),
-            tooltip: s.kAddLot,
-            onPressed: _openAddLotModal,
-            child: const Icon(Icons.add_rounded, size: 28),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: EveFloatingLauncherButton(
+            tooltip: s.kAskIvyTooltip,
+            onAddPressed: _openAddLotModal,
+            addTooltip: s.kAddLot,
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
         );

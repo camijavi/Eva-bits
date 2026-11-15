@@ -259,7 +259,7 @@ const String kCropUpdatedSuccessfully = 'Crop updated successfully!';
 // Agroclimatic Predictions Screen
 const String kPredictionsTitle = 'Agroclimatic Predictions';
 const String kPredictionsSubtitle = 'NASA POWER • SMAP L4 • Spatial Graph';
-const String kAskIvyTooltip = 'Ask Ivy AI';
+const String kAskIvyTooltip = 'Ask Eve AI';
 const String kTabIrrigation = 'Irrigation';
 const String kTabRotation = 'Rotation';
 const String kTabPlantingGdd = 'Planting';
@@ -303,11 +303,11 @@ const String kSimulatorTitle = 'Crop & Soil Simulator';
 const String kSimulatorCropQuestion = 'Which crop do you want to test?';
 const String kSimulatorSoilQuestion = 'What type of soil does your parcel have?';
 const String kSimulatorApplyButton = 'Calculate this Scenario';
-const String kAskIvyButton = 'Ask Ivy';
-const String kIvyCopilotTitle = 'Ivy • Agroclimatic Copilot';
-const String kIvyAnalyzingScenario = 'Ivy is analyzing your satellite data and crop...';
-const String kIvyInputHint = 'Ask Ivy anything about your farm...';
-const String kIvyErrorMessage = 'An error occurred while contacting Ivy. Please try again.';
+const String kAskIvyButton = 'Ask Eve';
+const String kIvyCopilotTitle = 'Eve • Agroecological Assistant';
+const String kIvyAnalyzingScenario = 'Eve is analyzing your satellite, soil, and crop data...';
+const String kIvyInputHint = 'Ask Eve anything about your farm...';
+const String kIvyErrorMessage = 'An error occurred while contacting Eve. Please try again.';
 const String kStatusAttentionRequired = 'Attention Required!';
 const String kStatusPlanIrrigation = 'Plan Irrigation';
 const String kStatusOptimalMoisture = 'Optimal Moisture';
@@ -403,6 +403,58 @@ const String kSoilNutritionDiagnosisCerealStandard =
 
 const String kDefaultCropName = 'Corn';
 const String kDefaultSoilName = 'Loam';
+
+// Eve Advanced Capabilities (Biotech Corpus, 3-Week Projections, Irrigation Systems)
+const String kWeeklyNotificationBannerTitle = 'Weekly Checkpoint (+7 Days): View changes detected by Eve';
+const String kWeeklyDeltaDialogTitle = 'Weekly Parcel Evolution (+7 Days)';
+const String kIrrigationSystemsSectionTitle = 'Recommended Irrigation Systems';
+const String kIrrigationSystemsSectionSub = 'Tailored to your parcel soil type';
+const String kRecommendedSystemBadge = 'Best for your soil';
+const String kEfficiencyLabel = 'Efficiency:';
+const String kBestForSoilLabel = 'Ideal soil:';
+const String kThreeWeekProjectionTitle = '3-Week Rolling Projection';
+const String kThreeWeekProjectionSub = '21-day operational horizon with weekly checkpoints';
+const String kNaturalPhenomenaSectionTitle = 'Natural Phenomena & Weather Alerts';
+const String kCropPestsSectionTitle = 'Crop Pest & Disease Warnings';
+const String kHighRiskBadge = 'High Risk';
+const String kModerateRiskBadge = 'Monitor';
+const String kPreventionLabel = 'Prevention:';
+const String kSourceLabel = 'Source:';
+const String kQuickPromptPests = 'What pests threaten my crop?';
+const String kQuickPromptPhenomena = 'What weather alerts affect my area?';
+const String kQuickPrompt3Weeks = 'View 3-week projection';
+const String kQuickPromptIrrigation = 'Which irrigation system fits my soil?';
+
+// Eve Animated Mascot & Settings Visibility
+const String kEveVisibilitySectionTitle = 'Eve Virtual Assistant';
+const String kEveVisibilitySectionSubtitle = 'Show or hide the animated cow mascot Eve across app screens';
+const String kShowEveOption = 'Show Eve';
+const String kShowEveSubtitle = 'Eve accompanies you with animations, alerts, and interactive guidance';
+const String kHideEveOption = 'Hide Eve';
+const String kHideEveSubtitle = 'Compact mode displaying data cards only';
+const String kEvePreviewEmoteLabel = 'Tap an emote to see Eve react:';
+const String kEmoteGreeting = 'Wave';
+const String kEmoteAlert = 'Alert !';
+const String kEmoteSad = 'Sad';
+const String kEmoteSurprised = 'Surprised';
+const String kEmoteHappy = 'Happy';
+const String kEmoteThumbsUp = 'Thumbs up';
+const String kEmoteThumbsDown = 'Thumbs down';
+const String kEmotePointing = 'Pointing';
+const String kEmoteJumping = 'Jumping';
+const String kEmoteCalm = 'Calm';
+const String kEveGuideBannerTitle = 'Hi! I am Eve, your farming guide';
+const String kEveGuideStep1 = 'Step 1: Use the dropdown menu to select Whole Farm, a Lot, or a specific Subplot.';
+const String kEveGuideStep2 = 'Step 2: Tap "Simulate what if..." to test how another crop or soil changes your results.';
+const String kEveGuideStep3 = 'Step 3: Review 3-week projections, irrigation systems, and NASA-backed pest warnings.';
+const String kEveGuideNextTip = 'Next tip';
+const String kEveReactionIrrigationCritical = 'Watch out! Your soil is critically dry. Apply irrigation soon.';
+const String kEveReactionIrrigationModerate = 'I am pointing below to the ideal irrigation system to save water.';
+const String kEveReactionIrrigationOptimal = 'Awesome! Root-zone moisture is optimal according to NASA SMAP.';
+const String kEveReactionRotationGood = 'Thumbs up! This rotation regenerates your soil and fixes nitrogen.';
+const String kEveReactionRotationRisk = 'Be careful planting the same crop family next to adjacent plots.';
+const String kEveReactionRisksAlert = 'Alert! Check the active crop pests and natural phenomena warnings.';
+
 
 
 

@@ -262,7 +262,7 @@ const String kCropUpdatedSuccessfully = '¡Cultivo actualizado con éxito!';
 // Agroclimatic Predictions Screen
 const String kPredictionsTitle = 'Predicciones Agroclimáticas';
 const String kPredictionsSubtitle = 'NASA POWER • SMAP L4 • Grafo Espacial';
-const String kAskIvyTooltip = 'Consultar a Ivy AI';
+const String kAskIvyTooltip = 'Consultar a Eve AI';
 const String kTabIrrigation = 'Riego';
 const String kTabRotation = 'Rotación';
 const String kTabPlantingGdd = 'Siembra';
@@ -306,11 +306,11 @@ const String kSimulatorTitle = 'Simulador de Cultivo y Suelo';
 const String kSimulatorCropQuestion = '¿Qué cultivo quieres probar?';
 const String kSimulatorSoilQuestion = '¿Qué tipo de tierra tiene tu parcela?';
 const String kSimulatorApplyButton = 'Calcular con este Escenario';
-const String kAskIvyButton = 'Preguntar a Ivy';
-const String kIvyCopilotTitle = 'Ivy • Copiloto Agroclimático';
-const String kIvyAnalyzingScenario = 'Ivy está analizando tus satélites y cultivo...';
-const String kIvyInputHint = 'Hazle una pregunta a Ivy sobre tu finca...';
-const String kIvyErrorMessage = 'Ocurrió un error al contactar a Ivy. Intenta de nuevo.';
+const String kAskIvyButton = 'Preguntar a Eve';
+const String kIvyCopilotTitle = 'Eve • Asistente Agroecológica';
+const String kIvyAnalyzingScenario = 'Eve está analizando tus satélites, suelo y cultivo...';
+const String kIvyInputHint = 'Hazle una pregunta a Eve sobre tu finca...';
+const String kIvyErrorMessage = 'Ocurrió un error al contactar a Eve. Intenta de nuevo.';
 const String kStatusAttentionRequired = '¡Atención Requerida!';
 const String kStatusPlanIrrigation = 'Planificar Riego';
 const String kStatusOptimalMoisture = 'Humedad Óptima';
@@ -406,6 +406,58 @@ const String kSoilNutritionDiagnosisCerealStandard =
 
 const String kDefaultCropName = 'Maíz';
 const String kDefaultSoilName = 'Franco';
+
+// Eve Advanced Capabilities (Biotech Corpus, 3-Week Projections, Irrigation Systems)
+const String kWeeklyNotificationBannerTitle = 'Control Semanal (+7 Días): Ver cambios detectados por Eve';
+const String kWeeklyDeltaDialogTitle = 'Evolución Semanal de tu Parcela (+7 Días)';
+const String kIrrigationSystemsSectionTitle = 'Sistemas de Riego Recomendados';
+const String kIrrigationSystemsSectionSub = 'Adaptados al tipo de suelo de tu parcela';
+const String kRecommendedSystemBadge = 'Ideal para tu suelo';
+const String kEfficiencyLabel = 'Eficiencia:';
+const String kBestForSoilLabel = 'Suelo ideal:';
+const String kThreeWeekProjectionTitle = 'Proyección a 3 Semanas';
+const String kThreeWeekProjectionSub = 'Horizonte operativo de 21 días con seguimiento semanal';
+const String kNaturalPhenomenaSectionTitle = 'Alertas de Fenómenos Naturales y Clima';
+const String kCropPestsSectionTitle = 'Alertas de Plagas y Enfermedades del Cultivo';
+const String kHighRiskBadge = 'Riesgo Alto';
+const String kModerateRiskBadge = 'Monitoreo';
+const String kPreventionLabel = 'Prevención:';
+const String kSourceLabel = 'Fuente:';
+const String kQuickPromptPests = '¿Qué plagas amenazan mi cultivo?';
+const String kQuickPromptPhenomena = '¿Qué fenómenos climáticos afectan mi zona?';
+const String kQuickPrompt3Weeks = 'Ver proyección de 3 semanas';
+const String kQuickPromptIrrigation = '¿Qué sistema de riego me conviene?';
+
+// Eve Animated Mascot & Settings Visibility
+const String kEveVisibilitySectionTitle = 'Asistente Virtual Eve';
+const String kEveVisibilitySectionSubtitle = 'Muestra u oculta a la vaquita animada Eve en las pantallas de la app';
+const String kShowEveOption = 'Mostrar a Eve';
+const String kShowEveSubtitle = 'Eve te acompaña con animaciones, alertas y guía interactiva';
+const String kHideEveOption = 'Ocultar a Eve';
+const String kHideEveSubtitle = 'Modo compacto mostrando únicamente tarjetas de datos';
+const String kEvePreviewEmoteLabel = 'Toca un emote para ver a Eve reaccionar:';
+const String kEmoteGreeting = 'Saludo';
+const String kEmoteAlert = 'Alerta !';
+const String kEmoteSad = 'Triste';
+const String kEmoteSurprised = 'Sorprendida';
+const String kEmoteHappy = 'Feliz';
+const String kEmoteThumbsUp = 'Pulgar arriba';
+const String kEmoteThumbsDown = 'Pulgar abajo';
+const String kEmotePointing = 'Señalando';
+const String kEmoteJumping = 'Saltando';
+const String kEmoteCalm = 'Tranquila';
+const String kEveGuideBannerTitle = '¡Hola! Soy Eve, tu guía agrícola';
+const String kEveGuideStep1 = 'Paso 1: Usa el menú desplegable para elegir Toda la Finca, un Lote o un Sublote específico.';
+const String kEveGuideStep2 = 'Paso 2: Toca "Simular qué pasa si..." para probar cómo otro cultivo o suelo cambia tus resultados.';
+const String kEveGuideStep3 = 'Paso 3: Revisa las proyecciones de 3 semanas, sistemas de riego y alertas de plagas con datos NASA.';
+const String kEveGuideNextTip = 'Siguiente consejo';
+const String kEveReactionIrrigationCritical = '¡Cuidado! Tu suelo tiene sed crítica. Aplica riego pronto.';
+const String kEveReactionIrrigationModerate = 'Señalo abajo el sistema de riego ideal para conservar tu agua.';
+const String kEveReactionIrrigationOptimal = '¡Excelente! La humedad en la raíz es óptima según NASA SMAP.';
+const String kEveReactionRotationGood = '¡Pulgar arriba! Esta rotación regenera tu suelo y aporta nitrógeno.';
+const String kEveReactionRotationRisk = 'Cuidado con sembrar la misma familia junto a lotes vecinos.';
+const String kEveReactionRisksAlert = '¡Alerta! Revisa las plagas de tu cultivo y fenómenos naturales activos.';
+
 
 
 
