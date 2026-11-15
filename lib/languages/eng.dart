@@ -407,21 +407,21 @@ const String kDefaultSoilName = 'Loam';
 // Eve Advanced Capabilities (Biotech Corpus, 3-Week Projections, Irrigation Systems)
 const String kWeeklyNotificationBannerTitle = 'Weekly Checkpoint (+7 Days): View changes detected by Eve';
 const String kWeeklyDeltaDialogTitle = 'Weekly Parcel Evolution (+7 Days)';
-const String kIrrigationSystemsSectionTitle = 'Recommended Precision Irrigation Systems';
-const String kIrrigationSystemsSectionSub = 'NASA-ISRO Mission (NISAR) • Bioversity Alliance & CIAT (2026)';
+const String kIrrigationSystemsSectionTitle = 'Recommended Irrigation Systems';
+const String kIrrigationSystemsSectionSub = 'Tailored to your parcel soil type';
 const String kRecommendedSystemBadge = 'Best for your soil';
 const String kEfficiencyLabel = 'Efficiency:';
 const String kBestForSoilLabel = 'Ideal soil:';
-const String kThreeWeekProjectionTitle = '3-Week Rolling Projection (Every 3 Weeks)';
+const String kThreeWeekProjectionTitle = '3-Week Rolling Projection';
 const String kThreeWeekProjectionSub = '21-day operational horizon with weekly checkpoints';
-const String kNaturalPhenomenaSectionTitle = 'Natural Phenomena Surveillance (NASA GPM / SMAP / GRACE)';
+const String kNaturalPhenomenaSectionTitle = 'Natural Phenomena & Weather Alerts';
 const String kCropPestsSectionTitle = 'Crop Pest & Disease Warnings';
 const String kHighRiskBadge = 'High Risk';
 const String kModerateRiskBadge = 'Monitor';
 const String kPreventionLabel = 'Prevention:';
 const String kSourceLabel = 'Source:';
 const String kQuickPromptPests = 'What pests threaten my crop?';
-const String kQuickPromptPhenomena = 'What natural phenomena is NASA tracking?';
+const String kQuickPromptPhenomena = 'What weather alerts affect my area?';
 const String kQuickPrompt3Weeks = 'View 3-week projection';
 const String kQuickPromptIrrigation = 'Which irrigation system fits my soil?';
 

@@ -88,7 +88,7 @@ class AzureAiService {
           final content =
               data['choices']?[0]?['message']?['content'] as String?;
           if (content != null && content.isNotEmpty) {
-            return content;
+            return content.replaceAll('*', '').trim();
           }
         }
       } catch (_) {
@@ -180,17 +180,17 @@ class AzureAiService {
 
     final phenomenaText = phenomena
         .map((p) =>
-            '- ${p.phenomenonName} [${p.severity.toUpperCase()}] (${p.citation}): ${p.description} Prevención: ${p.preventionMeasure}')
+            '- ${p.phenomenonName}: ${p.description} Prevención: ${p.preventionMeasure}')
         .join('\n');
 
     final pestsText = pests
         .map((p) =>
-            '- ${p.pestName} (${p.scientificName}) [Riesgo: ${p.riskLevel.toUpperCase()}] (Fuente: ${p.sourceCitation}): Disparador: ${p.climateTrigger}. Impacto: ${p.symptomsAndImpact} Prevención: ${p.preventionAction}')
+            '- ${p.pestName}: ${p.symptomsAndImpact} Prevención: ${p.preventionAction}')
         .join('\n');
 
     final irrigationText = irrigationSystems
         .map((i) =>
-            '- ${i.systemName} (Eficiencia ${i.efficiencyPct}, ideal para ${i.bestForSoil})${i.isRecommendedForCurrentSoil ? ' [RECOMENDADO PARA TU SUELO]' : ''}: ${i.description} (${i.nasaIntegrationNote})')
+            '- ${i.systemName} (Eficiencia ${i.efficiencyPct}, ideal para ${i.bestForSoil})${i.isRecommendedForCurrentSoil ? ' [RECOMENDADO]' : ''}: ${i.description}')
         .join('\n');
 
     final projectionText = projection3w.phases
@@ -199,52 +199,40 @@ class AzureAiService {
         .join('\n');
 
     return '''
-Eres Eve, la asistente virtual agroecológica y fitosanitaria de Eva-Bits para agricultores en el reto NASA Space Apps Challenge 2026 ("Field Shift: Adapting Farms with NASA Data").
-Operas con el modelo gpt-5-mini de Azure AI Foundry.
+Eres Eve, la asistente virtual agrícola para agricultores.
 
-REGLAS ESTRICTAS DE RESPUESTA Y CITACIÓN:
-1. Tu nombre es únicamente Eve (nunca te llames Ivy ni Evita).
-2. NUNCA uses emojis en tus respuestas. Usa viñetas limpias y subtítulos claros.
-3. CITA OBLIGATORIAMENTE LAS FUENTES EXACTAS que se te entregan en este contexto (ej. NASA POWER, NASA SMAP, NASA GPM, GRACE, Misión NASA-ISRO, Gray 2021, NASA Ciencia 2022/2024/2026, Alianza Bioversity and CIAT 2026, Vilela 2026, Cañizo s.f., Dubón 2006, Monge 2018, Murray y Aiston 2012, Delgado 2024, Porres y Cuxil 2024, Campos Hernández & Lugo Alonso 2012, JICA s.f., Deiss 2025, Sihdu 2022, Agrotec 2025).
-4. No inventes datos numéricos fuera de las lecturas satelitales y del motor determinista proporcionado.
-5. Mantén un tono empático, claro, práctico y orientado al agricultor.
+REGLAS ESTRICTAS DE RESPUESTA:
+1. Tu nombre es únicamente Eve.
+2. NUNCA uses símbolos de asteriscos (*, **, *****) ni formato Markdown en tus respuestas. Escribe texto limpio y directo.
+3. NUNCA menciones modelos de IA (como gpt-5-mini), ni cites autores, años o fuentes académicas. El agricultor solo busca la información práctica que necesita para su parcela.
+4. NUNCA uses emojis.
+5. Sé breve, clara, conversacional y directa.
 
-=== PERFIL DE LA FINCA Y PARCELA ACTIVA ===
+=== DATOS DE LA PARCELA ===
 - Finca: ${farm['name'] ?? 'Mi Finca'} (${farm['zone'] ?? 'Región Agrícola'})
-- Superficie total: ${farm['total_surface'] ?? 2.5} ${farm['unit'] ?? 'ha'}
-- Cultivo analizado: $crop
-- Tipo de suelo: $soil
-- Diagnóstico edafológico: $soilConcept
+- Cultivo: $crop | Suelo: $soil
+- Comportamiento del suelo: $soilConcept
+- Temperatura media: $tempC °C | Lluvia 7 días: $rainMm mm | Humedad en raíz: ${report.irrigation.soilMoisturePct}%
+- Topología de lotes: $topology
 
-=== TELEMETRÍA SATELITAL NASA ===
-- Temperatura media (NASA POWER T2M): $tempC °C
-- Precipitación 7 días (NASA GPM / POWER): $rainMm mm
-- Radiación solar (NASA POWER): $solarMj MJ/m²/día (~240 W/m² base climática según NASA, 2009)
-- Humedad radicular (NASA SMAP L4 GWETROOT): ${report.irrigation.soilMoisturePct}%
-
-=== TOPOLOGÍA ESPACIAL DE SUBLOTES ===
-$topology
-
-=== ADVERTENCIAS DE FENÓMENOS NATURALES Y CLIMA EXTREMO ===
+=== CLIMA Y FENÓMENOS ===
 $phenomenaText
 
-=== VIGILANCIA DE PLAGAS Y ENFERMEDADES PARA $crop ===
+=== PLAGAS A VIGILAR EN $crop ===
 $pestsText
 
-=== SISTEMAS DE RIEGO DE PRECISIÓN RECOMENDADOS ===
+=== SISTEMAS DE RIEGO ===
 $irrigationText
 
-=== PROYECCIÓN A 3 SEMANAS (${projection3w.fullDateRange}) Y CAMBIOS SEMANALES ===
+=== PROYECCIÓN A 3 SEMANAS (${projection3w.fullDateRange}) ===
 $projectionText
-- Comparativa últimos 7 días (${projection3w.weeklyCheckpointPeriod}): ${projection3w.weeklyChangesDetected.join(' ')}
-- ${projection3w.longTermClimateNote}
+- Cambios de la última semana (${projection3w.weeklyCheckpointPeriod}): ${projection3w.weeklyChangesDetected.join(' ')}
 
-=== PREDICCIONES DETERMINISTAS DEL MOTOR EVA-BITS ===
-- Riego: ${report.irrigation.actionTitle} | Déficit: ${report.irrigation.weeklyDeficitMm} mm | Lámina requerida: ${report.irrigation.recommendedWaterMm} mm.
-- Rotación: Compatibilidad ${report.rotation.score}% (${report.rotation.compatibilityLevel}) -> Sugerido: ${report.rotation.suggestedCrop}. Corredor de plagas: ${report.rotation.hasSpatialCorridorRisk ? 'SÍ' : 'NO'}.
-- Siembra y GDD: ${report.calendar.windowStatus} (${report.calendar.recommendedDateRange}) | ${report.calendar.accumulatedGdd7d} GDD acumulados.
-- Salud y Rendimiento (NDVI Proxy): ${report.health.vigorStatus} (NDVI ${report.health.estimatedNdviProxy}, rendimiento estimado ${report.health.expectedYieldRatioPct}%).
-- Balance de Nitrógeno: ${report.nutrition.projectedNitrogenGainKgPerHa} kg N/ha (Ahorro urea: ${report.nutrition.estimatedUreaSavingsKg} kg).
+=== RECOMENDACIONES CLAVE ===
+- Riego: ${report.irrigation.actionTitle} (Déficit: ${report.irrigation.weeklyDeficitMm} mm, aplicar ${report.irrigation.recommendedWaterMm} mm).
+- Rotación sugerida: ${report.rotation.suggestedCrop} (Compatibilidad ${report.rotation.score}%).
+- Siembra: ${report.calendar.windowStatus} (${report.calendar.recommendedDateRange}).
+- Nutrición: ${report.nutrition.projectedNitrogenGainKgPerHa} kg N/ha (ahorro estimado de ${report.nutrition.estimatedUreaSavingsKg} kg de urea).
 ''';
   }
 
@@ -257,8 +245,6 @@ $projectionText
     required String soil,
   }) {
     final es = AppLanguage.isSpanish;
-    final farmName = farm['name'] ?? (es ? 'tu finca' : 'your farm');
-    final zone = farm['zone'] ?? 'Nicaragua';
     final summary = nasa['summary'] as Map<String, dynamic>? ?? {};
     final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
     final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
@@ -307,80 +293,96 @@ $projectionText
       isSpanish: es,
     );
 
-    final pestsBullets = pests
-        .map((p) =>
-            '• **${p.pestName} (*${p.scientificName}*)** — *${p.sourceCitation}*:\n  ${p.symptomsAndImpact}\n  *Prevención:* ${p.preventionAction}')
-        .join('\n');
+    final qLower = query.toLowerCase();
 
-    final phenomenaBullets = phenomena
-        .take(2)
-        .map((ph) =>
-            '• **${ph.phenomenonName}** (*${ph.citation}*):\n  ${ph.description}\n  *Acción:* ${ph.preventionMeasure}')
-        .join('\n');
+    // Focused response if the farmer asked specifically about pests
+    if (qLower.contains('plaga') || qLower.contains('pest') || qLower.contains('enfermedad')) {
+      final pestLines = pests
+          .map((p) =>
+              '• ${p.pestName}: ${p.symptomsAndImpact}\n  Prevención: ${p.preventionAction}')
+          .join('\n\n');
+      return es
+          ? 'Para tu cultivo de $crop en suelo $soil, vigila principalmente estas plagas:\n\n$pestLines'
+          : 'For your $crop crop in $soil soil, watch out for these main pests:\n\n$pestLines';
+    }
 
-    final phasesBullets = projection3w.phases
-        .map((ph) =>
-            '• **${ph.title}** (${ph.dateRangeLabel}):\n  ${ph.expectedMetrics}\n  *Meta:* ${ph.recommendedAction}')
-        .join('\n');
+    // Focused response if the farmer asked about natural phenomena / weather
+    if (qLower.contains('fenómeno') || qLower.contains('fenomeno') || qLower.contains('phenomena') || qLower.contains('clima')) {
+      final phLines = phenomena
+          .take(3)
+          .map((ph) =>
+              '• ${ph.phenomenonName}: ${ph.description}\n  Recomendación: ${ph.preventionMeasure}')
+          .join('\n\n');
+      return es
+          ? 'Estas son las condiciones climáticas y alertas para tu zona:\n\n$phLines'
+          : 'Here are the weather conditions and alerts for your area:\n\n$phLines';
+    }
+
+    // Focused response if the farmer asked about 3-week projections
+    if (qLower.contains('3 semana') || qLower.contains('3-week') || qLower.contains('proyecci')) {
+      final phLines = projection3w.phases
+          .map((ph) =>
+              '• ${ph.title} (${ph.dateRangeLabel}):\n  ${ph.expectedMetrics}\n  Acción: ${ph.recommendedAction}')
+          .join('\n\n');
+      return es
+          ? 'Proyección de las próximas 3 semanas (${projection3w.fullDateRange}) para $crop:\n\n$phLines\n\nCambios de la última semana:\n• ${projection3w.weeklyChangesDetected.join('\n• ')}'
+          : 'Projection for the next 3 weeks (${projection3w.fullDateRange}) for $crop:\n\n$phLines\n\nChanges over the past week:\n• ${projection3w.weeklyChangesDetected.join('\n• ')}';
+    }
+
+    // Focused response if the farmer asked about irrigation systems
+    if (qLower.contains('riego') || qLower.contains('irrigat') || qLower.contains('agua')) {
+      return es
+          ? 'Tu suelo $soil tiene actualmente ${report.irrigation.soilMoisturePct}% de humedad (${report.irrigation.actionTitle}).\n\n'
+              'El sistema ideal para tu terreno es ${recommendedSystem.systemName} (Eficiencia: ${recommendedSystem.efficiencyPct}).\n\n'
+              '${recommendedSystem.description}'
+          : 'Your $soil soil currently has ${report.irrigation.soilMoisturePct}% moisture (${report.irrigation.actionTitle}).\n\n'
+              'The ideal system for your land is ${recommendedSystem.systemName} (Efficiency: ${recommendedSystem.efficiencyPct}).\n\n'
+              '${recommendedSystem.description}';
+    }
+
+    final mainPest = pests.first;
+    final mainPhenomenon = phenomena.first;
 
     if (!es) {
       return '''
-Hello! I am **Eve**, your virtual agroecological and phytosanitary assistant in **Eva-Bits** (powered by *gpt-5-mini* and grounded in NASA Earth Observations & the Eva-Bits Biotechnology Research Corpus).
+Hi! Here is what you need to know today for your $crop crop on $soil soil:
 
-Here is the scientific diagnosis for **$farmName** ($zone) for **$crop** on **$soil** soil:
+1. Water & Irrigation:
+• ${report.irrigation.actionTitle} (Root moisture: ${report.irrigation.soilMoisturePct}%, required water: ${report.irrigation.recommendedWaterMm} mm).
+• Best system for your soil: ${recommendedSystem.systemName} (${recommendedSystem.efficiencyPct} efficiency).
+• $soilConcept
 
-**1. Soil & Precision Irrigation Diagnosis (NASA SMAP / NISAR / CIAT):**
-• **Status:** ${report.irrigation.actionTitle} (Root moisture: ${report.irrigation.soilMoisturePct}%, 7-day deficit: ${report.irrigation.weeklyDeficitMm} mm).
-• **Soil Science:** $soilConcept
-• **Recommended Irrigation System:** **${recommendedSystem.systemName}** (Efficiency: ${recommendedSystem.efficiencyPct}). ${recommendedSystem.description} *(${recommendedSystem.nasaIntegrationNote})*.
+2. Weather & Field Watch:
+• ${mainPhenomenon.phenomenonName}: ${mainPhenomenon.preventionMeasure}
 
-**2. Natural Phenomena & Extreme Climate Warnings (NASA GPM / GRACE / Climate):**
-$phenomenaBullets
+3. Pest Alert for $crop:
+• ${mainPest.pestName}: ${mainPest.symptomsAndImpact}
+• Prevention: ${mainPest.preventionAction}
 
-**3. Crop Pest & Disease Surveillance for $crop:**
-$pestsBullets
-
-**4. 3-Week Rolling Projection (${projection3w.fullDateRange}):**
-$phasesBullets
-
-**5. Weekly Evolution Alert (Past 7 Days: ${projection3w.weeklyCheckpointPeriod}):**
-• ${projection3w.weeklyChangesDetected.join('\n• ')}
-
-**6. Spatial Crop Rotation & Nitrogen Balance:**
-• **Recommended Rotation:** **${report.rotation.suggestedCrop}** (Compatibility: ${report.rotation.score}%).
-• **Biological Nitrogen Fixation:** ${report.nutrition.projectedNitrogenGainKgPerHa > 0 ? '+${report.nutrition.projectedNitrogenGainKgPerHa}' : '${report.nutrition.projectedNitrogenGainKgPerHa}'} kg N/ha (~${report.nutrition.estimatedUreaSavingsKg.toStringAsFixed(0)} kg commercial urea saved).
-
-Ask me about a specific pest, irrigation system, or 3-week rotation scenario!
+4. Next 3 Weeks (${projection3w.fullDateRange}):
+• ${projection3w.phases.first.title}: ${projection3w.phases.first.recommendedAction}
+• Suggested rotation: ${report.rotation.suggestedCrop} (${report.rotation.score}% compatibility, +${report.nutrition.projectedNitrogenGainKgPerHa} kg N/ha).
 ''';
     }
 
     return '''
-Hola, soy **Eve**, tu asistente virtual agroecológica de **Eva-Bits** (impulsada por *gpt-5-mini* y fundamentada en datos satelitales de la **NASA** y el documento científico de **Biotecnología Eva-Bits**).
+Hola, aquí tienes el resumen práctico para tu cultivo de $crop en suelo $soil:
 
-Analicé tu finca **$farmName** en **$zone** para el cultivo de **$crop** en suelo **$soil** citando las fuentes oficiales:
+1. Agua y Riego:
+• ${report.irrigation.actionTitle} (Humedad actual: ${report.irrigation.soilMoisturePct}%, lámina recomendada: ${report.irrigation.recommendedWaterMm} mm).
+• Sistema ideal: ${recommendedSystem.systemName} (Eficiencia ${recommendedSystem.efficiencyPct}).
+• $soilConcept
 
-**1. Diagnóstico Hídrico, Suelo y Sistema de Riego (NASA SMAP / Misión NASA-ISRO / CIAT):**
-• **Estado Hídrico:** ${report.irrigation.actionTitle} (Humedad radicular: ${report.irrigation.soilMoisturePct}%, déficit semanal: ${report.irrigation.weeklyDeficitMm} mm, lámina: ${report.irrigation.recommendedWaterMm} mm).
-• **Base Edafológica:** $soilConcept
-• **Sistema de Riego Recomendado:** **${recommendedSystem.systemName}** (Eficiencia: ${recommendedSystem.efficiencyPct}). ${recommendedSystem.description} *(${recommendedSystem.nasaIntegrationNote})*.
+2. Clima en tu Zona:
+• ${mainPhenomenon.phenomenonName}: ${mainPhenomenon.preventionMeasure}
 
-**2. Advertencias de Fenómenos Naturales y Clima (NASA GPM / SMAP / GRACE):**
-$phenomenaBullets
+3. Cuidado contra Plagas ($crop):
+• ${mainPest.pestName}: ${mainPest.symptomsAndImpact}
+• Prevención: ${mainPest.preventionAction}
 
-**3. Vigilancia de Plagas y Enfermedades para $crop:**
-$pestsBullets
-
-**4. Proyección Tri-Semanal (${projection3w.fullDateRange}):**
-$phasesBullets
-
-**5. Control de Cambios tras 1 Semana (${projection3w.weeklyCheckpointPeriod}):**
-• ${projection3w.weeklyChangesDetected.join('\n• ')}
-
-**6. Rotación Espacial y Balance de Nitrógeno:**
-• **Rotación Sugerida:** **${report.rotation.suggestedCrop}** (Compatibilidad: **${report.rotation.score}%** — ${report.rotation.compatibilityLevel}).
-• **Aporte Biológico:** ${report.nutrition.projectedNitrogenGainKgPerHa > 0 ? '+${report.nutrition.projectedNitrogenGainKgPerHa}' : '${report.nutrition.projectedNitrogenGainKgPerHa}'} kg N/ha (ahorro estimado de ${report.nutrition.estimatedUreaSavingsKg.toStringAsFixed(0)} kg de urea).
-
-¿Deseas profundizar en el control de alguna plaga de tu cultivo, comparar los sistemas de riego o revisar la proyección de las próximas 3 semanas?
+4. Próximas 3 Semanas (${projection3w.fullDateRange}):
+• ${projection3w.phases.first.title}: ${projection3w.phases.first.recommendedAction}
+• Rotación recomendada: ${report.rotation.suggestedCrop} (${report.rotation.score}% de compatibilidad, aporta ${report.nutrition.projectedNitrogenGainKgPerHa} kg N/ha).
 ''';
   }
 }

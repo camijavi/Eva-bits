@@ -410,21 +410,21 @@ const String kDefaultSoilName = 'Franco';
 // Eve Advanced Capabilities (Biotech Corpus, 3-Week Projections, Irrigation Systems)
 const String kWeeklyNotificationBannerTitle = 'Control Semanal (+7 Días): Ver cambios detectados por Eve';
 const String kWeeklyDeltaDialogTitle = 'Evolución Semanal de tu Parcela (+7 Días)';
-const String kIrrigationSystemsSectionTitle = 'Sistemas de Riego de Precisión Recomendados';
-const String kIrrigationSystemsSectionSub = 'Misión NASA-ISRO (NISAR) • Alianza Bioversity & CIAT (2026)';
+const String kIrrigationSystemsSectionTitle = 'Sistemas de Riego Recomendados';
+const String kIrrigationSystemsSectionSub = 'Adaptados al tipo de suelo de tu parcela';
 const String kRecommendedSystemBadge = 'Ideal para tu suelo';
 const String kEfficiencyLabel = 'Eficiencia:';
 const String kBestForSoilLabel = 'Suelo ideal:';
-const String kThreeWeekProjectionTitle = 'Proyección Tri-Semanal (Cada 3 Semanas)';
+const String kThreeWeekProjectionTitle = 'Proyección a 3 Semanas';
 const String kThreeWeekProjectionSub = 'Horizonte operativo de 21 días con seguimiento semanal';
-const String kNaturalPhenomenaSectionTitle = 'Vigilancia de Fenómenos Naturales (NASA GPM / SMAP / GRACE)';
+const String kNaturalPhenomenaSectionTitle = 'Alertas de Fenómenos Naturales y Clima';
 const String kCropPestsSectionTitle = 'Alertas de Plagas y Enfermedades del Cultivo';
 const String kHighRiskBadge = 'Riesgo Alto';
 const String kModerateRiskBadge = 'Monitoreo';
 const String kPreventionLabel = 'Prevención:';
 const String kSourceLabel = 'Fuente:';
 const String kQuickPromptPests = '¿Qué plagas amenazan mi cultivo?';
-const String kQuickPromptPhenomena = '¿Qué fenómenos naturales vigila la NASA?';
+const String kQuickPromptPhenomena = '¿Qué fenómenos climáticos afectan mi zona?';
 const String kQuickPrompt3Weeks = 'Ver proyección de 3 semanas';
 const String kQuickPromptIrrigation = '¿Qué sistema de riego me conviene?';
 

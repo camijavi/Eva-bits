@@ -1,7 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
+import '../models/subplot_graph_model.dart';
+import '../services/agro_prediction_engine.dart';
 import '../services/app_settings.dart';
+import '../services/azure_ai_service.dart';
+import '../services/nasa_power_service.dart';
 
 enum EveEmote {
   calm,       // Tranquila y de vez en cuando saluda
@@ -922,17 +927,81 @@ class EveEmotePreviewSelector extends StatelessWidget {
   }
 }
 
-/// Floating animated Eve button that replaces the static "Preguntar a Eve" button.
-/// Shows Eve calm and occasionally waving; tapping her opens the Duolingo-style chat.
+/// Single reusable component to display rounded Eve on the bottom-left of any screen.
+/// Shows Eve calm and occasionally waving; tapping her opens the unified Duolingo-style chat.
 class EveFloatingLauncherButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String? tooltip;
+  final Map<String, dynamic>? farmData;
+  final Map<String, dynamic>? nasaData;
+  final FarmPredictionsReport? report;
+  final SubplotGraph? graph;
+  final List<Map<String, dynamic>>? subplots;
+  final String? activeCrop;
+  final String? activeSoil;
+  final String? initialQuery;
 
   const EveFloatingLauncherButton({
     super.key,
-    required this.onPressed,
+    this.onPressed,
     this.tooltip,
+    this.farmData,
+    this.nasaData,
+    this.report,
+    this.graph,
+    this.subplots,
+    this.activeCrop,
+    this.activeSoil,
+    this.initialQuery,
   });
+
+  static void openChatModal(
+    BuildContext context, {
+    Map<String, dynamic>? farmData,
+    Map<String, dynamic>? nasaData,
+    FarmPredictionsReport? report,
+    SubplotGraph? graph,
+    List<Map<String, dynamic>>? subplots,
+    String? activeCrop,
+    String? activeSoil,
+    String? initialQuery,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return EveUnifiedChatSheet(
+          farmData: farmData,
+          nasaData: nasaData,
+          report: report,
+          graph: graph,
+          subplots: subplots,
+          activeCrop: activeCrop,
+          activeSoil: activeSoil,
+          initialQuery: initialQuery,
+        );
+      },
+    );
+  }
+
+  void _handleTap(BuildContext context) {
+    if (onPressed != null) {
+      onPressed!();
+      return;
+    }
+    openChatModal(
+      context,
+      farmData: farmData,
+      nasaData: nasaData,
+      report: report,
+      graph: graph,
+      subplots: subplots,
+      activeCrop: activeCrop,
+      activeSoil: activeSoil,
+      initialQuery: initialQuery,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -940,22 +1009,11 @@ class EveFloatingLauncherButton extends StatelessWidget {
       valueListenable: AppSettings.showEve,
       builder: (context, showEve, _) {
         if (!showEve) {
-          return FloatingActionButton(
-            backgroundColor: const Color(0xFF1B5E20),
-            foregroundColor: Colors.white,
-            elevation: 4,
-            tooltip: tooltip,
-            onPressed: onPressed,
-            child: const Icon(
-              Icons.auto_awesome_rounded,
-              color: Color(0xFFFFD54F),
-              size: 24,
-            ),
-          );
+          return const SizedBox.shrink();
         }
 
         return GestureDetector(
-          onTap: onPressed,
+          onTap: () => _handleTap(context),
           behavior: HitTestBehavior.opaque,
           child: Stack(
             clipBehavior: Clip.none,
@@ -1327,5 +1385,422 @@ class _DuolingoBubbleTailPainter extends CustomPainter {
   bool shouldRepaint(covariant _DuolingoBubbleTailPainter oldDelegate) {
     return oldDelegate.fillColor != fillColor ||
         oldDelegate.borderColor != borderColor;
+  }
+}
+
+/// Unified Duolingo-style conversation modal sheet for Eve across all screens.
+class EveUnifiedChatSheet extends StatefulWidget {
+  final Map<String, dynamic>? farmData;
+  final Map<String, dynamic>? nasaData;
+  final FarmPredictionsReport? report;
+  final SubplotGraph? graph;
+  final List<Map<String, dynamic>>? subplots;
+  final String? activeCrop;
+  final String? activeSoil;
+  final String? initialQuery;
+
+  const EveUnifiedChatSheet({
+    super.key,
+    this.farmData,
+    this.nasaData,
+    this.report,
+    this.graph,
+    this.subplots,
+    this.activeCrop,
+    this.activeSoil,
+    this.initialQuery,
+  });
+
+  @override
+  State<EveUnifiedChatSheet> createState() => _EveUnifiedChatSheetState();
+}
+
+class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final List<Map<String, String>> _messages = [];
+  bool _isLoading = false;
+
+  late Map<String, dynamic> _farmData;
+  late Map<String, dynamic> _nasaData;
+  FarmPredictionsReport? _report;
+  SubplotGraph? _graph;
+  List<Map<String, dynamic>> _subplots = [];
+  String _activeCrop = 'Maíz';
+  String _activeSoil = 'Franco';
+
+  @override
+  void initState() {
+    super.initState();
+    _farmData = widget.farmData ??
+        {
+          'name': 'Mi Finca',
+          'zone': 'Nicaragua',
+          'total_surface': 2.5,
+          'unit': 'ha',
+        };
+    _nasaData = widget.nasaData ?? NasaPowerService.getFallbackData();
+    _report = widget.report;
+    _graph = widget.graph;
+    _subplots = widget.subplots ?? [];
+    _activeCrop = widget.activeCrop ?? 'Maíz';
+    _activeSoil = widget.activeSoil ?? 'Franco';
+
+    _initializeAndAskFirst();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  String _cleanText(String raw) {
+    return raw.replaceAll('*', '').trim();
+  }
+
+  Future<void> _initializeAndAskFirst() async {
+    final s = AppLanguage.strings;
+    final firstQuery = widget.initialQuery ?? s.kIvyInitialPrompt;
+
+    if (widget.farmData == null || widget.report == null) {
+      try {
+        final db = DatabaseManager();
+        final latestFarm = await db.getLatestFarm();
+        if (latestFarm != null) {
+          _farmData = latestFarm;
+          final farmId = latestFarm['id'] as int?;
+          final lots = await db.getAllLotsWithSubplots(farmId: farmId);
+          final spList = <Map<String, dynamic>>[];
+          for (final lot in lots) {
+            final sps = lot['subplots'] as List<dynamic>? ?? [];
+            for (final sp in sps) {
+              if (sp is Map<String, dynamic>) {
+                spList.add(sp);
+              }
+            }
+          }
+          _subplots = spList;
+          if (_subplots.isNotEmpty) {
+            _activeCrop =
+                widget.activeCrop ?? (_subplots.first['crop']?.toString() ?? 'Maíz');
+            _activeSoil = widget.activeSoil ??
+                (_subplots.first['soil_type']?.toString() ?? 'Franco');
+          }
+          _graph = SubplotGraph.buildAutomaticAdjacency(_subplots);
+        }
+      } catch (_) {}
+
+      _report ??= AgroPredictionEngine.generateReport(
+        farmData: _farmData,
+        nasaData: _nasaData,
+        graph: _graph,
+        subplots: _subplots,
+        targetCrop: _activeCrop,
+        targetSoilType: _activeSoil,
+        strings: s,
+      );
+    }
+
+    if (mounted) {
+      await _askEve(firstQuery);
+    }
+  }
+
+  Future<void> _askEve(String query) async {
+    final cleanQuery = _cleanText(query);
+    final s = AppLanguage.strings;
+    setState(() {
+      _messages.add({'role': 'user', 'text': cleanQuery});
+      _isLoading = true;
+    });
+    _scrollToBottom();
+
+    try {
+      final effectiveReport = _report ??
+          AgroPredictionEngine.generateReport(
+            farmData: _farmData,
+            nasaData: _nasaData,
+            graph: _graph,
+            subplots: _subplots,
+            targetCrop: _activeCrop,
+            targetSoilType: _activeSoil,
+            strings: s,
+          );
+
+      final reply = await AzureAiService.askEve(
+        userQuery: cleanQuery,
+        farmData: _farmData,
+        nasaData: _nasaData,
+        predictionsReport: effectiveReport,
+        graph: _graph,
+        subplots: _subplots,
+        activeCrop: _activeCrop,
+        activeSoil: _activeSoil,
+      );
+
+      if (mounted) {
+        setState(() {
+          _messages.add({'role': 'assistant', 'text': _cleanText(reply)});
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'text': _cleanText(s.kIvyErrorMessage),
+          });
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  String _getLatestEveSpeechText(AppStrings s) {
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i]['role'] == 'assistant') {
+        return _cleanText(_messages[i]['text'] ?? '');
+      }
+    }
+    return s.kIvyAnalyzingScenario;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLanguage.strings;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+    final availableHeight =
+        (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
+            .clamp(320.0, mediaQuery.size.height * 0.92);
+
+    return Container(
+      height: availableHeight,
+      margin: EdgeInsets.only(bottom: bottomInset),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 4),
+            width: 48,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          EveDuolingoConversationStage(
+            title: s.kIvyCopilotTitle,
+            subtitle: '$_activeCrop • ${s.kSoilPrefix} $_activeSoil',
+            speechBubbleText: _getLatestEveSpeechText(s),
+            isLoading: _isLoading,
+            loadingText: s.kIvyAnalyzingScenario,
+            onClose: () => Navigator.pop(context),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: _messages.length + (_isLoading ? 1 : 0),
+              itemBuilder: (ctx, index) {
+                if (index == _messages.length && _isLoading) {
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F8E9),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFDCEDC8)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF2E7D32),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              s.kIvyAnalyzingScenario,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade800,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final msg = _messages[index];
+                final isUser = msg['role'] == 'user';
+                final cleanMsgText = _cleanText(msg['text'] ?? '');
+
+                return Align(
+                  alignment:
+                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.82,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? const Color(0xFF1B5E20)
+                          : const Color(0xFFF7FAF7),
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(18),
+                        topRight: const Radius.circular(18),
+                        bottomLeft: isUser
+                            ? const Radius.circular(18)
+                            : const Radius.circular(4),
+                        bottomRight: isUser
+                            ? const Radius.circular(4)
+                            : const Radius.circular(18),
+                      ),
+                      border: isUser
+                          ? null
+                          : Border.all(color: const Color(0xFFE0E0E0)),
+                    ),
+                    child: Text(
+                      cleanMsgText,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: isUser ? Colors.white : const Color(0xFF1E2D24),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(
+            height: 38,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildQuickChip(Icons.pest_control_rounded, s.kQuickPromptPests),
+                _buildQuickChip(
+                    Icons.thunderstorm_rounded, s.kQuickPromptPhenomena),
+                _buildQuickChip(Icons.date_range_rounded, s.kQuickPrompt3Weeks),
+                _buildQuickChip(
+                    Icons.water_drop_rounded, s.kQuickPromptIrrigation),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    textInputAction: TextInputAction.send,
+                    decoration: InputDecoration(
+                      hintText: s.kIvyInputHint,
+                      hintStyle:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      filled: true,
+                      fillColor: const Color(0xFFF1F6F2),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onSubmitted: (t) {
+                      final q = t.trim();
+                      if (q.isNotEmpty && !_isLoading) {
+                        _controller.clear();
+                        _askEve(q);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  icon: const Icon(Icons.send_rounded,
+                      color: Color(0xFF1B5E20)),
+                  onPressed: () {
+                    final q = _controller.text.trim();
+                    if (q.isNotEmpty && !_isLoading) {
+                      _controller.clear();
+                      _askEve(q);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickChip(IconData icon, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        avatar: Icon(icon, size: 15, color: const Color(0xFF1B5E20)),
+        backgroundColor: const Color(0xFFEAF5EC),
+        side: const BorderSide(color: Color(0xFFC8E6C9)),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF1B5E20),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        onPressed: _isLoading
+            ? null
+            : () {
+                _askEve(label);
+              },
+      ),
+    );
   }
 }

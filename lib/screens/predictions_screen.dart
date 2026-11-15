@@ -6,8 +6,6 @@ import '../services/nasa_power_service.dart';
 import '../services/agro_prediction_engine.dart';
 import '../services/eve_knowledge_base.dart';
 import '../services/subplot_graph_service.dart';
-import '../services/azure_ai_service.dart';
-import '../services/app_settings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/eve_animated_avatar.dart';
 
@@ -41,7 +39,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   String _selectedContextValue = 'farm';
   String _selectedCrop = 'Maíz';
   String _selectedSoil = 'Franco';
-  int _guideStepIndex = 0;
 
   final List<String> _cropOptions = [
     'Maíz',
@@ -317,43 +314,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 ),
               ],
             ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ValueListenableBuilder<bool>(
-                  valueListenable: AppSettings.showEve,
-                  builder: (ctx, showEve, _) {
-                    if (!showEve) {
-                      return IconButton(
-                        tooltip: s.kAskIvyTooltip,
-                        icon: const Icon(Icons.auto_awesome_rounded,
-                            color: Color(0xFFFFD54F)),
-                        onPressed: () => _openIvySheet(report, s),
-                      );
-                    }
-                    return GestureDetector(
-                      onTap: () => _openIvySheet(report, s),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: const Color(0xFFFFD54F), width: 1.5),
-                        ),
-                        child: const Center(
-                          child: EveAnimatedAvatar(
-                            emote: EveEmote.calm,
-                            size: 34,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
             bottom: TabBar(
               controller: _tabController,
               isScrollable: true,
@@ -406,9 +366,16 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               ),
             ],
           ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
           floatingActionButton: EveFloatingLauncherButton(
             tooltip: s.kAskIvyTooltip,
-            onPressed: () => _openIvySheet(report, s),
+            farmData: _farm,
+            nasaData: _nasaData,
+            report: report,
+            graph: _graph,
+            subplots: _subplots,
+            activeCrop: _selectedCrop,
+            activeSoil: _selectedSoil,
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
         );
@@ -548,39 +515,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               ),
             ),
           ),
-
-          // Interactive Onboarding / Guide Banner (Controlled by Show/Hide Eve)
-          _buildEveGuideBanner(s),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEveGuideBanner(AppStrings s) {
-    final steps = [
-      s.kEveGuideStep1,
-      s.kEveGuideStep2,
-      s.kEveGuideStep3,
-    ];
-    final emotes = [
-      EveEmote.jumping,
-      EveEmote.pointing,
-      EveEmote.happy,
-    ];
-    final currentStep = _guideStepIndex % steps.length;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: EveReactionBanner(
-        emote: emotes[currentStep],
-        title: s.kEveGuideBannerTitle,
-        message: steps[currentStep],
-        actionLabel: s.kEveGuideNextTip,
-        onTap: () {
-          setState(() {
-            _guideStepIndex = (_guideStepIndex + 1) % steps.length;
-          });
-        },
       ),
     );
   }
@@ -825,44 +760,23 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     final IconData statusIcon;
     final String statusLabel;
 
-    final EveEmote eveEmote;
-    final String eveReactionMessage;
-    final Color eveBgColor;
-
     if (item.status == 'critical') {
       statusColor = const Color(0xFFD32F2F);
       statusIcon = Icons.warning_rounded;
       statusLabel = s.kStatusAttentionRequired;
-      eveEmote = EveEmote.sad;
-      eveReactionMessage = s.kEveReactionIrrigationCritical;
-      eveBgColor = const Color(0xFFFFEBEE);
     } else if (item.status == 'moderate') {
       statusColor = const Color(0xFFF57F17);
       statusIcon = Icons.schedule_rounded;
       statusLabel = s.kStatusPlanIrrigation;
-      eveEmote = EveEmote.pointing;
-      eveReactionMessage = s.kEveReactionIrrigationModerate;
-      eveBgColor = const Color(0xFFFFF8E1);
     } else {
       statusColor = const Color(0xFF2E7D32);
       statusIcon = Icons.check_circle_rounded;
       statusLabel = s.kStatusOptimalMoisture;
-      eveEmote = EveEmote.happy;
-      eveReactionMessage = s.kEveReactionIrrigationOptimal;
-      eveBgColor = const Color(0xFFF1F8E9);
     }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
-        // Eve Reactive Emote Banner (Auto-hides if Show Eve is disabled)
-        EveReactionBanner(
-          emote: eveEmote,
-          message: eveReactionMessage,
-          accentColor: statusColor,
-          backgroundColor: eveBgColor,
-        ),
-
         // Hero Moisture Gauge Card
         Container(
           padding: const EdgeInsets.all(18),
@@ -1264,22 +1178,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
-        // Eve Reactive Emote Banner (Thumbs Up / Thumbs Down)
-        EveReactionBanner(
-          emote: item.hasSpatialCorridorRisk
-              ? EveEmote.thumbsDown
-              : EveEmote.thumbsUp,
-          message: item.hasSpatialCorridorRisk
-              ? s.kEveReactionRotationRisk
-              : s.kEveReactionRotationGood,
-          accentColor: item.hasSpatialCorridorRisk
-              ? const Color(0xFFE65100)
-              : const Color(0xFF1B5E20),
-          backgroundColor: item.hasSpatialCorridorRisk
-              ? const Color(0xFFFFF3E0)
-              : const Color(0xFFF1F8E9),
-        ),
-
         // Compatibility Hero Meter
         Container(
           padding: const EdgeInsets.all(18),
@@ -1909,14 +1807,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
-        // Eve Reactive Alert (!) Banner
-        EveReactionBanner(
-          emote: EveEmote.alert,
-          message: s.kEveReactionRisksAlert,
-          accentColor: const Color(0xFFC62828),
-          backgroundColor: const Color(0xFFFFEBEE),
-        ),
-
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
@@ -2030,7 +1920,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       ),
                     ),
                     Text(
-                      '${s.kSoilPrefix} $_selectedSoil • NASA POWER & SMAP',
+                      '${s.kSoilPrefix} $_selectedSoil',
                       style: TextStyle(
                         fontSize: 10.5,
                         color: Colors.grey.shade600,
@@ -2129,15 +2019,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1B5E20),
                       height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${s.kSourceLabel} ${p.sourceCitation}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -2250,15 +2131,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    ph.satelliteSource,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1565C0),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
                     ph.description,
                     style: TextStyle(
                       fontSize: 11,
@@ -2274,15 +2146,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1B5E20),
                       height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${s.kSourceLabel} ${ph.citation}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -2746,23 +2609,12 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 children: [
                   Row(
                     children: [
-                      ValueListenableBuilder<bool>(
-                        valueListenable: AppSettings.showEve,
-                        builder: (ctx, showEve, _) {
-                          if (!showEve) {
-                            return _buildIconBadge(
-                              icon: Icons.notifications_active_rounded,
-                              color: const Color(0xFFE65100),
-                              bgColor: const Color(0xFFFFF3E0),
-                              size: 20,
-                              containerSize: 36,
-                            );
-                          }
-                          return const EveAnimatedAvatar(
-                            emote: EveEmote.surprised,
-                            size: 48,
-                          );
-                        },
+                      _buildIconBadge(
+                        icon: Icons.notifications_active_rounded,
+                        color: const Color(0xFFE65100),
+                        bgColor: const Color(0xFFFFF3E0),
+                        size: 20,
+                        containerSize: 36,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -2833,374 +2685,12 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       ),
                     );
                   }),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: EveFloatingLauncherButton(
-                      tooltip: s.kAskIvyTooltip,
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _openIvySheet(report, s);
-                      },
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
         );
       },
-    );
-  }
-
-  // ===========================================================================
-  // EVE CHAT SHEET OPENER
-  // ===========================================================================
-  void _openIvySheet(FarmPredictionsReport report, AppStrings s) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return _PredictionsIvyChatSheet(
-          farmData: _farm ?? {},
-          nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
-          report: report,
-          graph: _graph,
-          subplots: _subplots,
-          activeCrop: _selectedCrop,
-          activeSoil: _selectedSoil,
-          s: s,
-        );
-      },
-    );
-  }
-}
-
-// =============================================================================
-// IVY AI CHAT SHEET FOR PREDICTIONS
-// =============================================================================
-class _PredictionsIvyChatSheet extends StatefulWidget {
-  final Map<String, dynamic> farmData;
-  final Map<String, dynamic> nasaData;
-  final FarmPredictionsReport report;
-  final SubplotGraph? graph;
-  final List<Map<String, dynamic>> subplots;
-  final String activeCrop;
-  final String activeSoil;
-  final AppStrings s;
-
-  const _PredictionsIvyChatSheet({
-    required this.farmData,
-    required this.nasaData,
-    required this.report,
-    required this.graph,
-    required this.subplots,
-    required this.activeCrop,
-    required this.activeSoil,
-    required this.s,
-  });
-
-  @override
-  State<_PredictionsIvyChatSheet> createState() =>
-      _PredictionsIvyChatSheetState();
-}
-
-class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
-  final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final List<Map<String, String>> _messages = [];
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _askIvy(widget.s.kIvyInitialPrompt);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _askIvy(String query) async {
-    setState(() {
-      _messages.add({'role': 'user', 'text': query});
-      _isLoading = true;
-    });
-    _scrollToBottom();
-
-    try {
-      final reply = await AzureAiService.askEve(
-        userQuery: query,
-        farmData: widget.farmData,
-        nasaData: widget.nasaData,
-        predictionsReport: widget.report,
-        graph: widget.graph,
-        subplots: widget.subplots,
-        activeCrop: widget.activeCrop,
-        activeSoil: widget.activeSoil,
-      );
-
-      if (mounted) {
-        setState(() {
-          _messages.add({'role': 'assistant', 'text': reply});
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _messages.add({
-            'role': 'assistant',
-            'text': widget.s.kIvyErrorMessage,
-          });
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      }
-    }
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  String _getLatestEveSpeechText() {
-    for (int i = _messages.length - 1; i >= 0; i--) {
-      if (_messages[i]['role'] == 'assistant') {
-        return _messages[i]['text'] ?? '';
-      }
-    }
-    return widget.s.kIvyAnalyzingScenario;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final bottomInset = mediaQuery.viewInsets.bottom;
-    final availableHeight =
-        (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
-            .clamp(320.0, mediaQuery.size.height * 0.92);
-
-    return Container(
-      height: availableHeight,
-      margin: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 10, bottom: 4),
-            width: 48,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          EveDuolingoConversationStage(
-            title: widget.s.kIvyCopilotTitle,
-            subtitle:
-                '${widget.activeCrop} • ${widget.s.kSoilPrefix} ${widget.activeSoil} • gpt-5-mini',
-            speechBubbleText: _getLatestEveSpeechText(),
-            isLoading: _isLoading,
-            loadingText: widget.s.kIvyAnalyzingScenario,
-            onClose: () => Navigator.pop(context),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: _messages.length + (_isLoading ? 1 : 0),
-              itemBuilder: (ctx, index) {
-                if (index == _messages.length && _isLoading) {
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F8E9),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFDCEDC8)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFF2E7D32),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            widget.s.kIvyAnalyzingScenario,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade800,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                final msg = _messages[index];
-                final isUser = msg['role'] == 'user';
-
-                return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.82,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isUser
-                          ? const Color(0xFF1B5E20)
-                          : const Color(0xFFF7FAF7),
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(18),
-                        topRight: const Radius.circular(18),
-                        bottomLeft: isUser
-                            ? const Radius.circular(18)
-                            : const Radius.circular(4),
-                        bottomRight: isUser
-                            ? const Radius.circular(4)
-                            : const Radius.circular(18),
-                      ),
-                      border: isUser
-                          ? null
-                          : Border.all(color: const Color(0xFFE0E0E0)),
-                    ),
-                    child: Text(
-                      msg['text'] ?? '',
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: isUser ? Colors.white : const Color(0xFF1E2D24),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SizedBox(
-            height: 38,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildEveQuickChip(
-                    Icons.pest_control_rounded, widget.s.kQuickPromptPests),
-                _buildEveQuickChip(Icons.thunderstorm_rounded,
-                    widget.s.kQuickPromptPhenomena),
-                _buildEveQuickChip(
-                    Icons.date_range_rounded, widget.s.kQuickPrompt3Weeks),
-                _buildEveQuickChip(
-                    Icons.water_drop_rounded, widget.s.kQuickPromptIrrigation),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: widget.s.kIvyInputHint,
-                      hintStyle: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade500),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      filled: true,
-                      fillColor: const Color(0xFFF1F6F2),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onSubmitted: (t) {
-                      final q = t.trim();
-                      if (q.isNotEmpty && !_isLoading) {
-                        _controller.clear();
-                        _askIvy(q);
-                      }
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send_rounded,
-                      color: Color(0xFF1B5E20)),
-                  onPressed: () {
-                    final q = _controller.text.trim();
-                    if (q.isNotEmpty && !_isLoading) {
-                      _controller.clear();
-                      _askIvy(q);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEveQuickChip(IconData icon, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
-        avatar: Icon(icon, size: 15, color: const Color(0xFF1B5E20)),
-        backgroundColor: const Color(0xFFEAF5EC),
-        side: const BorderSide(color: Color(0xFFC8E6C9)),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        label: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFF1B5E20),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        onPressed: _isLoading
-            ? null
-            : () {
-                _askIvy(label);
-              },
-      ),
     );
   }
 }

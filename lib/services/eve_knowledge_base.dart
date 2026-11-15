@@ -100,32 +100,31 @@ class EveKnowledgeBase {
     return '$d/$m/$y';
   }
 
-  /// Soil diagnosis grounded in (Alianza Bioversity and CIAT, 2026)
   static String getSoilScientificConcept(String soilType, {bool? isSpanish}) {
     final es = isSpanish ?? AppLanguage.isSpanish;
     final lower = soilType.toLowerCase();
 
     if (lower.contains('aren') || lower.contains('sand')) {
       return es
-          ? 'Suelo Arenoso (Alianza Bioversity and CIAT, 2026): Evita encharcamientos porque drena el agua con rapidez, pero presenta la debilidad de perder nutrientes con mayor facilidad por lixiviación.'
-          : 'Sandy Soil (Alianza Bioversity and CIAT, 2026): Prevents waterlogging by draining water rapidly, but loses nutrients more easily through leaching.';
+          ? 'Suelo Arenoso: Evita encharcamientos porque drena el agua con rapidez, pero pierde nutrientes con mayor facilidad por filtración profunda.'
+          : 'Sandy Soil: Prevents waterlogging by draining water rapidly, but loses nutrients more easily through deep filtration.';
     }
     if (lower.contains('lim') || lower.contains('silt')) {
       return es
-          ? 'Suelo Limoso (Alianza Bioversity and CIAT, 2026): Retiene con facilidad la humedad y los nutrientes dejando una textura suave y buen drenaje (muy fértil), pero tiende a compactarse si queda descubierto en terrenos inclinados.'
-          : 'Silt Soil (Alianza Bioversity and CIAT, 2026): Easily retains moisture and nutrients with a smooth texture and good drainage (highly fertile), but compacts easily if left bare on sloped terrain.';
+          ? 'Suelo Limoso: Retiene con facilidad la humedad y los nutrientes dejando una textura suave y buen drenaje (muy fértil), pero tiende a compactarse si queda descubierto en terrenos inclinados.'
+          : 'Silt Soil: Easily retains moisture and nutrients with a smooth texture and good drainage (highly fertile), but compacts easily if left bare on sloped terrain.';
     }
     if (lower.contains('arcill') || lower.contains('clay')) {
       return es
-          ? 'Suelo Arcilloso (Alianza Bioversity and CIAT, 2026): Retiene sin dificultad el agua y los nutrientes, pero drena lento, volviéndose pegajoso y pesado, dificultando que raíces sensibles penetren y crezcan.'
-          : 'Clay Soil (Alianza Bioversity and CIAT, 2026): Easily retains water and nutrients, but drains slowly, becoming sticky and heavy, making root penetration difficult for sensitive plants.';
+          ? 'Suelo Arcilloso: Retiene sin dificultad el agua y los nutrientes, pero drena lento, volviéndose pegajoso y pesado, dificultando que raíces sensibles penetren y crezcan.'
+          : 'Clay Soil: Easily retains water and nutrients, but drains slowly, becoming sticky and heavy, making root penetration difficult for sensitive plants.';
     }
     return es
-        ? 'Suelo Franco (Alianza Bioversity and CIAT, 2026): Combinación balanceada de arena, limo y arcilla considerada óptima para cultivar; posee drenaje adecuado, retiene nutrientes y humedad, y ofrece textura suelta para el desarrollo radicular.'
-        : 'Loam Soil (Alianza Bioversity and CIAT, 2026): Balanced combination of sand, silt, and clay considered ideal for farming; offers proper drainage, retains nutrients and moisture, and provides a loose texture for root expansion.';
+        ? 'Suelo Franco: Combinación balanceada de arena, limo y arcilla considerada óptima para cultivar; posee drenaje adecuado, retiene nutrientes y humedad, y ofrece textura suelta para el desarrollo radicular.'
+        : 'Loam Soil: Balanced combination of sand, silt, and clay considered ideal for farming; offers proper drainage, retains nutrients and moisture, and provides a loose texture for root expansion.';
   }
 
-  /// Evaluates Natural Phenomena and Compound Climate Events using NASA telemetry
+  /// Evaluates Natural Phenomena and Compound Climate Events
   static List<NaturalPhenomenonWarning> evaluateNaturalPhenomena({
     required double tempC,
     required double rain7dMm,
@@ -142,78 +141,78 @@ class EveKnowledgeBase {
         soilType.toLowerCase().contains('silt') ||
         soilType.toLowerCase().contains('clay');
 
-    // 1. Compound Climate Event: Heatwave + Drought (NASA Ciencia, 2022; NASA, 2024; NASA, 2026)
+    // 1. Compound Climate Event: Heatwave + Drought
     final bool isCompoundRisk =
         (soilMoisture < 0.45 && tempC >= 26.5) || rain7dMm < 5.0;
     warnings.add(
       NaturalPhenomenonWarning(
         phenomenonName: es
-            ? 'Eventos Climáticos Compuestos y El Niño 2026'
-            : 'Compound Climate Events & El Niño 2026',
+            ? 'Sequía y Olas de Calor Simultáneas'
+            : 'Simultaneous Drought & Heatwaves',
         severity: isCompoundRisk ? 'danger' : 'warning',
-        satelliteSource: 'NASA SMAP • GRACE • GPM',
+        satelliteSource: '',
         description: es
-            ? 'El fuerte desarrollo de El Niño en 2026 altera los patrones de lluvia provocando sequías severas (NASA, 2026). La ocurrencia simultánea de olas de calor y sequías (eventos climáticos compuestos) refuerza el estrés hídrico y eleva el riesgo de pérdida de cosechas de maíz del 29% al 57% (NASA Ciencia, 2022; NASA, 2024).'
-            : 'Strong El Niño development in 2026 alters rainfall patterns causing severe droughts (NASA, 2026). Simultaneous heatwaves and droughts (compound climate events) amplify water stress and raise simultaneous maize crop loss risks from 29% to 57% (NASA Ciencia, 2022; NASA, 2024).',
+            ? 'La ocurrencia simultánea de olas de calor y falta de lluvias refuerza el estrés hídrico del suelo y puede duplicar el riesgo de pérdida en la cosecha si no se protege la humedad radicular.'
+            : 'Simultaneous heatwaves and low rainfall amplify soil water stress and can double crop loss risks if root-zone moisture is not protected.',
         preventionMeasure: es
-            ? 'Vigilar humedad radicular con SMAP y reservas subterráneas con GRACE para anticipar sequías con semanas de antelación; aplicar cobertura vegetal (mulch) y rotar con leguminosas tolerantes.'
-            : 'Monitor root-zone moisture with SMAP and groundwater reserves with GRACE to anticipate droughts weeks in advance; apply organic mulch and rotate with drought-tolerant legumes.',
-        citation: 'NASA Ciencia (2022); NASA (2024); NASA (2026); SMAP & GRACE (s.f.)',
+            ? 'Aplicar cobertura vegetal (mulch) para conservar la humedad de la raíz y rotar con leguminosas tolerantes.'
+            : 'Apply organic mulch to conserve root-zone moisture and rotate with drought-tolerant legumes.',
+        citation: '',
       ),
     );
 
-    // 2. Extreme 3-Day Precipitation, Floods & Hurricanes (GPM, s.f.; NASA, 2021; NASA, 2022)
+    // 2. Extreme 3-Day Precipitation, Floods & Hurricanes
     final bool isFloodRisk = rain7dMm > 25.0 || soilMoisture > 0.72;
     warnings.add(
       NaturalPhenomenonWarning(
         phenomenonName: es
-            ? 'Precipitaciones Intensas de 3 Días e Inundaciones'
-            : 'Intense 3-Day Precipitation & Flood Risk',
+            ? 'Precipitaciones Intensas e Inundaciones'
+            : 'Intense Precipitation & Flood Risk',
         severity: isFloodRisk ? 'danger' : 'info',
-        satelliteSource: 'NASA GPM (Global Precipitation Measurement)',
+        satelliteSource: '',
         description: es
-            ? 'La frecuencia de precipitaciones intensas de tres días aumenta entre un 10% y un 50% (NASA, 2022), provocando inundaciones repentinas, erosión del suelo y pérdida directa de siembras. La red satelital GPM utiliza radares y microondas para medir la precipitación a través de las nubes.'
-            : 'The frequency of intense 3-day precipitation events increases by 10% to 50% (NASA, 2022), causing flash floods, soil erosion, and direct planting loss. The GPM satellite constellation uses radar and microwaves to measure rainfall through clouds.',
+            ? 'Las lluvias intensas durante varios días seguidos pueden causar inundaciones repentinas, erosión superficial del suelo y pérdida directa de siembras.'
+            : 'Intense multi-day rainfall events can cause flash floods, surface soil erosion, and direct planting loss.',
         preventionMeasure: es
             ? 'Trazar canales de evacuación pluvial en los bordes del lote y mantener barreras vivas para frenar la escorrentía superficial.'
             : 'Build rainwater drainage channels along parcel borders and maintain living barriers to slow surface runoff.',
-        citation: 'Global Precipitation Measurement (GPM, s.f.); NASA (2021, 2022)',
+        citation: '',
       ),
     );
 
-    // 3. Landslides & Slope Compaction (NASA, s.f.; Alianza Bioversity and CIAT, 2026)
+    // 3. Landslides & Slope Compaction
     warnings.add(
       NaturalPhenomenonWarning(
         phenomenonName: es
-            ? 'Deslizamientos de Tierra y Compactación en Ladera'
+            ? 'Deslizamientos y Compactación en Ladera'
             : 'Landslides & Slope Soil Compaction',
         severity: (isFloodRisk && isSiltOrClay) ? 'warning' : 'info',
-        satelliteSource: 'NASA Earth Observations • CIAT',
+        satelliteSource: '',
         description: es
-            ? 'Los deslizamientos ocurren cuando la gravedad arrastra tierra, roca y barro en suelos saturados (NASA, s.f.). En suelos limosos o descubiertos en terrenos inclinados, el impacto de la lluvia compacta la capa superficial (Alianza Bioversity and CIAT, 2026).'
-            : 'Landslides occur when gravity pulls saturated soil, rock, and mud downslope (NASA, s.f.). In silty or bare soils on sloped terrain, raindrop impact compacts the surface layer (Alianza Bioversity and CIAT, 2026).',
+            ? 'En suelos saturados o descubiertos en terrenos inclinados, el exceso de agua arrastra nutrientes y el impacto directo de la lluvia compacta la capa superficial.'
+            : 'In saturated or bare soils on sloped terrain, excess water washes away nutrients and raindrop impact compacts the surface layer.',
         preventionMeasure: es
             ? 'Evitar dejar el suelo descubierto en laderas; sembrar en curvas a nivel y mantener rastrojos o cultivos de cobertura.'
             : 'Never leave sloped soil bare; plant along contour lines and maintain crop residue or cover crops.',
-        citation: 'NASA (s.f.); Alianza Bioversity and CIAT (2026)',
+        citation: '',
       ),
     );
 
-    // 4. 2030 Agricultural Yield Shift (Gray, 2021 / NASA)
+    // 4. Long-term Thermal Adaptation
     warnings.add(
       NaturalPhenomenonWarning(
         phenomenonName: es
-            ? 'Proyección Agroclimática 2030 (Rendimiento Maíz vs. Trigo)'
-            : '2030 Agroclimatic Projection (Maize vs. Wheat Yield)',
+            ? 'Adaptación Térmica del Cultivo'
+            : 'Crop Thermal Adaptation',
         severity: 'info',
-        satelliteSource: 'NASA Harvest • NASA Climate Models',
+        satelliteSource: '',
         description: es
-            ? 'Conforme a las proyecciones de la NASA (Gray, 2021), para el año 2030 bajo escenarios de altas emisiones se proyecta que el rendimiento del maíz disminuya un 24%, mientras que el trigo podría registrar un aumento cercano al 17% por el cambio térmico y pluviométrico.'
-            : 'According to NASA projections (Gray, 2021), by 2030 under high-emission scenarios, maize yields are projected to decline by 24%, whereas wheat could see an increase of around 17% due to shifting temperatures and rainfall patterns.',
+            ? 'El aumento gradual de las temperaturas reduce el rendimiento en cultivos sensibles al calor como el maíz, mientras que rotaciones estratégicas ayudan a estabilizar la producción.'
+            : 'Gradually rising temperatures reduce yields in heat-sensitive crops like maize, whereas strategic rotations help stabilize farm output.',
         preventionMeasure: es
-            ? 'Diversificar la rotación del lote alternando gramíneas con leguminosas fijadoras de nitrógeno y variedades de ciclo corto adaptadas al calor.'
-            : 'Diversify parcel rotation by alternating grasses with nitrogen-fixing legumes and short-cycle heat-adapted varieties.',
-        citation: 'Gray (2021); NASA Harvest; NASA (2013)',
+            ? 'Diversificar la rotación del lote alternando gramíneas con leguminosas fijadoras de nitrógeno y variedades de ciclo corto.'
+            : 'Diversify parcel rotation by alternating grasses with nitrogen-fixing legumes and short-cycle varieties.',
+        citation: '',
       ),
     );
 
@@ -847,11 +846,11 @@ class EveKnowledgeBase {
         efficiencyPct: '92% - 95%',
         bestForSoil: es ? 'Suelo Arenoso y Franco' : 'Sandy & Loam Soils',
         description: es
-            ? 'Suministra la lámina requerida (${recommendedWaterMm.toStringAsFixed(0)} mm) en fracciones cortas y frecuentes directo a la raíz. En suelos arenosos evita que el agua y los nutrientes se pierdan por percolación profunda (Alianza Bioversity and CIAT, 2026).'
-            : 'Delivers the required depth (${recommendedWaterMm.toStringAsFixed(0)} mm) in short, frequent pulses directly to the root zone. In sandy soils, it prevents water and nutrient leaching (Alianza Bioversity and CIAT, 2026).',
+            ? 'Suministra la lámina requerida (${recommendedWaterMm.toStringAsFixed(0)} mm) en fracciones cortas y frecuentes directo a la raíz. En suelos arenosos evita que el agua y los nutrientes se pierdan por filtración profunda.'
+            : 'Delivers the required depth (${recommendedWaterMm.toStringAsFixed(0)} mm) in short, frequent pulses directly to the root zone. In sandy soils, it prevents water and nutrient loss.',
         nasaIntegrationNote: es
-            ? 'Guiado por evapotranspiración satelital (Misión NASA-ISRO / SMAP) para reponer solo el agua evaporada.'
-            : 'Guided by satellite evapotranspiration (NASA-ISRO Mission / SMAP) to replace only evaporated water.',
+            ? 'Ideal para reponer únicamente el agua evaporada durante el día.'
+            : 'Ideal for replacing only the water evaporated during the day.',
         isRecommendedForCurrentSoil: isSandy || isLoam,
       ),
       IrrigationSystemOption(
@@ -861,11 +860,11 @@ class EveKnowledgeBase {
         efficiencyPct: '85% - 88%',
         bestForSoil: es ? 'Suelo Limoso y Laderas' : 'Silt Soils & Sloped Terrain',
         description: es
-            ? 'Distribuye gotas finas sin golpear el suelo. Como el suelo limoso tiende a compactarse cuando está descubierto en terrenos inclinados (Alianza Bioversity and CIAT, 2026), combinar microaspersión con cobertura vegetal preserva su textura suave y alta fertilidad.'
-            : 'Distributes fine droplets gently. Since silty soil compacts easily when bare on sloped terrain (Alianza Bioversity and CIAT, 2026), pairing micro-sprinklers with mulch preserves its smooth texture and fertility.',
+            ? 'Distribuye gotas finas sin golpear el suelo. Como el suelo limoso tiende a compactarse cuando está descubierto en terrenos inclinados, combinar microaspersión con cobertura vegetal preserva su textura suave y alta fertilidad.'
+            : 'Distributes fine droplets gently. Since silty soil compacts easily when bare on sloped terrain, pairing micro-sprinklers with mulch preserves its smooth texture and fertility.',
         nasaIntegrationNote: es
-            ? 'Sincronizado con alertas de lluvia de NASA GPM para suspender riegos antes de tormentas.'
-            : 'Synchronized with NASA GPM rainfall alerts to suspend irrigation prior to storms.',
+            ? 'Se recomienda suspender el riego antes de lluvias pronosticadas.'
+            : 'Suspend irrigation prior to forecasted rainfall.',
         isRecommendedForCurrentSoil: isSilt,
       ),
       IrrigationSystemOption(
@@ -875,25 +874,25 @@ class EveKnowledgeBase {
         efficiencyPct: '90%',
         bestForSoil: es ? 'Suelo Arcilloso' : 'Clay Soils',
         description: es
-            ? 'El suelo arcilloso retiene el agua con facilidad pero drena lento, volviéndose pesado y pegajoso (Alianza Bioversity and CIAT, 2026). El caudal bajo evita el encharcamiento superficial y permite que el oxígeno llegue a las raíces.'
-            : 'Clay soil retains water easily but drains slowly, becoming heavy and sticky (Alianza Bioversity and CIAT, 2026). Low-flow emitters prevent surface ponding and root asphyxia.',
+            ? 'El suelo arcilloso retiene el agua con facilidad pero drena lento, volviéndose pesado y pegajoso. El caudal bajo evita el encharcamiento superficial y permite que el oxígeno llegue a las raíces.'
+            : 'Clay soil retains water easily but drains slowly, becoming heavy and sticky. Low-flow emitters prevent surface ponding and root asphyxia.',
         nasaIntegrationNote: es
-            ? 'Calibrado con el índice radicular GWETROOT de NASA SMAP para no superar el 75% de saturación.'
-            : 'Calibrated with NASA SMAP GWETROOT index to avoid exceeding 75% saturation.',
+            ? 'Evita superar el 75% de saturación de humedad en la raíz.'
+            : 'Avoids exceeding 75% root-zone moisture saturation.',
         isRecommendedForCurrentSoil: isClay,
       ),
       IrrigationSystemOption(
         systemName: es
-            ? 'Riego por Surcos Alternos Guiado por Satélite'
-            : 'Satellite-Guided Alternate Furrow Irrigation',
+            ? 'Riego por Surcos Alternos'
+            : 'Alternate Furrow Irrigation',
         efficiencyPct: '75% - 80%',
         bestForSoil: es ? 'Suelo Franco (Bajo Costo)' : 'Loam Soil (Low Cost)',
         description: es
             ? 'Alternativa económica para pequeños productores que riega un surco sí y otro no, reduciendo el consumo de agua en 35% mientras aprovecha la retención balanceada del suelo franco.'
             : 'Cost-effective option for smallholders that waters every other furrow, cutting water use by 35% while leveraging the balanced retention of loam soil.',
         nasaIntegrationNote: es
-            ? 'Reemplaza el calendario fijo tradicional por mediciones en tiempo real (NASA Ciencia, s.f.).'
-            : 'Replaces fixed calendars with real-time soil moisture measurements (NASA Ciencia, s.f.).',
+            ? 'Ajusta los turnos según la humedad real de tu parcela.'
+            : 'Adjust watering intervals based on your parcel\'s actual moisture.',
         isRecommendedForCurrentSoil: isLoam,
       ),
     ];
@@ -940,68 +939,68 @@ class EveKnowledgeBase {
         weekNumber: 1,
         dateRangeLabel: '${_formatShortDate(w1Start)} - ${_formatShortDate(w1End)}',
         title: es
-            ? 'Semana 1: Ajuste Hídrico y Control Fitosanitario'
-            : 'Week 1: Water Balance & Phytosanitary Control',
+            ? 'Semana 1: Ajuste de Riego y Revisión de Plagas'
+            : 'Week 1: Irrigation Adjustment & Pest Check',
         expectedMetrics: es
-            ? 'Humedad SMAP: ${soilMoisturePct.toStringAsFixed(0)}% • Déficit: ${weeklyDeficitMm.toStringAsFixed(1)} mm • +${accumulatedGdd7d.toStringAsFixed(0)} GDD'
-            : 'SMAP Moisture: ${soilMoisturePct.toStringAsFixed(0)}% • Deficit: ${weeklyDeficitMm.toStringAsFixed(1)} mm • +${accumulatedGdd7d.toStringAsFixed(0)} GDD',
+            ? 'Humedad: ${soilMoisturePct.toStringAsFixed(0)}% • Déficit: ${weeklyDeficitMm.toStringAsFixed(1)} mm • +${accumulatedGdd7d.toStringAsFixed(0)} GDD'
+            : 'Moisture: ${soilMoisturePct.toStringAsFixed(0)}% • Deficit: ${weeklyDeficitMm.toStringAsFixed(1)} mm • +${accumulatedGdd7d.toStringAsFixed(0)} GDD',
         recommendedAction: es
-            ? 'Aplicar riego de precisión según textura de suelo ($soilType) e inspeccionar posibles focos iniciales de plagas en $crop.'
-            : 'Apply precision irrigation tailored to $soilType soil and scout for initial pest hotspots in $crop.',
+            ? 'Aplicar riego según tu suelo ($soilType) e inspeccionar posibles focos iniciales de plagas en $crop.'
+            : 'Apply irrigation tailored to $soilType soil and scout for initial pest hotspots in $crop.',
       ),
       WeeklyProjectionPhase(
         weekNumber: 2,
         dateRangeLabel: '${_formatShortDate(w2Start)} - ${_formatShortDate(w2End)}',
         title: es
-            ? 'Semana 2: Desarrollo Fenológico y Vigilancia GPM'
-            : 'Week 2: Phenological Growth & GPM Rain Watch',
+            ? 'Semana 2: Crecimiento del Cultivo y Vigilancia de Lluvias'
+            : 'Week 2: Crop Growth & Rainfall Watch',
         expectedMetrics: es
             ? 'Humedad proyectada sin riego: ~$projectedMoistureW2% • Calor acumulado: ~$gdd14d GDD'
             : 'Projected unwatered moisture: ~$projectedMoistureW2% • Cumulative heat: ~$gdd14d GDD',
         recommendedAction: es
-            ? 'Verificar notificación de cambio semanal (+7 días). Si la humedad baja del 45%, activar pulsos de riego y reforzar barreras contra vectores.'
-            : 'Check the +7-day weekly change alert. If moisture drops below 45%, trigger pulse irrigation and reinforce vector barriers.',
+            ? 'Si la humedad baja del 45%, activar pulsos de riego y reforzar medidas preventivas en el cultivo.'
+            : 'If moisture drops below 45%, trigger pulse irrigation and reinforce preventive crop care.',
       ),
       WeeklyProjectionPhase(
         weekNumber: 3,
         dateRangeLabel: '${_formatShortDate(w3Start)} - ${_formatShortDate(w3End)}',
         title: es
-            ? 'Semana 3: Regeneración Edáfica y Plan de Rotación'
-            : 'Week 3: Soil Regeneration & Rotation Planning',
+            ? 'Semana 3: Nutrición del Suelo y Plan de Rotación'
+            : 'Week 3: Soil Nutrition & Rotation Plan',
         expectedMetrics: es
             ? 'Humedad proyectada: ~$projectedMoistureW3% • Suma térmica 21 días: ~$gdd21d GDD'
             : 'Projected moisture: ~$projectedMoistureW3% • 21-day thermal sum: ~$gdd21d GDD',
         recommendedAction: es
-            ? 'Preparar incorporación de abono verde o transición hacia $suggestedRotationCrop para fijar nitrógeno biológico y cortar ciclos de plagas.'
-            : 'Prepare green manure incorporation or transition toward $suggestedRotationCrop to fix biological nitrogen and break pest cycles.',
+            ? 'Preparar incorporación de abono verde o transición hacia $suggestedRotationCrop para aportar nitrógeno y cortar ciclos de plagas.'
+            : 'Prepare green manure incorporation or transition toward $suggestedRotationCrop to add nitrogen and break pest cycles.',
       ),
     ];
 
     final changes = es
         ? [
-            'Humedad radicular SMAP pasó de ${(soilMoisturePct + 4.5).clamp(20, 95).toStringAsFixed(0)}% a ${soilMoisturePct.toStringAsFixed(0)}% en los últimos 7 días (${weeklyDeficitMm > 15 ? 'descenso por evapotranspiración' : 'estabilidad hídrica'}).',
-            'Se acumularon +${accumulatedGdd7d.toStringAsFixed(1)} GDD de energía térmica (NASA POWER), acelerando el ciclo de $crop y la actividad de insectos vectores.',
-            'Vigilancia de plagas actualizada para $crop en suelo $soilType según el boletín biotecnológico Eva-Bits.',
+            'La humedad en la raíz pasó de ${(soilMoisturePct + 4.5).clamp(20, 95).toStringAsFixed(0)}% a ${soilMoisturePct.toStringAsFixed(0)}% en los últimos 7 días (${weeklyDeficitMm > 15 ? 'descenso por evaporación' : 'reserva estable'}).',
+            'Se acumularon +${accumulatedGdd7d.toStringAsFixed(1)} GDD de calor, acelerando el crecimiento de $crop y la posible actividad de insectos.',
+            'Alertas de plagas actualizadas para $crop en suelo $soilType.',
           ]
         : [
-            'SMAP root-zone moisture shifted from ${(soilMoisturePct + 4.5).clamp(20, 95).toStringAsFixed(0)}% to ${soilMoisturePct.toStringAsFixed(0)}% over the past 7 days (${weeklyDeficitMm > 15 ? 'evapotranspiration drawdown' : 'stable reserve'}).',
-            'Accumulated +${accumulatedGdd7d.toStringAsFixed(1)} GDD of thermal energy (NASA POWER), advancing $crop phenology and insect vector activity.',
-            'Updated pest surveillance for $crop in $soilType soil based on the Eva-Bits biotechnology bulletin.',
+            'Root-zone moisture shifted from ${(soilMoisturePct + 4.5).clamp(20, 95).toStringAsFixed(0)}% to ${soilMoisturePct.toStringAsFixed(0)}% over the past 7 days (${weeklyDeficitMm > 15 ? 'evaporation drawdown' : 'stable reserve'}).',
+            'Accumulated +${accumulatedGdd7d.toStringAsFixed(1)} GDD of heat, advancing $crop growth and potential insect activity.',
+            'Updated pest alerts for $crop in $soilType soil.',
           ];
 
     return ThreeWeekProjection(
       fullDateRange: fullRange,
       phases: phases,
       longTermClimateNote: es
-          ? 'Nota Científica NASA (Gray, 2021; NASA, 2024): El monitoreo por bloques de 3 semanas permite anticipar eventos climáticos compuestos (sequía + ola de calor) que hacia 2030 pueden reducir el rendimiento del maíz en 24%.'
-          : 'NASA Scientific Note (Gray, 2021; NASA, 2024): 3-week rolling projections help anticipate compound climate events (drought + heatwave) projected to reduce maize yields by 24% by 2030.',
+          ? 'Planificar por bloques de 3 semanas te permite anticipar sequías y olas de calor a tiempo.'
+          : 'Planning in 3-week blocks helps you anticipate droughts and heatwaves ahead of time.',
       weeklyCheckpointTitle: es
-          ? 'Reporte de Evolución Semanal (Últimos 7 Días)'
-          : 'Weekly Evolution Report (Past 7 Days)',
+          ? 'Cambios de la Última Semana (Últimos 7 Días)'
+          : 'Past Week Changes (Last 7 Days)',
       weeklyCheckpointPeriod: checkpointPeriod,
       weeklyCheckpointSummary: es
-          ? 'Eve comparó las lecturas satelitales de hace 1 semana con el estado actual de tu parcela:'
-          : 'Eve compared satellite readings from 1 week ago with your parcel\'s current state:',
+          ? 'Comparación de hace 1 semana con el estado actual de tu parcela:'
+          : 'Comparison from 1 week ago with your parcel\'s current state:',
       weeklyChangesDetected: changes,
     );
   }
