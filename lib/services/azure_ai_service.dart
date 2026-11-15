@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'agro_prediction_engine.dart';
+import 'eve_knowledge_base.dart';
 import 'subplot_graph_service.dart';
+import '../languages/app_strings.dart';
 
 class AzureAiService {
   // Configured for Azure AI Foundry deployment (Resource: eva-bits-open-ai)
@@ -12,25 +14,39 @@ class AzureAiService {
       const String.fromEnvironment('AZURE_AI_API_KEY', defaultValue: '');
   static String modelDeployment = "gpt-5-mini";
 
-  /// Queries Azure AI Foundry with agricultural, graph topology, and deterministic NASA predictions.
-  static Future<String> askIvy({
+  /// Queries Eve (Azure AI Foundry gpt-5-mini) with NASA telemetry, spatial graph topology,
+  /// deterministic predictions, and the Eva-Bits Biotechnology & Agronomy research corpus.
+  static Future<String> askEve({
     required String userQuery,
     required Map<String, dynamic> farmData,
     required Map<String, dynamic> nasaData,
     FarmPredictionsReport? predictionsReport,
     SubplotGraph? graph,
     List<Map<String, dynamic>>? subplots,
+    String? activeCrop,
+    String? activeSoil,
   }) async {
-    // If not supplied, generate predictions deterministically on the spot
+    final s = AppLanguage.strings;
+    final crop = activeCrop ??
+        (subplots != null && subplots.isNotEmpty
+            ? (subplots.first['crop']?.toString() ?? s.kDefaultCropName)
+            : s.kDefaultCropName);
+    final soil = activeSoil ??
+        (subplots != null && subplots.isNotEmpty
+            ? (subplots.first['soil_type']?.toString() ?? s.kDefaultSoilName)
+            : s.kDefaultSoilName);
+
     final report = predictionsReport ??
         AgroPredictionEngine.generateReport(
           farmData: farmData,
           nasaData: nasaData,
           graph: graph,
           subplots: subplots,
+          targetCrop: crop,
+          targetSoilType: soil,
+          strings: s,
         );
 
-    // If endpoint and credentials (bearerToken or apiKey) are provided, perform live Azure AI Foundry call
     final bool hasAuth = bearerToken.isNotEmpty || apiKey.isNotEmpty;
     if (endpoint.isNotEmpty && hasAuth) {
       try {
@@ -40,6 +56,8 @@ class AzureAiService {
           nasa: nasaData,
           report: report,
           graph: graph,
+          crop: crop,
+          soil: soil,
         );
 
         final Map<String, String> headers = {
@@ -60,8 +78,7 @@ class AzureAiService {
                   {'role': 'system', 'content': systemPrompt},
                   {'role': 'user', 'content': userQuery},
                 ],
-                // Note: gpt-5-mini requires max_completion_tokens instead of max_tokens
-                'max_completion_tokens': 1000,
+                'max_completion_tokens': 1100,
               }),
             )
             .timeout(const Duration(seconds: 15));
@@ -74,17 +91,41 @@ class AzureAiService {
             return content;
           }
         }
-      } catch (e) {
-        // Fall back to intelligent grounded response if Azure call fails or times out
+      } catch (_) {
+        // Fall back to deterministic grounded response if offline or timeout
       }
     }
 
-    // Default grounded intelligent response for instant hackathon testing & offline demo
-    return _generateGroundedDemoResponse(
+    return _generateGroundedResponse(
       farm: farmData,
       nasa: nasaData,
       report: report,
       query: userQuery,
+      crop: crop,
+      soil: soil,
+    );
+  }
+
+  /// Backward-compatible alias for existing callers
+  static Future<String> askIvy({
+    required String userQuery,
+    required Map<String, dynamic> farmData,
+    required Map<String, dynamic> nasaData,
+    FarmPredictionsReport? predictionsReport,
+    SubplotGraph? graph,
+    List<Map<String, dynamic>>? subplots,
+    String? activeCrop,
+    String? activeSoil,
+  }) {
+    return askEve(
+      userQuery: userQuery,
+      farmData: farmData,
+      nasaData: nasaData,
+      predictionsReport: predictionsReport,
+      graph: graph,
+      subplots: subplots,
+      activeCrop: activeCrop,
+      activeSoil: activeSoil,
     );
   }
 
@@ -92,117 +133,254 @@ class AzureAiService {
     required Map<String, dynamic> farm,
     required Map<String, dynamic> nasa,
     required FarmPredictionsReport report,
+    required String crop,
+    required String soil,
     SubplotGraph? graph,
   }) {
     final topology =
         graph?.toIvyTopologyContext() ?? 'Topología espacial no configurada.';
+    final summary = nasa['summary'] as Map<String, dynamic>? ?? {};
+    final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
+    final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
+    final solarMj =
+        (summary['avg_solar_radiation_mj'] as num?)?.toDouble() ?? 18.5;
+    final soilMoisture =
+        (summary['root_soil_moisture_index'] as num?)?.toDouble() ?? 0.58;
+
+    final soilConcept = EveKnowledgeBase.getSoilScientificConcept(soil);
+    final phenomena = EveKnowledgeBase.evaluateNaturalPhenomena(
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisture: soilMoisture,
+      solarMj: solarMj,
+      soilType: soil,
+      crop: crop,
+    );
+    final pests = EveKnowledgeBase.getPestWarningsForCrop(
+      crop: crop,
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisture: soilMoisture,
+      soilType: soil,
+    );
+    final irrigationSystems = EveKnowledgeBase.getIrrigationSystemsForSoil(
+      soilType: soil,
+      recommendedWaterMm: report.irrigation.recommendedWaterMm,
+    );
+    final projection3w = EveKnowledgeBase.generateThreeWeekProjection(
+      crop: crop,
+      soilType: soil,
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisturePct: report.irrigation.soilMoisturePct,
+      weeklyDeficitMm: report.irrigation.weeklyDeficitMm,
+      accumulatedGdd7d: report.calendar.accumulatedGdd7d,
+      suggestedRotationCrop: report.rotation.suggestedCrop,
+    );
+
+    final phenomenaText = phenomena
+        .map((p) =>
+            '- ${p.phenomenonName} [${p.severity.toUpperCase()}] (${p.citation}): ${p.description} Prevención: ${p.preventionMeasure}')
+        .join('\n');
+
+    final pestsText = pests
+        .map((p) =>
+            '- ${p.pestName} (${p.scientificName}) [Riesgo: ${p.riskLevel.toUpperCase()}] (Fuente: ${p.sourceCitation}): Disparador: ${p.climateTrigger}. Impacto: ${p.symptomsAndImpact} Prevención: ${p.preventionAction}')
+        .join('\n');
+
+    final irrigationText = irrigationSystems
+        .map((i) =>
+            '- ${i.systemName} (Eficiencia ${i.efficiencyPct}, ideal para ${i.bestForSoil})${i.isRecommendedForCurrentSoil ? ' [RECOMENDADO PARA TU SUELO]' : ''}: ${i.description} (${i.nasaIntegrationNote})')
+        .join('\n');
+
+    final projectionText = projection3w.phases
+        .map((ph) =>
+            '- ${ph.title} (${ph.dateRangeLabel}): ${ph.expectedMetrics}. Acción: ${ph.recommendedAction}')
+        .join('\n');
 
     return '''
-Eres Ivy, la asistente agroecológica experta de Eva-Bits para el NASA Space Apps Challenge (Field Shift: Adapting Farms with NASA Data).
+Eres Eve, la asistente virtual agroecológica y fitosanitaria de Eva-Bits para agricultores en el reto NASA Space Apps Challenge 2026 ("Field Shift: Adapting Farms with NASA Data").
 Operas con el modelo gpt-5-mini de Azure AI Foundry.
 
-Tu misión es aconsejar al agricultor sobre rotación de cultivos, salud del suelo, prevención de plagas y conservación hídrica utilizando observaciones satelitales de la NASA y el motor determinista de Eva-Bits.
+REGLAS ESTRICTAS DE RESPUESTA Y CITACIÓN:
+1. Tu nombre es únicamente Eve (nunca te llames Ivy ni Evita).
+2. NUNCA uses emojis en tus respuestas. Usa viñetas limpias y subtítulos claros.
+3. CITA OBLIGATORIAMENTE LAS FUENTES EXACTAS que se te entregan en este contexto (ej. NASA POWER, NASA SMAP, NASA GPM, GRACE, Misión NASA-ISRO, Gray 2021, NASA Ciencia 2022/2024/2026, Alianza Bioversity and CIAT 2026, Vilela 2026, Cañizo s.f., Dubón 2006, Monge 2018, Murray y Aiston 2012, Delgado 2024, Porres y Cuxil 2024, Campos Hernández & Lugo Alonso 2012, JICA s.f., Deiss 2025, Sihdu 2022, Agrotec 2025).
+4. No inventes datos numéricos fuera de las lecturas satelitales y del motor determinista proporcionado.
+5. Mantén un tono empático, claro, práctico y orientado al agricultor.
 
-=== PERFIL DE LA FINCA ===
-- Finca: ${farm['name'] ?? 'Sin nombre'}
-- Ubicación: ${farm['zone'] ?? 'Nicaragua'}
-- Superficie: ${farm['total_surface']} ${farm['unit'] ?? 'ha'}
+=== PERFIL DE LA FINCA Y PARCELA ACTIVA ===
+- Finca: ${farm['name'] ?? 'Mi Finca'} (${farm['zone'] ?? 'Región Agrícola'})
+- Superficie total: ${farm['total_surface'] ?? 2.5} ${farm['unit'] ?? 'ha'}
+- Cultivo analizado: $crop
+- Tipo de suelo: $soil
+- Diagnóstico edafológico: $soilConcept
 
-=== TOPOLOGÍA DE SUBLOTES (GRAFO ESPACIAL) ===
+=== TELEMETRÍA SATELITAL NASA ===
+- Temperatura media (NASA POWER T2M): $tempC °C
+- Precipitación 7 días (NASA GPM / POWER): $rainMm mm
+- Radiación solar (NASA POWER): $solarMj MJ/m²/día (~240 W/m² base climática según NASA, 2009)
+- Humedad radicular (NASA SMAP L4 GWETROOT): ${report.irrigation.soilMoisturePct}%
+
+=== TOPOLOGÍA ESPACIAL DE SUBLOTES ===
 $topology
 
-=== PREDICCIONES DETERMINISTAS DE LA FINCA (MOTOR EVA-BITS) ===
-1. Gestor de Riego (7 Días):
-   - Estado: ${report.irrigation.status.toUpperCase()} (${report.irrigation.actionTitle})
-   - Humedad del suelo (SMAP proxy): ${report.irrigation.soilMoisturePct}%
-   - Déficit hídrico semanal: ${report.irrigation.weeklyDeficitMm} mm
-   - Días hasta estrés: ${report.irrigation.daysUntilStress} días
-   - Lámina requerida: ${report.irrigation.recommendedWaterMm} mm
-   - Recomendación: ${report.irrigation.actionRecommendation}
+=== ADVERTENCIAS DE FENÓMENOS NATURALES Y CLIMA EXTREMO ===
+$phenomenaText
 
-2. Simulador de Rotación:
-   - Score de compatibilidad: ${report.rotation.score}% (${report.rotation.compatibilityLevel})
-   - Cultivo sugerido: ${report.rotation.suggestedCrop}
-   - Alternativas: ${report.rotation.alternativeCrops.join(', ')}
-   - Riesgo de corredor de plagas: ${report.rotation.hasSpatialCorridorRisk ? 'SÍ (vecinos con misma familia botánica)' : 'NO'}
-   - Diagnóstico: ${report.rotation.explanation}
+=== VIGILANCIA DE PLAGAS Y ENFERMEDADES PARA $crop ===
+$pestsText
 
-3. Calendario Agrícola y GDD:
-   - Estado de ventana: ${report.calendar.windowStatus} (Abierta: ${report.calendar.isWindowOpen ? 'SÍ' : 'NO'})
-   - Rango recomendado: ${report.calendar.recommendedDateRange}
-   - Suma térmica 7 días: ${report.calendar.accumulatedGdd7d} GDD
-   - Días a floración estimados: ${report.calendar.estimatedDaysToFlowering} días
-   - Consejo térmico: ${report.calendar.thermalAdvice}
+=== SISTEMAS DE RIEGO DE PRECISIÓN RECOMENDADOS ===
+$irrigationText
 
-4. Salud y Rendimiento (NDVI Proxy):
-   - Estado: ${report.health.vigorStatus}
-   - Proxy NDVI: ${report.health.estimatedNdviProxy}
-   - Rendimiento relativo proyectado: ${report.health.expectedYieldRatioPct}%
-   - Condición biomasa: ${report.health.biomassCondition}
+=== PROYECCIÓN A 3 SEMANAS (${projection3w.fullDateRange}) Y CAMBIOS SEMANALES ===
+$projectionText
+- Comparativa últimos 7 días (${projection3w.weeklyCheckpointPeriod}): ${projection3w.weeklyChangesDetected.join(' ')}
+- ${projection3w.longTermClimateNote}
 
-5. Alertas Climáticas Extremas:
-   - Tipo de alerta: ${report.risks.alertType} (Severidad: ${report.risks.severity})
-   - Alerta: ${report.risks.headline}
-   - Mitigación: ${report.risks.mitigationAdvice}
-
-6. Balance Nutricional de Suelo:
-   - Ganancia de Nitrógeno: ${report.nutrition.projectedNitrogenGainKgPerHa} kg N/ha
-   - Ahorro estimado de urea comercial: ${report.nutrition.estimatedUreaSavingsKg} kg
-   - Índice de regeneración del suelo: ${report.nutrition.soilHealthScore}/100
-   - Diagnóstico: ${report.nutrition.regenerationDiagnosis}
-
-Reglas de respuesta:
-1. Responde de manera clara, práctica, empática y comprensible para el agricultor.
-2. Cita datos exactos del reporte determinista y observaciones de la NASA (NASA POWER, SMAP L4).
-3. Recomienda romper corredores biológicos de plagas en base al grafo de sublotes.
-4. Mantén las recomendaciones adaptadas al tamaño y condiciones reales de la finca.
+=== PREDICCIONES DETERMINISTAS DEL MOTOR EVA-BITS ===
+- Riego: ${report.irrigation.actionTitle} | Déficit: ${report.irrigation.weeklyDeficitMm} mm | Lámina requerida: ${report.irrigation.recommendedWaterMm} mm.
+- Rotación: Compatibilidad ${report.rotation.score}% (${report.rotation.compatibilityLevel}) -> Sugerido: ${report.rotation.suggestedCrop}. Corredor de plagas: ${report.rotation.hasSpatialCorridorRisk ? 'SÍ' : 'NO'}.
+- Siembra y GDD: ${report.calendar.windowStatus} (${report.calendar.recommendedDateRange}) | ${report.calendar.accumulatedGdd7d} GDD acumulados.
+- Salud y Rendimiento (NDVI Proxy): ${report.health.vigorStatus} (NDVI ${report.health.estimatedNdviProxy}, rendimiento estimado ${report.health.expectedYieldRatioPct}%).
+- Balance de Nitrógeno: ${report.nutrition.projectedNitrogenGainKgPerHa} kg N/ha (Ahorro urea: ${report.nutrition.estimatedUreaSavingsKg} kg).
 ''';
   }
 
-  static String _generateGroundedDemoResponse({
+  static String _generateGroundedResponse({
     required Map<String, dynamic> farm,
     required Map<String, dynamic> nasa,
     required FarmPredictionsReport report,
     required String query,
+    required String crop,
+    required String soil,
   }) {
-    final farmName = farm['name'] ?? 'tu finca';
-    final zone = farm['zone'] ?? 'Estelí';
+    final es = AppLanguage.isSpanish;
+    final farmName = farm['name'] ?? (es ? 'tu finca' : 'your farm');
+    final zone = farm['zone'] ?? 'Nicaragua';
+    final summary = nasa['summary'] as Map<String, dynamic>? ?? {};
+    final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
+    final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
+    final solarMj =
+        (summary['avg_solar_radiation_mj'] as num?)?.toDouble() ?? 18.5;
+    final soilMoisture =
+        (summary['root_soil_moisture_index'] as num?)?.toDouble() ?? 0.58;
+
+    final soilConcept =
+        EveKnowledgeBase.getSoilScientificConcept(soil, isSpanish: es);
+    final phenomena = EveKnowledgeBase.evaluateNaturalPhenomena(
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisture: soilMoisture,
+      solarMj: solarMj,
+      soilType: soil,
+      crop: crop,
+      isSpanish: es,
+    );
+    final pests = EveKnowledgeBase.getPestWarningsForCrop(
+      crop: crop,
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisture: soilMoisture,
+      soilType: soil,
+      isSpanish: es,
+    );
+    final irrigationSystems = EveKnowledgeBase.getIrrigationSystemsForSoil(
+      soilType: soil,
+      recommendedWaterMm: report.irrigation.recommendedWaterMm,
+      isSpanish: es,
+    );
+    final recommendedSystem = irrigationSystems.firstWhere(
+      (s) => s.isRecommendedForCurrentSoil,
+      orElse: () => irrigationSystems.first,
+    );
+    final projection3w = EveKnowledgeBase.generateThreeWeekProjection(
+      crop: crop,
+      soilType: soil,
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisturePct: report.irrigation.soilMoisturePct,
+      weeklyDeficitMm: report.irrigation.weeklyDeficitMm,
+      accumulatedGdd7d: report.calendar.accumulatedGdd7d,
+      suggestedRotationCrop: report.rotation.suggestedCrop,
+      isSpanish: es,
+    );
+
+    final pestsBullets = pests
+        .map((p) =>
+            '• **${p.pestName} (*${p.scientificName}*)** — *${p.sourceCitation}*:\n  ${p.symptomsAndImpact}\n  *Prevención:* ${p.preventionAction}')
+        .join('\n');
+
+    final phenomenaBullets = phenomena
+        .take(2)
+        .map((ph) =>
+            '• **${ph.phenomenonName}** (*${ph.citation}*):\n  ${ph.description}\n  *Acción:* ${ph.preventionMeasure}')
+        .join('\n');
+
+    final phasesBullets = projection3w.phases
+        .map((ph) =>
+            '• **${ph.title}** (${ph.dateRangeLabel}):\n  ${ph.expectedMetrics}\n  *Meta:* ${ph.recommendedAction}')
+        .join('\n');
+
+    if (!es) {
+      return '''
+Hello! I am **Eve**, your virtual agroecological and phytosanitary assistant in **Eva-Bits** (powered by *gpt-5-mini* and grounded in NASA Earth Observations & the Eva-Bits Biotechnology Research Corpus).
+
+Here is the scientific diagnosis for **$farmName** ($zone) for **$crop** on **$soil** soil:
+
+**1. Soil & Precision Irrigation Diagnosis (NASA SMAP / NISAR / CIAT):**
+• **Status:** ${report.irrigation.actionTitle} (Root moisture: ${report.irrigation.soilMoisturePct}%, 7-day deficit: ${report.irrigation.weeklyDeficitMm} mm).
+• **Soil Science:** $soilConcept
+• **Recommended Irrigation System:** **${recommendedSystem.systemName}** (Efficiency: ${recommendedSystem.efficiencyPct}). ${recommendedSystem.description} *(${recommendedSystem.nasaIntegrationNote})*.
+
+**2. Natural Phenomena & Extreme Climate Warnings (NASA GPM / GRACE / Climate):**
+$phenomenaBullets
+
+**3. Crop Pest & Disease Surveillance for $crop:**
+$pestsBullets
+
+**4. 3-Week Rolling Projection (${projection3w.fullDateRange}):**
+$phasesBullets
+
+**5. Weekly Evolution Alert (Past 7 Days: ${projection3w.weeklyCheckpointPeriod}):**
+• ${projection3w.weeklyChangesDetected.join('\n• ')}
+
+**6. Spatial Crop Rotation & Nitrogen Balance:**
+• **Recommended Rotation:** **${report.rotation.suggestedCrop}** (Compatibility: ${report.rotation.score}%).
+• **Biological Nitrogen Fixation:** ${report.nutrition.projectedNitrogenGainKgPerHa > 0 ? '+${report.nutrition.projectedNitrogenGainKgPerHa}' : '${report.nutrition.projectedNitrogenGainKgPerHa}'} kg N/ha (~${report.nutrition.estimatedUreaSavingsKg.toStringAsFixed(0)} kg commercial urea saved).
+
+Ask me about a specific pest, irrigation system, or 3-week rotation scenario!
+''';
+    }
 
     return '''
-¡Hola! Soy **Ivy**, tu asistente agroecológica de **Eva-Bits** (optimizada con *gpt-5-mini*).
+Hola, soy **Eve**, tu asistente virtual agroecológica de **Eva-Bits** (impulsada por *gpt-5-mini* y fundamentada en datos satelitales de la **NASA** y el documento científico de **Biotecnología Eva-Bits**).
 
-Analicé tu finca **$farmName** en **$zone** combinando las observaciones satelitales de la NASA con la topología de tus sublotes:
+Analicé tu finca **$farmName** en **$zone** para el cultivo de **$crop** en suelo **$soil** citando las fuentes oficiales:
 
-💧 **1. Diagnóstico Hídrico y Riego (NASA SMAP / POWER):**
-• **Estado:** ${report.irrigation.actionTitle}
-• **Humedad radicular actual:** ${report.irrigation.soilMoisturePct}%
-• **Déficit a 7 días:** ${report.irrigation.weeklyDeficitMm} mm (${report.irrigation.daysUntilStress} días de reserva)
-• **Recomendación:** ${report.irrigation.actionRecommendation}
+**1. Diagnóstico Hídrico, Suelo y Sistema de Riego (NASA SMAP / Misión NASA-ISRO / CIAT):**
+• **Estado Hídrico:** ${report.irrigation.actionTitle} (Humedad radicular: ${report.irrigation.soilMoisturePct}%, déficit semanal: ${report.irrigation.weeklyDeficitMm} mm, lámina: ${report.irrigation.recommendedWaterMm} mm).
+• **Base Edafológica:** $soilConcept
+• **Sistema de Riego Recomendado:** **${recommendedSystem.systemName}** (Eficiencia: ${recommendedSystem.efficiencyPct}). ${recommendedSystem.description} *(${recommendedSystem.nasaIntegrationNote})*.
 
-🔄 **2. Compatibilidad de Rotación y Grafo Espacial:**
-• **Compatibilidad:** **${report.rotation.score}%** (${report.rotation.compatibilityLevel})
-• **Cultivo Óptimo Sugerido:** **${report.rotation.suggestedCrop}**
-• **Riesgo de Corredor de Plagas:** ${report.rotation.hasSpatialCorridorRisk ? '⚠️ Detectada colindancia con parcelas de la misma familia. Rotar con leguminosas romperá el ciclo de plagas.' : '✅ Excelente aislamiento espacial entre sublotes.'}
-• **Alternativas viables:** ${report.rotation.alternativeCrops.join(', ')}.
+**2. Advertencias de Fenómenos Naturales y Clima (NASA GPM / SMAP / GRACE):**
+$phenomenaBullets
 
-🌱 **3. Ventana de Siembra y Desarrollo Térmico (GDD):**
-• **Estado:** ${report.calendar.windowStatus} (${report.calendar.recommendedDateRange})
-• **Acumulación Térmica:** ${report.calendar.accumulatedGdd7d} GDD acumulados (floración proyectada en ~${report.calendar.estimatedDaysToFlowering} días).
+**3. Vigilancia de Plagas y Enfermedades para $crop:**
+$pestsBullets
 
-🍃 **4. Vigor Vegetal y Rendimiento (NDVI Proxy):**
-• **Índice de Vigor:** ${report.health.vigorStatus} (NDVI estimado: ${report.health.estimatedNdviProxy})
-• **Rendimiento Proyectado:** ${report.health.expectedYieldRatioPct}% del potencial normal.
+**4. Proyección Tri-Semanal (${projection3w.fullDateRange}):**
+$phasesBullets
 
-⚡ **5. Alerta de Riesgos Agroclimáticos:**
-• **${report.risks.headline}**
-• *Mitigación:* ${report.risks.mitigationAdvice}
+**5. Control de Cambios tras 1 Semana (${projection3w.weeklyCheckpointPeriod}):**
+• ${projection3w.weeklyChangesDetected.join('\n• ')}
 
-🌍 **6. Balance Nutricional y Ahorro en Fertilizantes:**
-• **Aporte Biológico de Nitrógeno:** ${report.nutrition.projectedNitrogenGainKgPerHa > 0 ? '+${report.nutrition.projectedNitrogenGainKgPerHa}' : '${report.nutrition.projectedNitrogenGainKgPerHa}'} kg N/ha.
-• **Ahorro Estimado:** ${report.nutrition.estimatedUreaSavingsKg.toStringAsFixed(0)} kg de urea comercial en la finca.
-• **Índice de Salud del Suelo:** ${report.nutrition.soilHealthScore}/100.
+**6. Rotación Espacial y Balance de Nitrógeno:**
+• **Rotación Sugerida:** **${report.rotation.suggestedCrop}** (Compatibilidad: **${report.rotation.score}%** — ${report.rotation.compatibilityLevel}).
+• **Aporte Biológico:** ${report.nutrition.projectedNitrogenGainKgPerHa > 0 ? '+${report.nutrition.projectedNitrogenGainKgPerHa}' : '${report.nutrition.projectedNitrogenGainKgPerHa}'} kg N/ha (ahorro estimado de ${report.nutrition.estimatedUreaSavingsKg.toStringAsFixed(0)} kg de urea).
 
-¿Deseas que simulemos un cultivo específico en alguno de tus sublotes o planifiquemos el calendario de labores?
+¿Deseas profundizar en el control de alguna plaga de tu cultivo, comparar los sistemas de riego o revisar la proyección de las próximas 3 semanas?
 ''';
   }
 }

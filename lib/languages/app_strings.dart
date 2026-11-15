@@ -382,6 +382,27 @@ abstract class AppStrings {
 
   String get kDefaultCropName;
   String get kDefaultSoilName;
+
+  // Eve Advanced Capabilities
+  String get kWeeklyNotificationBannerTitle;
+  String get kWeeklyDeltaDialogTitle;
+  String get kIrrigationSystemsSectionTitle;
+  String get kIrrigationSystemsSectionSub;
+  String get kRecommendedSystemBadge;
+  String get kEfficiencyLabel;
+  String get kBestForSoilLabel;
+  String get kThreeWeekProjectionTitle;
+  String get kThreeWeekProjectionSub;
+  String get kNaturalPhenomenaSectionTitle;
+  String get kCropPestsSectionTitle;
+  String get kHighRiskBadge;
+  String get kModerateRiskBadge;
+  String get kPreventionLabel;
+  String get kSourceLabel;
+  String get kQuickPromptPests;
+  String get kQuickPromptPhenomena;
+  String get kQuickPrompt3Weeks;
+  String get kQuickPromptIrrigation;
 }
 
 class EngStrings implements AppStrings {
@@ -1091,6 +1112,45 @@ class EngStrings implements AppStrings {
   String get kDefaultCropName => eng.kDefaultCropName;
   @override
   String get kDefaultSoilName => eng.kDefaultSoilName;
+
+  @override
+  String get kWeeklyNotificationBannerTitle => eng.kWeeklyNotificationBannerTitle;
+  @override
+  String get kWeeklyDeltaDialogTitle => eng.kWeeklyDeltaDialogTitle;
+  @override
+  String get kIrrigationSystemsSectionTitle => eng.kIrrigationSystemsSectionTitle;
+  @override
+  String get kIrrigationSystemsSectionSub => eng.kIrrigationSystemsSectionSub;
+  @override
+  String get kRecommendedSystemBadge => eng.kRecommendedSystemBadge;
+  @override
+  String get kEfficiencyLabel => eng.kEfficiencyLabel;
+  @override
+  String get kBestForSoilLabel => eng.kBestForSoilLabel;
+  @override
+  String get kThreeWeekProjectionTitle => eng.kThreeWeekProjectionTitle;
+  @override
+  String get kThreeWeekProjectionSub => eng.kThreeWeekProjectionSub;
+  @override
+  String get kNaturalPhenomenaSectionTitle => eng.kNaturalPhenomenaSectionTitle;
+  @override
+  String get kCropPestsSectionTitle => eng.kCropPestsSectionTitle;
+  @override
+  String get kHighRiskBadge => eng.kHighRiskBadge;
+  @override
+  String get kModerateRiskBadge => eng.kModerateRiskBadge;
+  @override
+  String get kPreventionLabel => eng.kPreventionLabel;
+  @override
+  String get kSourceLabel => eng.kSourceLabel;
+  @override
+  String get kQuickPromptPests => eng.kQuickPromptPests;
+  @override
+  String get kQuickPromptPhenomena => eng.kQuickPromptPhenomena;
+  @override
+  String get kQuickPrompt3Weeks => eng.kQuickPrompt3Weeks;
+  @override
+  String get kQuickPromptIrrigation => eng.kQuickPromptIrrigation;
 }
 
 class SpaStrings implements AppStrings {
@@ -1800,6 +1860,45 @@ class SpaStrings implements AppStrings {
   String get kDefaultCropName => spa.kDefaultCropName;
   @override
   String get kDefaultSoilName => spa.kDefaultSoilName;
+
+  @override
+  String get kWeeklyNotificationBannerTitle => spa.kWeeklyNotificationBannerTitle;
+  @override
+  String get kWeeklyDeltaDialogTitle => spa.kWeeklyDeltaDialogTitle;
+  @override
+  String get kIrrigationSystemsSectionTitle => spa.kIrrigationSystemsSectionTitle;
+  @override
+  String get kIrrigationSystemsSectionSub => spa.kIrrigationSystemsSectionSub;
+  @override
+  String get kRecommendedSystemBadge => spa.kRecommendedSystemBadge;
+  @override
+  String get kEfficiencyLabel => spa.kEfficiencyLabel;
+  @override
+  String get kBestForSoilLabel => spa.kBestForSoilLabel;
+  @override
+  String get kThreeWeekProjectionTitle => spa.kThreeWeekProjectionTitle;
+  @override
+  String get kThreeWeekProjectionSub => spa.kThreeWeekProjectionSub;
+  @override
+  String get kNaturalPhenomenaSectionTitle => spa.kNaturalPhenomenaSectionTitle;
+  @override
+  String get kCropPestsSectionTitle => spa.kCropPestsSectionTitle;
+  @override
+  String get kHighRiskBadge => spa.kHighRiskBadge;
+  @override
+  String get kModerateRiskBadge => spa.kModerateRiskBadge;
+  @override
+  String get kPreventionLabel => spa.kPreventionLabel;
+  @override
+  String get kSourceLabel => spa.kSourceLabel;
+  @override
+  String get kQuickPromptPests => spa.kQuickPromptPests;
+  @override
+  String get kQuickPromptPhenomena => spa.kQuickPromptPhenomena;
+  @override
+  String get kQuickPrompt3Weeks => spa.kQuickPrompt3Weeks;
+  @override
+  String get kQuickPromptIrrigation => spa.kQuickPromptIrrigation;
 }
 
 class AppLanguage {

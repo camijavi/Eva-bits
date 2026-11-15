@@ -4,6 +4,7 @@ import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/nasa_power_service.dart';
 import '../services/agro_prediction_engine.dart';
+import '../services/eve_knowledge_base.dart';
 import '../services/subplot_graph_service.dart';
 import '../services/azure_ai_service.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -354,8 +355,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           ),
           body: Column(
             children: [
-              // Interactive 2.5D Isometric Parcel Selector Bar
-              _buildInteractiveContextBar(s),
+              // Interactive Parcel Context Dropdown & Weekly Evolution Banner
+              _buildInteractiveContextBar(report, s),
 
               // The 6 Prediction Tabs
               Expanded(
@@ -364,7 +365,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   children: [
                     _buildIrrigationTab(report.irrigation, s),
                     _buildRotationTab(report.rotation, s),
-                    _buildCalendarTab(report.calendar, s),
+                    _buildCalendarTab(report, s),
                     _buildHealthTab(report.health, s),
                     _buildRisksTab(report.risks, s),
                     _buildNutritionTab(report.nutrition, s),
@@ -393,9 +394,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   }
 
   // ===========================================================================
-  // INTERACTIVE CONTEXT BAR & 2.5D ISOMETRIC PARCEL MAP
+  // INTERACTIVE CONTEXT BAR & WEEKLY NOTIFICATION BANNER
   // ===========================================================================
-  Widget _buildInteractiveContextBar(AppStrings s) {
+  Widget _buildInteractiveContextBar(
+      FarmPredictionsReport report, AppStrings s) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -485,7 +487,44 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           // Dropdown Field for Lots & Subplots
           _buildLotSubplotDropdown(s),
 
-          const SizedBox(height: 10),
+          // Weekly (+7 Days) Evolution Notification Strip
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _showWeeklyDeltaDialog(report, s),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFE082)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.notifications_active_rounded,
+                        size: 16, color: Color(0xFFE65100)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        s.kWeeklyNotificationBannerTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF5D4037),
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded,
+                        size: 18, color: Color(0xFFE65100)),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -956,7 +995,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      s.kSoilImpactDescription,
+                      EveKnowledgeBase.getSoilScientificConcept(_selectedSoil),
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey.shade800,
@@ -969,7 +1008,176 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             ],
           ),
         ),
+        const SizedBox(height: 16),
+
+        // Precision Irrigation Systems Catalog (NASA-ISRO & CIAT)
+        _buildIrrigationSystemsCatalog(item, s),
       ],
+    );
+  }
+
+  Widget _buildIrrigationSystemsCatalog(
+      IrrigationPrediction item, AppStrings s) {
+    final systems = EveKnowledgeBase.getIrrigationSystemsForSoil(
+      soilType: _selectedSoil,
+      recommendedWaterMm: item.recommendedWaterMm,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFC8E6C9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildIconBadge(
+                icon: Icons.opacity_rounded,
+                color: const Color(0xFF0277BD),
+                bgColor: const Color(0xFFE1F5FE),
+                size: 20,
+                containerSize: 36,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.kIrrigationSystemsSectionTitle,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E2D24),
+                      ),
+                    ),
+                    Text(
+                      s.kIrrigationSystemsSectionSub,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...systems.map((sys) {
+            final isRec = sys.isRecommendedForCurrentSoil;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isRec
+                    ? const Color(0xFFF1F8E9)
+                    : const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isRec
+                      ? const Color(0xFF2E7D32)
+                      : Colors.grey.shade200,
+                  width: isRec ? 1.5 : 1.0,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isRec
+                            ? Icons.verified_rounded
+                            : Icons.water_drop_outlined,
+                        size: 16,
+                        color: isRec
+                            ? const Color(0xFF1B5E20)
+                            : const Color(0xFF0277BD),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          sys.systemName,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: isRec
+                                ? const Color(0xFF1B5E20)
+                                : const Color(0xFF1E2D24),
+                          ),
+                        ),
+                      ),
+                      if (isRec)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1B5E20),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            s.kRecommendedSystemBadge,
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        '${s.kEfficiencyLabel} ${sys.efficiencyPct}',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0277BD),
+                        ),
+                      ),
+                      Text(
+                        '• ${s.kBestForSoilLabel} ${sys.bestForSoil}',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    sys.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade800,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    sys.nasaIntegrationNote,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      fontStyle: FontStyle.italic,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -1245,9 +1453,25 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   }
 
   // ===========================================================================
-  // 3. PREDICCIÓN DE SIEMBRA Y GDD
+  // 3. PREDICCIÓN DE SIEMBRA, GDD Y PROYECCIÓN TRI-SEMANAL (21 DÍAS)
   // ===========================================================================
-  Widget _buildCalendarTab(PlantingCalendarPrediction item, AppStrings s) {
+  Widget _buildCalendarTab(FarmPredictionsReport report, AppStrings s) {
+    final item = report.calendar;
+    final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
+    final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
+    final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
+
+    final projection3w = EveKnowledgeBase.generateThreeWeekProjection(
+      crop: _selectedCrop,
+      soilType: _selectedSoil,
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisturePct: report.irrigation.soilMoisturePct,
+      weeklyDeficitMm: report.irrigation.weeklyDeficitMm,
+      accumulatedGdd7d: item.accumulatedGdd7d,
+      suggestedRotationCrop: report.rotation.suggestedCrop,
+    );
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
@@ -1355,6 +1579,132 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+
+        // 3-Week Rolling Projection Card (From Date X to Date Y)
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFC8E6C9)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildIconBadge(
+                    icon: Icons.date_range_rounded,
+                    color: const Color(0xFF1B5E20),
+                    bgColor: const Color(0xFFE8F5E9),
+                    size: 20,
+                    containerSize: 36,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.kThreeWeekProjectionTitle,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E2D24),
+                          ),
+                        ),
+                        Text(
+                          '${projection3w.fullDateRange} • ${s.kThreeWeekProjectionSub}',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...projection3w.phases.map((phase) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7FAF7),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE0E7E1)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B5E20),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              phase.dateRangeLabel,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              phase.title,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1B5E20),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        phase.expectedMetrics,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0277BD),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        phase.recommendedAction,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade800,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 4),
+              Text(
+                projection3w.longTermClimateNote,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1520,7 +1870,327 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             ],
           ),
         ),
+        const SizedBox(height: 16),
+
+        // Crop-Specific Pest & Disease Warnings (Biotech Corpus)
+        _buildCropPestsSection(s),
+        const SizedBox(height: 16),
+
+        // Natural Phenomena & Compound Climate Warnings (NASA GPM / SMAP / GRACE)
+        _buildNaturalPhenomenaSection(s),
       ],
+    );
+  }
+
+  Widget _buildCropPestsSection(AppStrings s) {
+    final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
+    final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
+    final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
+    final soilMoisture =
+        (summary['root_soil_moisture_index'] as num?)?.toDouble() ?? 0.58;
+
+    final pests = EveKnowledgeBase.getPestWarningsForCrop(
+      crop: _selectedCrop,
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisture: soilMoisture,
+      soilType: _selectedSoil,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFFCCBC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildIconBadge(
+                icon: Icons.pest_control_rounded,
+                color: const Color(0xFFD84315),
+                bgColor: const Color(0xFFFBE9E7),
+                size: 20,
+                containerSize: 36,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${s.kCropPestsSectionTitle} ($_selectedCrop)',
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E2D24),
+                      ),
+                    ),
+                    Text(
+                      '${s.kSoilPrefix} $_selectedSoil • NASA POWER & SMAP',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...pests.map((p) {
+            final isHigh = p.riskLevel == 'high';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isHigh
+                    ? const Color(0xFFFFF8F6)
+                    : const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isHigh
+                      ? const Color(0xFFFFAB91)
+                      : Colors.grey.shade300,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isHigh
+                            ? Icons.bug_report_rounded
+                            : Icons.visibility_rounded,
+                        size: 16,
+                        color: isHigh
+                            ? const Color(0xFFC62828)
+                            : const Color(0xFFF57F17),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${p.pestName} (${p.scientificName})',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E2D24),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isHigh
+                              ? const Color(0xFFC62828)
+                              : const Color(0xFFF57F17),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          isHigh ? s.kHighRiskBadge : s.kModerateRiskBadge,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    p.climateTrigger,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFD84315),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    p.symptomsAndImpact,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade800,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${s.kPreventionLabel} ${p.preventionAction}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1B5E20),
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${s.kSourceLabel} ${p.sourceCitation}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNaturalPhenomenaSection(AppStrings s) {
+    final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
+    final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
+    final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
+    final solarMj =
+        (summary['avg_solar_radiation_mj'] as num?)?.toDouble() ?? 18.5;
+    final soilMoisture =
+        (summary['root_soil_moisture_index'] as num?)?.toDouble() ?? 0.58;
+
+    final phenomena = EveKnowledgeBase.evaluateNaturalPhenomena(
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisture: soilMoisture,
+      solarMj: solarMj,
+      soilType: _selectedSoil,
+      crop: _selectedCrop,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFBBDEFB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildIconBadge(
+                icon: Icons.thunderstorm_rounded,
+                color: const Color(0xFF1565C0),
+                bgColor: const Color(0xFFE3F2FD),
+                size: 20,
+                containerSize: 36,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  s.kNaturalPhenomenaSectionTitle,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E2D24),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...phenomena.map((ph) {
+            final isDanger = ph.severity == 'danger';
+            final isWarn = ph.severity == 'warning';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDanger
+                    ? const Color(0xFFFFF8F6)
+                    : (isWarn
+                        ? const Color(0xFFFFFDE7)
+                        : const Color(0xFFF5F9FF)),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDanger
+                      ? const Color(0xFFFFCDD2)
+                      : (isWarn
+                          ? const Color(0xFFFFF59D)
+                          : const Color(0xFFBBDEFB)),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isDanger
+                            ? Icons.warning_amber_rounded
+                            : Icons.satellite_alt_rounded,
+                        size: 16,
+                        color: isDanger
+                            ? const Color(0xFFC62828)
+                            : const Color(0xFF1565C0),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          ph.phenomenonName,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E2D24),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    ph.satelliteSource,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1565C0),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    ph.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade800,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${s.kPreventionLabel} ${ph.preventionMeasure}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1B5E20),
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${s.kSourceLabel} ${ph.citation}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -1939,7 +2609,154 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   }
 
   // ===========================================================================
-  // IVY CHAT SHEET OPENER
+  // WEEKLY (+7 DAYS) EVOLUTION NOTIFICATION DIALOG
+  // ===========================================================================
+  void _showWeeklyDeltaDialog(FarmPredictionsReport report, AppStrings s) {
+    final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
+    final tempC = (summary['avg_temp_c'] as num?)?.toDouble() ?? 24.5;
+    final rainMm = (summary['avg_rainfall_mm'] as num?)?.toDouble() ?? 3.2;
+
+    final projection3w = EveKnowledgeBase.generateThreeWeekProjection(
+      crop: _selectedCrop,
+      soilType: _selectedSoil,
+      tempC: tempC,
+      rain7dMm: rainMm,
+      soilMoisturePct: report.irrigation.soilMoisturePct,
+      weeklyDeficitMm: report.irrigation.weeklyDeficitMm,
+      accumulatedGdd7d: report.calendar.accumulatedGdd7d,
+      suggestedRotationCrop: report.rotation.suggestedCrop,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _buildIconBadge(
+                        icon: Icons.notifications_active_rounded,
+                        color: const Color(0xFFE65100),
+                        bgColor: const Color(0xFFFFF3E0),
+                        size: 20,
+                        containerSize: 36,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              s.kWeeklyDeltaDialogTitle,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E2D24),
+                              ),
+                            ),
+                            Text(
+                              projection3w.weeklyCheckpointPeriod,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    projection3w.weeklyCheckpointSummary,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...projection3w.weeklyChangesDetected.map((change) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F8E9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFC8E6C9)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.analytics_rounded,
+                              size: 16, color: Color(0xFF1B5E20)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              change,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF1E2D24),
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B5E20),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(Icons.auto_awesome_rounded,
+                          color: Color(0xFFFFD54F)),
+                      label: Text(
+                        s.kAskIvyButton,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _openIvySheet(report, s);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ===========================================================================
+  // EVE CHAT SHEET OPENER
   // ===========================================================================
   void _openIvySheet(FarmPredictionsReport report, AppStrings s) {
     showModalBottomSheet(
@@ -2018,13 +2835,15 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
     _scrollToBottom();
 
     try {
-      final reply = await AzureAiService.askIvy(
+      final reply = await AzureAiService.askEve(
         userQuery: query,
         farmData: widget.farmData,
         nasaData: widget.nasaData,
         predictionsReport: widget.report,
         graph: widget.graph,
         subplots: widget.subplots,
+        activeCrop: widget.activeCrop,
+        activeSoil: widget.activeSoil,
       );
 
       if (mounted) {
@@ -2216,6 +3035,24 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
               },
             ),
           ),
+          SizedBox(
+            height: 38,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildEveQuickChip(
+                    Icons.pest_control_rounded, widget.s.kQuickPromptPests),
+                _buildEveQuickChip(Icons.thunderstorm_rounded,
+                    widget.s.kQuickPromptPhenomena),
+                _buildEveQuickChip(
+                    Icons.date_range_rounded, widget.s.kQuickPrompt3Weeks),
+                _buildEveQuickChip(
+                    Icons.water_drop_rounded, widget.s.kQuickPromptIrrigation),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
             decoration: BoxDecoration(
@@ -2264,6 +3101,31 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEveQuickChip(IconData icon, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        avatar: Icon(icon, size: 15, color: const Color(0xFF1B5E20)),
+        backgroundColor: const Color(0xFFEAF5EC),
+        side: const BorderSide(color: Color(0xFFC8E6C9)),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF1B5E20),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        onPressed: _isLoading
+            ? null
+            : () {
+                _askIvy(label);
+              },
       ),
     );
   }

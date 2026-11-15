@@ -259,7 +259,7 @@ const String kCropUpdatedSuccessfully = 'Crop updated successfully!';
 // Agroclimatic Predictions Screen
 const String kPredictionsTitle = 'Agroclimatic Predictions';
 const String kPredictionsSubtitle = 'NASA POWER • SMAP L4 • Spatial Graph';
-const String kAskIvyTooltip = 'Ask Ivy AI';
+const String kAskIvyTooltip = 'Ask Eve AI';
 const String kTabIrrigation = 'Irrigation';
 const String kTabRotation = 'Rotation';
 const String kTabPlantingGdd = 'Planting';
@@ -303,11 +303,11 @@ const String kSimulatorTitle = 'Crop & Soil Simulator';
 const String kSimulatorCropQuestion = 'Which crop do you want to test?';
 const String kSimulatorSoilQuestion = 'What type of soil does your parcel have?';
 const String kSimulatorApplyButton = 'Calculate this Scenario';
-const String kAskIvyButton = 'Ask Ivy';
-const String kIvyCopilotTitle = 'Ivy • Agroclimatic Copilot';
-const String kIvyAnalyzingScenario = 'Ivy is analyzing your satellite data and crop...';
-const String kIvyInputHint = 'Ask Ivy anything about your farm...';
-const String kIvyErrorMessage = 'An error occurred while contacting Ivy. Please try again.';
+const String kAskIvyButton = 'Ask Eve';
+const String kIvyCopilotTitle = 'Eve • Agroecological Assistant';
+const String kIvyAnalyzingScenario = 'Eve is analyzing your satellite, soil, and crop data...';
+const String kIvyInputHint = 'Ask Eve anything about your farm...';
+const String kIvyErrorMessage = 'An error occurred while contacting Eve. Please try again.';
 const String kStatusAttentionRequired = 'Attention Required!';
 const String kStatusPlanIrrigation = 'Plan Irrigation';
 const String kStatusOptimalMoisture = 'Optimal Moisture';
@@ -403,6 +403,28 @@ const String kSoilNutritionDiagnosisCerealStandard =
 
 const String kDefaultCropName = 'Corn';
 const String kDefaultSoilName = 'Loam';
+
+// Eve Advanced Capabilities (Biotech Corpus, 3-Week Projections, Irrigation Systems)
+const String kWeeklyNotificationBannerTitle = 'Weekly Checkpoint (+7 Days): View changes detected by Eve';
+const String kWeeklyDeltaDialogTitle = 'Weekly Parcel Evolution (+7 Days)';
+const String kIrrigationSystemsSectionTitle = 'Recommended Precision Irrigation Systems';
+const String kIrrigationSystemsSectionSub = 'NASA-ISRO Mission (NISAR) • Bioversity Alliance & CIAT (2026)';
+const String kRecommendedSystemBadge = 'Best for your soil';
+const String kEfficiencyLabel = 'Efficiency:';
+const String kBestForSoilLabel = 'Ideal soil:';
+const String kThreeWeekProjectionTitle = '3-Week Rolling Projection (Every 3 Weeks)';
+const String kThreeWeekProjectionSub = '21-day operational horizon with weekly checkpoints';
+const String kNaturalPhenomenaSectionTitle = 'Natural Phenomena Surveillance (NASA GPM / SMAP / GRACE)';
+const String kCropPestsSectionTitle = 'Crop Pest & Disease Warnings';
+const String kHighRiskBadge = 'High Risk';
+const String kModerateRiskBadge = 'Monitor';
+const String kPreventionLabel = 'Prevention:';
+const String kSourceLabel = 'Source:';
+const String kQuickPromptPests = 'What pests threaten my crop?';
+const String kQuickPromptPhenomena = 'What natural phenomena is NASA tracking?';
+const String kQuickPrompt3Weeks = 'View 3-week projection';
+const String kQuickPromptIrrigation = 'Which irrigation system fits my soil?';
+
 
 
 

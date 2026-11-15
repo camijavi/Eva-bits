@@ -1039,8 +1039,7 @@ class _IvyChatModalState extends State<_IvyChatModal> {
         setState(() {
           _messages.add({
             'role': 'assistant',
-            'text':
-                'Ocurrió un error al consultar a Ivy. Por favor intenta de nuevo.'
+            'text': AppLanguage.strings.kIvyErrorMessage,
           });
           _isLoading = false;
         });
@@ -1063,10 +1062,15 @@ class _IvyChatModalState extends State<_IvyChatModal> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final s = AppLanguage.strings;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+    final availableHeight =
+        (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
+            .clamp(280.0, mediaQuery.size.height * 0.90);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.90,
+      height: availableHeight,
       margin: EdgeInsets.only(bottom: bottomInset),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -1105,9 +1109,9 @@ class _IvyChatModalState extends State<_IvyChatModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Ivy • Copiloto Agroclimático',
-                        style: TextStyle(
+                      Text(
+                        s.kIvyCopilotTitle,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1E2D24),
@@ -1124,12 +1128,16 @@ class _IvyChatModalState extends State<_IvyChatModal> {
                             ),
                           ),
                           const SizedBox(width: 5),
-                          Text(
-                            'gpt-5-mini • Grounding NASA',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w500),
+                          Flexible(
+                            child: Text(
+                              'gpt-5-mini • NASA & Biotech Grounding',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w500),
+                            ),
                           ),
                         ],
                       ),
@@ -1176,12 +1184,14 @@ class _IvyChatModalState extends State<_IvyChatModal> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Text(
-                            'Ivy está analizando tus datos satelitales...',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade800,
-                              fontStyle: FontStyle.italic,
+                          Flexible(
+                            child: Text(
+                              s.kIvyAnalyzingScenario,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade800,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
                           ),
                         ],
@@ -1235,17 +1245,17 @@ class _IvyChatModalState extends State<_IvyChatModal> {
             ),
           ),
 
-          // Quick Chips
+          // Quick Chips (Zero Emojis - Icon Based)
           SizedBox(
             height: 38,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildQuickChip('🌾 ¿Qué rotación me conviene?'),
-                _buildQuickChip('💧 ¿Cuánta agua regar?'),
-                _buildQuickChip('⚡ ¿Hay alertas climáticas?'),
-                _buildQuickChip('🧪 ¿Aporte de nitrógeno?'),
+                _buildQuickChip(Icons.pest_control_rounded, s.kQuickPromptPests),
+                _buildQuickChip(Icons.thunderstorm_rounded, s.kQuickPromptPhenomena),
+                _buildQuickChip(Icons.date_range_rounded, s.kQuickPrompt3Weeks),
+                _buildQuickChip(Icons.water_drop_rounded, s.kQuickPromptIrrigation),
               ],
             ),
           ),
@@ -1267,7 +1277,7 @@ class _IvyChatModalState extends State<_IvyChatModal> {
                     controller: _controller,
                     textInputAction: TextInputAction.send,
                     decoration: InputDecoration(
-                      hintText: 'Pregunta a Ivy sobre tu finca...',
+                      hintText: s.kIvyInputHint,
                       hintStyle: TextStyle(
                           fontSize: 13, color: Colors.grey.shade500),
                       contentPadding: const EdgeInsets.symmetric(
@@ -1308,10 +1318,11 @@ class _IvyChatModalState extends State<_IvyChatModal> {
     );
   }
 
-  Widget _buildQuickChip(String label) {
+  Widget _buildQuickChip(IconData icon, String label) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
+        avatar: Icon(icon, size: 15, color: const Color(0xFF1B5E20)),
         backgroundColor: const Color(0xFFEAF5EC),
         side: const BorderSide(color: Color(0xFFC8E6C9)),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
