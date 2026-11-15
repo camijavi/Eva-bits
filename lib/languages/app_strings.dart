@@ -205,6 +205,26 @@ abstract class AppStrings {
   String get kUnitCelsiusShort;
   String get kUnitFahrenheitShort;
   String get kSettingsSaved;
+
+  // Subplot Details & Management
+  String get kLotDetailsTitle;
+  String get kSubplotsTitle;
+  String get kAddNewSubplot;
+  String get kEditSubplot;
+  String get kDeleteSubplot;
+  String get kDeleteSubplotConfirm;
+  String get kDeleteSubplotWarning;
+  String get kSubplotCreatedSuccessfully;
+  String get kSubplotUpdatedSuccessfully;
+  String get kSubplotDeletedSuccessfully;
+  String get kSaveSubplot;
+  String get kLotAllocation;
+  String get kTotalLotSurface;
+  String get kAllocatedToSubplots;
+  String get kUnallocatedFromLot;
+  String get kNoSubplotsYet;
+  String get kNoSubplotsSubtitle;
+  String get kExceededLotSurfaceWarning;
 }
 
 class EngStrings implements AppStrings {
@@ -569,6 +589,44 @@ class EngStrings implements AppStrings {
   String get kUnitFahrenheitShort => eng.kUnitFahrenheitShort;
   @override
   String get kSettingsSaved => eng.kSettingsSaved;
+
+  // Subplot Details & Management
+  @override
+  String get kLotDetailsTitle => eng.kLotDetailsTitle;
+  @override
+  String get kSubplotsTitle => eng.kSubplotsTitle;
+  @override
+  String get kAddNewSubplot => eng.kAddNewSubplot;
+  @override
+  String get kEditSubplot => eng.kEditSubplot;
+  @override
+  String get kDeleteSubplot => eng.kDeleteSubplot;
+  @override
+  String get kDeleteSubplotConfirm => eng.kDeleteSubplotConfirm;
+  @override
+  String get kDeleteSubplotWarning => eng.kDeleteSubplotWarning;
+  @override
+  String get kSubplotCreatedSuccessfully => eng.kSubplotCreatedSuccessfully;
+  @override
+  String get kSubplotUpdatedSuccessfully => eng.kSubplotUpdatedSuccessfully;
+  @override
+  String get kSubplotDeletedSuccessfully => eng.kSubplotDeletedSuccessfully;
+  @override
+  String get kSaveSubplot => eng.kSaveSubplot;
+  @override
+  String get kLotAllocation => eng.kLotAllocation;
+  @override
+  String get kTotalLotSurface => eng.kTotalLotSurface;
+  @override
+  String get kAllocatedToSubplots => eng.kAllocatedToSubplots;
+  @override
+  String get kUnallocatedFromLot => eng.kUnallocatedFromLot;
+  @override
+  String get kNoSubplotsYet => eng.kNoSubplotsYet;
+  @override
+  String get kNoSubplotsSubtitle => eng.kNoSubplotsSubtitle;
+  @override
+  String get kExceededLotSurfaceWarning => eng.kExceededLotSurfaceWarning;
 }
 
 class SpaStrings implements AppStrings {
@@ -933,6 +991,44 @@ class SpaStrings implements AppStrings {
   String get kUnitFahrenheitShort => spa.kUnitFahrenheitShort;
   @override
   String get kSettingsSaved => spa.kSettingsSaved;
+
+  // Subplot Details & Management
+  @override
+  String get kLotDetailsTitle => spa.kLotDetailsTitle;
+  @override
+  String get kSubplotsTitle => spa.kSubplotsTitle;
+  @override
+  String get kAddNewSubplot => spa.kAddNewSubplot;
+  @override
+  String get kEditSubplot => spa.kEditSubplot;
+  @override
+  String get kDeleteSubplot => spa.kDeleteSubplot;
+  @override
+  String get kDeleteSubplotConfirm => spa.kDeleteSubplotConfirm;
+  @override
+  String get kDeleteSubplotWarning => spa.kDeleteSubplotWarning;
+  @override
+  String get kSubplotCreatedSuccessfully => spa.kSubplotCreatedSuccessfully;
+  @override
+  String get kSubplotUpdatedSuccessfully => spa.kSubplotUpdatedSuccessfully;
+  @override
+  String get kSubplotDeletedSuccessfully => spa.kSubplotDeletedSuccessfully;
+  @override
+  String get kSaveSubplot => spa.kSaveSubplot;
+  @override
+  String get kLotAllocation => spa.kLotAllocation;
+  @override
+  String get kTotalLotSurface => spa.kTotalLotSurface;
+  @override
+  String get kAllocatedToSubplots => spa.kAllocatedToSubplots;
+  @override
+  String get kUnallocatedFromLot => spa.kUnallocatedFromLot;
+  @override
+  String get kNoSubplotsYet => spa.kNoSubplotsYet;
+  @override
+  String get kNoSubplotsSubtitle => spa.kNoSubplotsSubtitle;
+  @override
+  String get kExceededLotSurfaceWarning => spa.kExceededLotSurfaceWarning;
 }
 
 class AppLanguage {

@@ -5,6 +5,7 @@ import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/new_edit_plot.dart';
 import '../services/app_settings.dart';
+import 'subplot_screen.dart';
 
 enum LotFilterPriority {
   all,
@@ -181,6 +182,21 @@ class _LotsScreenState extends State<LotsScreen> {
       surfaceUnit: _surfaceUnit,
       onSaved: _loadLots,
     );
+  }
+
+  void _navigateToSubplots(Map<String, dynamic> lot) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SubplotScreen(
+          lot: lot,
+          surfaceUnit: _surfaceUnit,
+        ),
+      ),
+    ).then((_) {
+      if (mounted) {
+        _loadLots();
+      }
+    });
   }
 
   @override
@@ -596,7 +612,7 @@ class _LotsScreenState extends State<LotsScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _openEditLotModal(lot),
+          onTap: () => _navigateToSubplots(lot),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(

@@ -235,6 +235,18 @@ class DatabaseManager {
     );
   }
 
+  Future<Map<String, dynamic>?> getLotById(int lotId) async {
+    final Database db = await database;
+    final results = await db.query(
+      'lots',
+      where: 'id = ?',
+      whereArgs: [lotId],
+      limit: 1,
+    );
+    if (results.isEmpty) return null;
+    return results.first;
+  }
+
   Future<int> insertLot(Map<String, dynamic> lot) async {
     final Database db = await database;
     return await db.insert('lots', lot);
@@ -362,6 +374,17 @@ class DatabaseManager {
   Future<int> insertSubplot(Map<String, dynamic> subplot) async {
     final Database db = await database;
     return await db.insert('subplots', subplot);
+  }
+
+  Future<int> updateSubplot(Map<String, dynamic> subplot) async {
+    final Database db = await database;
+    final subplotMap = Map<String, dynamic>.from(subplot);
+    return await db.update(
+      'subplots',
+      subplotMap,
+      where: 'id = ?',
+      whereArgs: [subplot['id']],
+    );
   }
 
   Future<int> deleteSubplot(int subplotId) async {

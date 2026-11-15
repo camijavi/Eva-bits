@@ -207,3 +207,24 @@ const String kUnitCelsiusShort = '°C';
 const String kUnitFahrenheitShort = '°F';
 const String kSettingsSaved = 'Settings updated';
 
+// Subplot Details & Management
+const String kLotDetailsTitle = 'Lot Details';
+const String kSubplotsTitle = 'Subplots';
+const String kAddNewSubplot = 'Add Subplot';
+const String kEditSubplot = 'Edit Subplot';
+const String kDeleteSubplot = 'Delete Subplot';
+const String kDeleteSubplotConfirm = 'Are you sure you want to delete this subplot?';
+const String kDeleteSubplotWarning = 'This action cannot be undone. All records for this subplot will be removed.';
+const String kSubplotCreatedSuccessfully = 'Subplot registered successfully!';
+const String kSubplotUpdatedSuccessfully = 'Subplot updated successfully!';
+const String kSubplotDeletedSuccessfully = 'Subplot deleted successfully!';
+const String kSaveSubplot = 'Save Subplot';
+const String kLotAllocation = 'Lot Land Allocation';
+const String kTotalLotSurface = 'Total Lot Area';
+const String kAllocatedToSubplots = 'Allocated to subplots';
+const String kUnallocatedFromLot = 'Unallocated';
+const String kNoSubplotsYet = 'No subplots in this lot yet.';
+const String kNoSubplotsSubtitle = 'Divide this lot into subplots to manage specific crops, rotations, and soil practices.';
+const String kExceededLotSurfaceWarning = 'Total subplot area exceeds the lot surface area!';
+
+

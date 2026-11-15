@@ -210,3 +210,24 @@ const String kUnitCelsiusShort = '°C';
 const String kUnitFahrenheitShort = '°F';
 const String kSettingsSaved = 'Configuración actualizada';
 
+// Subplot Details & Management
+const String kLotDetailsTitle = 'Detalles del Lote';
+const String kSubplotsTitle = 'Subparcelas';
+const String kAddNewSubplot = 'Agregar Subparcela';
+const String kEditSubplot = 'Editar Subparcela';
+const String kDeleteSubplot = 'Eliminar Subparcela';
+const String kDeleteSubplotConfirm = '¿Estás seguro de que deseas eliminar esta subparcela?';
+const String kDeleteSubplotWarning = 'Esta acción no se puede deshacer. Se eliminarán los registros asociados a esta subparcela.';
+const String kSubplotCreatedSuccessfully = '¡Subparcela registrada con éxito!';
+const String kSubplotUpdatedSuccessfully = '¡Subparcela actualizada con éxito!';
+const String kSubplotDeletedSuccessfully = '¡Subparcela eliminada con éxito!';
+const String kSaveSubplot = 'Guardar Subparcela';
+const String kLotAllocation = 'Distribución del Terreno del Lote';
+const String kTotalLotSurface = 'Superficie Total del Lote';
+const String kAllocatedToSubplots = 'Asignado a subparcelas';
+const String kUnallocatedFromLot = 'Sin asignar';
+const String kNoSubplotsYet = 'Aún no hay subparcelas en este lote.';
+const String kNoSubplotsSubtitle = 'Divide este lote en subparcelas para gestionar cultivos específicos, rotaciones y prácticas de suelo.';
+const String kExceededLotSurfaceWarning = '¡La superficie total de las subparcelas supera la superficie del lote!';
+
+
