@@ -689,9 +689,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: Text(
-                    crop.emoji,
-                    style: const TextStyle(fontSize: 18),
+                  child: Icon(
+                    crop.icon,
+                    size: 18,
+                    color: crop.textColor,
                   ),
                 ),
               ),
