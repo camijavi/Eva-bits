@@ -409,7 +409,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                   ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _selectedLocationId,
+                    initialValue: _selectedLocationId,
                     isExpanded: true,
                     decoration: InputDecoration(
                       hintText: s.kCountryHint,

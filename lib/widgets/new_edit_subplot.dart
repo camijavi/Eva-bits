@@ -906,7 +906,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
             )
           else ...[
             DropdownButtonFormField<int?>(
-              value: _selectedNeighborId,
+              initialValue: _selectedNeighborId,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Sublote vecino',
@@ -978,7 +978,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
             if (_selectedNeighborId != null) ...[
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                value: _selectedRelationshipType,
+                initialValue: _selectedRelationshipType,
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: 'Tipo de colindancia',

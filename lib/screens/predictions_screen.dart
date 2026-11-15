@@ -7,7 +7,9 @@ import '../services/agro_prediction_engine.dart';
 import '../services/eve_knowledge_base.dart';
 import '../services/subplot_graph_service.dart';
 import '../services/azure_ai_service.dart';
+import '../services/app_settings.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/eve_animated_avatar.dart';
 
 class PredictionsScreen extends StatefulWidget {
   final int initialTab;
@@ -39,6 +41,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   String _selectedContextValue = 'farm';
   String _selectedCrop = 'Maíz';
   String _selectedSoil = 'Franco';
+  int _guideStepIndex = 0;
 
   final List<String> _cropOptions = [
     'Maíz',
@@ -525,7 +528,39 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               ),
             ),
           ),
+
+          // Interactive Onboarding / Guide Banner (Controlled by Show/Hide Eve)
+          _buildEveGuideBanner(s),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEveGuideBanner(AppStrings s) {
+    final steps = [
+      s.kEveGuideStep1,
+      s.kEveGuideStep2,
+      s.kEveGuideStep3,
+    ];
+    final emotes = [
+      EveEmote.greeting,
+      EveEmote.pointing,
+      EveEmote.happy,
+    ];
+    final currentStep = _guideStepIndex % steps.length;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: EveReactionBanner(
+        emote: emotes[currentStep],
+        title: s.kEveGuideBannerTitle,
+        message: steps[currentStep],
+        actionLabel: s.kEveGuideNextTip,
+        onTap: () {
+          setState(() {
+            _guideStepIndex = (_guideStepIndex + 1) % steps.length;
+          });
+        },
       ),
     );
   }
@@ -770,23 +805,44 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     final IconData statusIcon;
     final String statusLabel;
 
+    final EveEmote eveEmote;
+    final String eveReactionMessage;
+    final Color eveBgColor;
+
     if (item.status == 'critical') {
       statusColor = const Color(0xFFD32F2F);
       statusIcon = Icons.warning_rounded;
       statusLabel = s.kStatusAttentionRequired;
+      eveEmote = EveEmote.sad;
+      eveReactionMessage = s.kEveReactionIrrigationCritical;
+      eveBgColor = const Color(0xFFFFEBEE);
     } else if (item.status == 'moderate') {
       statusColor = const Color(0xFFF57F17);
       statusIcon = Icons.schedule_rounded;
       statusLabel = s.kStatusPlanIrrigation;
+      eveEmote = EveEmote.pointing;
+      eveReactionMessage = s.kEveReactionIrrigationModerate;
+      eveBgColor = const Color(0xFFFFF8E1);
     } else {
       statusColor = const Color(0xFF2E7D32);
       statusIcon = Icons.check_circle_rounded;
       statusLabel = s.kStatusOptimalMoisture;
+      eveEmote = EveEmote.happy;
+      eveReactionMessage = s.kEveReactionIrrigationOptimal;
+      eveBgColor = const Color(0xFFF1F8E9);
     }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
+        // Eve Reactive Emote Banner (Auto-hides if Show Eve is disabled)
+        EveReactionBanner(
+          emote: eveEmote,
+          message: eveReactionMessage,
+          accentColor: statusColor,
+          backgroundColor: eveBgColor,
+        ),
+
         // Hero Moisture Gauge Card
         Container(
           padding: const EdgeInsets.all(18),
@@ -1188,6 +1244,22 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
+        // Eve Reactive Emote Banner (Thumbs Up / Thumbs Down)
+        EveReactionBanner(
+          emote: item.hasSpatialCorridorRisk
+              ? EveEmote.thumbsDown
+              : EveEmote.thumbsUp,
+          message: item.hasSpatialCorridorRisk
+              ? s.kEveReactionRotationRisk
+              : s.kEveReactionRotationGood,
+          accentColor: item.hasSpatialCorridorRisk
+              ? const Color(0xFFE65100)
+              : const Color(0xFF1B5E20),
+          backgroundColor: item.hasSpatialCorridorRisk
+              ? const Color(0xFFFFF3E0)
+              : const Color(0xFFF1F8E9),
+        ),
+
         // Compatibility Hero Meter
         Container(
           padding: const EdgeInsets.all(18),
@@ -1817,6 +1889,14 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
+        // Eve Reactive Alert (!) Banner
+        EveReactionBanner(
+          emote: EveEmote.alert,
+          message: s.kEveReactionRisksAlert,
+          accentColor: const Color(0xFFC62828),
+          backgroundColor: const Color(0xFFFFEBEE),
+        ),
+
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
@@ -2646,12 +2726,23 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 children: [
                   Row(
                     children: [
-                      _buildIconBadge(
-                        icon: Icons.notifications_active_rounded,
-                        color: const Color(0xFFE65100),
-                        bgColor: const Color(0xFFFFF3E0),
-                        size: 20,
-                        containerSize: 36,
+                      ValueListenableBuilder<bool>(
+                        valueListenable: AppSettings.showEve,
+                        builder: (ctx, showEve, _) {
+                          if (!showEve) {
+                            return _buildIconBadge(
+                              icon: Icons.notifications_active_rounded,
+                              color: const Color(0xFFE65100),
+                              bgColor: const Color(0xFFFFF3E0),
+                              size: 20,
+                              containerSize: 36,
+                            );
+                          }
+                          return const EveAnimatedAvatar(
+                            emote: EveEmote.surprised,
+                            size: 48,
+                          );
+                        },
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -2909,17 +3000,28 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
             child: Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1B5E20),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.auto_awesome_rounded,
-                        color: Color(0xFFFFD54F), size: 22),
-                  ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppSettings.showEve,
+                  builder: (ctx, showEve, _) {
+                    if (!showEve) {
+                      return Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1B5E20),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.auto_awesome_rounded,
+                              color: Color(0xFFFFD54F), size: 22),
+                        ),
+                      );
+                    }
+                    return EveAnimatedAvatar(
+                      emote: _isLoading ? EveEmote.surprised : EveEmote.greeting,
+                      size: 46,
+                    );
+                  },
                 ),
                 const SizedBox(width: 14),
                 Expanded(

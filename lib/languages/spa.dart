@@ -428,6 +428,34 @@ const String kQuickPromptPhenomena = '¿Qué fenómenos naturales vigila la NASA
 const String kQuickPrompt3Weeks = 'Ver proyección de 3 semanas';
 const String kQuickPromptIrrigation = '¿Qué sistema de riego me conviene?';
 
+// Eve Animated Mascot & Settings Visibility
+const String kEveVisibilitySectionTitle = 'Asistente Virtual Eve';
+const String kEveVisibilitySectionSubtitle = 'Muestra u oculta a la vaquita animada Eve en las pantallas de la app';
+const String kShowEveOption = 'Mostrar a Eve';
+const String kShowEveSubtitle = 'Eve te acompaña con animaciones, alertas y guía interactiva';
+const String kHideEveOption = 'Ocultar a Eve';
+const String kHideEveSubtitle = 'Modo compacto mostrando únicamente tarjetas de datos';
+const String kEvePreviewEmoteLabel = 'Toca un emote para ver a Eve reaccionar:';
+const String kEmoteGreeting = 'Saludo';
+const String kEmoteAlert = 'Alerta !';
+const String kEmoteSad = 'Triste';
+const String kEmoteSurprised = 'Sorprendida';
+const String kEmoteHappy = 'Feliz';
+const String kEmoteThumbsUp = 'Pulgar arriba';
+const String kEmoteThumbsDown = 'Pulgar abajo';
+const String kEmotePointing = 'Señalando';
+const String kEveGuideBannerTitle = '¡Hola! Soy Eve, tu guía agrícola';
+const String kEveGuideStep1 = 'Paso 1: Usa el menú desplegable para elegir Toda la Finca, un Lote o un Sublote específico.';
+const String kEveGuideStep2 = 'Paso 2: Toca "Simular qué pasa si..." para probar cómo otro cultivo o suelo cambia tus resultados.';
+const String kEveGuideStep3 = 'Paso 3: Revisa las proyecciones de 3 semanas, sistemas de riego y alertas de plagas con datos NASA.';
+const String kEveGuideNextTip = 'Siguiente consejo';
+const String kEveReactionIrrigationCritical = '¡Cuidado! Tu suelo tiene sed crítica. Aplica riego pronto.';
+const String kEveReactionIrrigationModerate = 'Señalo abajo el sistema de riego ideal para conservar tu agua.';
+const String kEveReactionIrrigationOptimal = '¡Excelente! La humedad en la raíz es óptima según NASA SMAP.';
+const String kEveReactionRotationGood = '¡Pulgar arriba! Esta rotación regenera tu suelo y aporta nitrógeno.';
+const String kEveReactionRotationRisk = 'Cuidado con sembrar la misma familia junto a lotes vecinos.';
+const String kEveReactionRisksAlert = '¡Alerta! Revisa las plagas de tu cultivo y fenómenos naturales activos.';
+
 
 
 

@@ -673,7 +673,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _selectedLocationId,
+                    initialValue: _selectedLocationId,
                     isExpanded: true,
                     decoration: InputDecoration(
                       labelText: s.kCountryLabel,

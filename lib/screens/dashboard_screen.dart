@@ -4,6 +4,7 @@ import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/eve_animated_avatar.dart';
 import '../services/app_settings.dart';
 import '../services/nasa_power_service.dart';
 import '../services/agro_prediction_engine.dart';
@@ -195,6 +196,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             displaySurface,
                           ),
                           const SizedBox(height: 16),
+                          EveReactionBanner(
+                            emote: EveEmote.greeting,
+                            title: s.kEveGuideBannerTitle,
+                            message: s.kEveGuideStep1,
+                            actionLabel: s.kAskIvyButton,
+                            onTap: () => _showIvyConsultationSheet(context),
+                          ),
                           _buildNasaEnvironmentalCard(context, s),
                           const SizedBox(height: 24),
                           Text(
@@ -270,9 +278,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           foregroundColor: Colors.white,
           elevation: 3,
           icon: const Icon(Icons.auto_awesome_rounded, size: 20),
-          label: const Text(
-            'Preguntar a Ivy',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          label: Text(
+            s.kAskIvyButton,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           onPressed: () => _showIvyConsultationSheet(context),
         ),
@@ -1092,17 +1100,28 @@ class _IvyChatModalState extends State<_IvyChatModal> {
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
             child: Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1B5E20),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.auto_awesome_rounded,
-                        color: Colors.white, size: 24),
-                  ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppSettings.showEve,
+                  builder: (ctx, showEve, _) {
+                    if (!showEve) {
+                      return Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1B5E20),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.auto_awesome_rounded,
+                              color: Colors.white, size: 24),
+                        ),
+                      );
+                    }
+                    return EveAnimatedAvatar(
+                      emote: _isLoading ? EveEmote.surprised : EveEmote.greeting,
+                      size: 46,
+                    );
+                  },
                 ),
                 const SizedBox(width: 14),
                 Expanded(

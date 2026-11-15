@@ -403,6 +403,34 @@ abstract class AppStrings {
   String get kQuickPromptPhenomena;
   String get kQuickPrompt3Weeks;
   String get kQuickPromptIrrigation;
+
+  // Eve Animated Mascot & Settings Visibility
+  String get kEveVisibilitySectionTitle;
+  String get kEveVisibilitySectionSubtitle;
+  String get kShowEveOption;
+  String get kShowEveSubtitle;
+  String get kHideEveOption;
+  String get kHideEveSubtitle;
+  String get kEvePreviewEmoteLabel;
+  String get kEmoteGreeting;
+  String get kEmoteAlert;
+  String get kEmoteSad;
+  String get kEmoteSurprised;
+  String get kEmoteHappy;
+  String get kEmoteThumbsUp;
+  String get kEmoteThumbsDown;
+  String get kEmotePointing;
+  String get kEveGuideBannerTitle;
+  String get kEveGuideStep1;
+  String get kEveGuideStep2;
+  String get kEveGuideStep3;
+  String get kEveGuideNextTip;
+  String get kEveReactionIrrigationCritical;
+  String get kEveReactionIrrigationModerate;
+  String get kEveReactionIrrigationOptimal;
+  String get kEveReactionRotationGood;
+  String get kEveReactionRotationRisk;
+  String get kEveReactionRisksAlert;
 }
 
 class EngStrings implements AppStrings {
@@ -1151,6 +1179,59 @@ class EngStrings implements AppStrings {
   String get kQuickPrompt3Weeks => eng.kQuickPrompt3Weeks;
   @override
   String get kQuickPromptIrrigation => eng.kQuickPromptIrrigation;
+
+  @override
+  String get kEveVisibilitySectionTitle => eng.kEveVisibilitySectionTitle;
+  @override
+  String get kEveVisibilitySectionSubtitle => eng.kEveVisibilitySectionSubtitle;
+  @override
+  String get kShowEveOption => eng.kShowEveOption;
+  @override
+  String get kShowEveSubtitle => eng.kShowEveSubtitle;
+  @override
+  String get kHideEveOption => eng.kHideEveOption;
+  @override
+  String get kHideEveSubtitle => eng.kHideEveSubtitle;
+  @override
+  String get kEvePreviewEmoteLabel => eng.kEvePreviewEmoteLabel;
+  @override
+  String get kEmoteGreeting => eng.kEmoteGreeting;
+  @override
+  String get kEmoteAlert => eng.kEmoteAlert;
+  @override
+  String get kEmoteSad => eng.kEmoteSad;
+  @override
+  String get kEmoteSurprised => eng.kEmoteSurprised;
+  @override
+  String get kEmoteHappy => eng.kEmoteHappy;
+  @override
+  String get kEmoteThumbsUp => eng.kEmoteThumbsUp;
+  @override
+  String get kEmoteThumbsDown => eng.kEmoteThumbsDown;
+  @override
+  String get kEmotePointing => eng.kEmotePointing;
+  @override
+  String get kEveGuideBannerTitle => eng.kEveGuideBannerTitle;
+  @override
+  String get kEveGuideStep1 => eng.kEveGuideStep1;
+  @override
+  String get kEveGuideStep2 => eng.kEveGuideStep2;
+  @override
+  String get kEveGuideStep3 => eng.kEveGuideStep3;
+  @override
+  String get kEveGuideNextTip => eng.kEveGuideNextTip;
+  @override
+  String get kEveReactionIrrigationCritical => eng.kEveReactionIrrigationCritical;
+  @override
+  String get kEveReactionIrrigationModerate => eng.kEveReactionIrrigationModerate;
+  @override
+  String get kEveReactionIrrigationOptimal => eng.kEveReactionIrrigationOptimal;
+  @override
+  String get kEveReactionRotationGood => eng.kEveReactionRotationGood;
+  @override
+  String get kEveReactionRotationRisk => eng.kEveReactionRotationRisk;
+  @override
+  String get kEveReactionRisksAlert => eng.kEveReactionRisksAlert;
 }
 
 class SpaStrings implements AppStrings {
@@ -1899,6 +1980,59 @@ class SpaStrings implements AppStrings {
   String get kQuickPrompt3Weeks => spa.kQuickPrompt3Weeks;
   @override
   String get kQuickPromptIrrigation => spa.kQuickPromptIrrigation;
+
+  @override
+  String get kEveVisibilitySectionTitle => spa.kEveVisibilitySectionTitle;
+  @override
+  String get kEveVisibilitySectionSubtitle => spa.kEveVisibilitySectionSubtitle;
+  @override
+  String get kShowEveOption => spa.kShowEveOption;
+  @override
+  String get kShowEveSubtitle => spa.kShowEveSubtitle;
+  @override
+  String get kHideEveOption => spa.kHideEveOption;
+  @override
+  String get kHideEveSubtitle => spa.kHideEveSubtitle;
+  @override
+  String get kEvePreviewEmoteLabel => spa.kEvePreviewEmoteLabel;
+  @override
+  String get kEmoteGreeting => spa.kEmoteGreeting;
+  @override
+  String get kEmoteAlert => spa.kEmoteAlert;
+  @override
+  String get kEmoteSad => spa.kEmoteSad;
+  @override
+  String get kEmoteSurprised => spa.kEmoteSurprised;
+  @override
+  String get kEmoteHappy => spa.kEmoteHappy;
+  @override
+  String get kEmoteThumbsUp => spa.kEmoteThumbsUp;
+  @override
+  String get kEmoteThumbsDown => spa.kEmoteThumbsDown;
+  @override
+  String get kEmotePointing => spa.kEmotePointing;
+  @override
+  String get kEveGuideBannerTitle => spa.kEveGuideBannerTitle;
+  @override
+  String get kEveGuideStep1 => spa.kEveGuideStep1;
+  @override
+  String get kEveGuideStep2 => spa.kEveGuideStep2;
+  @override
+  String get kEveGuideStep3 => spa.kEveGuideStep3;
+  @override
+  String get kEveGuideNextTip => spa.kEveGuideNextTip;
+  @override
+  String get kEveReactionIrrigationCritical => spa.kEveReactionIrrigationCritical;
+  @override
+  String get kEveReactionIrrigationModerate => spa.kEveReactionIrrigationModerate;
+  @override
+  String get kEveReactionIrrigationOptimal => spa.kEveReactionIrrigationOptimal;
+  @override
+  String get kEveReactionRotationGood => spa.kEveReactionRotationGood;
+  @override
+  String get kEveReactionRotationRisk => spa.kEveReactionRotationRisk;
+  @override
+  String get kEveReactionRisksAlert => spa.kEveReactionRisksAlert;
 }
 
 class AppLanguage {

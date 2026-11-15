@@ -25,6 +25,13 @@ class AppSettings {
   static final ValueNotifier<AppTemperatureUnit> temperatureUnit =
       ValueNotifier<AppTemperatureUnit>(AppTemperatureUnit.celsius);
 
+  static final ValueNotifier<bool> showEve = ValueNotifier<bool>(true);
+
+  // Eve visibility helper
+  static void setShowEve(bool visible) {
+    showEve.value = visible;
+  }
+
   // Theme helpers
   static void setThemeMode(ThemeMode mode) {
     themeMode.value = mode;

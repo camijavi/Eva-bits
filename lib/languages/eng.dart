@@ -425,6 +425,34 @@ const String kQuickPromptPhenomena = 'What natural phenomena is NASA tracking?';
 const String kQuickPrompt3Weeks = 'View 3-week projection';
 const String kQuickPromptIrrigation = 'Which irrigation system fits my soil?';
 
+// Eve Animated Mascot & Settings Visibility
+const String kEveVisibilitySectionTitle = 'Eve Virtual Assistant';
+const String kEveVisibilitySectionSubtitle = 'Show or hide the animated cow mascot Eve across app screens';
+const String kShowEveOption = 'Show Eve';
+const String kShowEveSubtitle = 'Eve accompanies you with animations, alerts, and interactive guidance';
+const String kHideEveOption = 'Hide Eve';
+const String kHideEveSubtitle = 'Compact mode displaying data cards only';
+const String kEvePreviewEmoteLabel = 'Tap an emote to see Eve react:';
+const String kEmoteGreeting = 'Wave';
+const String kEmoteAlert = 'Alert !';
+const String kEmoteSad = 'Sad';
+const String kEmoteSurprised = 'Surprised';
+const String kEmoteHappy = 'Happy';
+const String kEmoteThumbsUp = 'Thumbs up';
+const String kEmoteThumbsDown = 'Thumbs down';
+const String kEmotePointing = 'Pointing';
+const String kEveGuideBannerTitle = 'Hi! I am Eve, your farming guide';
+const String kEveGuideStep1 = 'Step 1: Use the dropdown menu to select Whole Farm, a Lot, or a specific Subplot.';
+const String kEveGuideStep2 = 'Step 2: Tap "Simulate what if..." to test how another crop or soil changes your results.';
+const String kEveGuideStep3 = 'Step 3: Review 3-week projections, irrigation systems, and NASA-backed pest warnings.';
+const String kEveGuideNextTip = 'Next tip';
+const String kEveReactionIrrigationCritical = 'Watch out! Your soil is critically dry. Apply irrigation soon.';
+const String kEveReactionIrrigationModerate = 'I am pointing below to the ideal irrigation system to save water.';
+const String kEveReactionIrrigationOptimal = 'Awesome! Root-zone moisture is optimal according to NASA SMAP.';
+const String kEveReactionRotationGood = 'Thumbs up! This rotation regenerates your soil and fixes nitrogen.';
+const String kEveReactionRotationRisk = 'Be careful planting the same crop family next to adjacent plots.';
+const String kEveReactionRisksAlert = 'Alert! Check the active crop pests and natural phenomena warnings.';
+
 
 
 
