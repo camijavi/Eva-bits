@@ -245,7 +245,11 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(crop.emoji, style: const TextStyle(fontSize: 15)),
+                            Icon(
+                              crop.icon,
+                              size: 16,
+                              color: isSelected ? Colors.white : crop.textColor,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               crop.localizedName(isSpanish),
@@ -357,9 +361,10 @@ class _CropPickerSheetState extends State<CropPickerSheet> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: Center(
-                                  child: Text(
-                                    crop.emoji,
-                                    style: const TextStyle(fontSize: 18),
+                                  child: Icon(
+                                    crop.icon,
+                                    size: 18,
+                                    color: crop.textColor,
                                   ),
                                 ),
                               ),
