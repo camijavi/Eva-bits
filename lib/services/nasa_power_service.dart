@@ -112,6 +112,10 @@ class NasaPowerService {
     };
   }
 
+  static Map<String, dynamic> getFallbackData([double lat = 13.0910, double lon = -86.3538]) {
+    return _fallbackData(lat, lon);
+  }
+
   static Map<String, dynamic> _fallbackData(double lat, double lon) {
     return {
       'source': 'NASA POWER & SMAP Earth Observations (Cached/Simulated)',

@@ -256,6 +256,156 @@ const String kCategoryFruits = 'Fruits';
 const String kCategoryCommercial = 'Commercial & Cash Crops';
 const String kCropUpdatedSuccessfully = 'Crop updated successfully!';
 
+// Agroclimatic Predictions Screen
+const String kPredictionsTitle = 'Agroclimatic Predictions';
+const String kPredictionsSubtitle = 'NASA POWER • SMAP L4 • Spatial Graph';
+const String kAskIvyTooltip = 'Ask Ivy AI';
+const String kTabIrrigation = 'Irrigation';
+const String kTabRotation = 'Rotation';
+const String kTabPlantingGdd = 'Planting';
+const String kTabVigorNdvi = 'Vigor';
+const String kTabRisks = 'Alerts';
+const String kTabNutrition = 'Nutrition';
+const String kPredictionContext = 'Parcel Context:';
+const String kWhatIfSimulator = 'Simulate what if...';
+const String kWholeFarmGeneral = 'Whole Farm';
+const String kCropPrefix = 'Crop:';
+const String kSoilPrefix = 'Soil:';
+const String kMetricRootMoisture = 'Root Zone Moisture';
+const String kMetricRootMoistureSub = 'NASA SMAP L4';
+const String kMetric7dDeficit = '7-Day Deficit';
+const String kMetric7dDeficitSub = 'Crop demand vs. rain';
+const String kMetricReserveDays = 'Reserve Days';
+const String kMetricReserveDaysSub = 'Before wilting stress';
+const String kMetricRequiredDepth = 'Required Water Depth';
+const String kMetricRequiredDepthSub = 'Water to apply';
+const String kSoilImpactTitle = 'How does your soil texture affect irrigation?';
+const String kSoilImpactDescription = 'In sandy soils, water drains rapidly to lower layers, requiring shorter and more frequent watering. In clay soils, water is stored for more days, but drainage must be monitored during heavy rains to prevent root asphyxia.';
+const String kCorridorRiskTitle = 'Watch out! Pest Corridor in Adjacent Parcel';
+const String kCorridorRiskDescription = 'Adjacent parcels share crops of the same botanical family. Rotating with legumes (beans or green manure) cuts the spread of pests and fungi.';
+const String kAgroJustificationTitle = 'Benefit for Your Parcel:';
+const String kAlternativeCropsTitle = 'Other Compatible Options:';
+const String kOptimalCropPrefix = 'Recommended:';
+const String kMetricThermalSumGdd = 'Thermal Sum (GDD)';
+const String kMetricThermalSumGddSub = 'Accumulated heat (Tbase 10°C)';
+const String kMetricDaysToFlowering = 'Days to Flowering';
+const String kRecommendedRangePrefix = 'Ideal window:';
+const String kMetricNdviProxy = 'Satellite Vigor (NDVI)';
+const String kMetricNdviProxySub = 'Greenness and photosynthesis';
+const String kMetricRelativeYield = 'Projected Yield';
+const String kMetricRelativeYieldSub = 'Of your parcel potential';
+const String kMetricBiologicalNFixation = 'Biological Nitrogen Fixation';
+const String kMetricNBalancePerHa = 'Nitrogen to Soil';
+const String kMetricUreaSavings = 'Fertilizer Savings';
+const String kMetricSoilHealthScore = 'Soil Health & Vitality';
+const String kMetricSoilHealthScoreSub = 'Fertility and organic matter';
+const String kSimulatorTitle = 'Crop & Soil Simulator';
+const String kSimulatorCropQuestion = 'Which crop do you want to test?';
+const String kSimulatorSoilQuestion = 'What type of soil does your parcel have?';
+const String kSimulatorApplyButton = 'Calculate this Scenario';
+const String kAskIvyButton = 'Ask Ivy';
+const String kIvyCopilotTitle = 'Ivy • Agroclimatic Copilot';
+const String kIvyAnalyzingScenario = 'Ivy is analyzing your satellite data and crop...';
+const String kIvyInputHint = 'Ask Ivy anything about your farm...';
+const String kIvyErrorMessage = 'An error occurred while contacting Ivy. Please try again.';
+const String kStatusAttentionRequired = 'Attention Required!';
+const String kStatusPlanIrrigation = 'Plan Irrigation';
+const String kStatusOptimalMoisture = 'Optimal Moisture';
+const String kSynergyLabel = 'Synergy';
+const String kBiologicalNFixationPerHa = 'BNF per Ha';
+const String kUreaSavingsShort = 'Urea Savings';
+const String kDaysUnit = 'days';
+const String kIvyInitialPrompt = 'Explain the predictions for my current crop and soil type.';
+const String kVisualParcelView = '2.5D Map';
+const String kCompactListView = 'List';
+const String kSoilBalancedDesc = 'Loam (Balanced)';
+const String kSoilClayDesc = 'Clay (High retention / Slow infiltration)';
+const String kSoilSandyDesc = 'Sandy (Fast drainage / Low retention)';
+const String kSoilSiltDesc = 'Silt (Surface crusting)';
+const String kActiveSubplotBadge = 'Selected';
+const String kTapToInspectSubplot = 'Tap a parcel or subplot to inspect';
+
+// Prediction Engine Localized Messages
+const String kIrrigationUrgentTitle = 'Urgent Irrigation Required';
+const String kIrrigationModerateTitle = 'Moderate Moisture - Monitor';
+const String kIrrigationOptimalTitle = 'Optimal Water Level';
+String kIrrigationUrgentRec(Object moisture, Object soil, Object crop, Object kc, Object waterMm) =>
+    'Critical root moisture ($moisture%) in $soil soil for $crop (Kc: $kc). Apply a depth of $waterMm mm within 48 h to prevent wilting.';
+String kIrrigationModerateRec(Object soil, Object days, Object waterMm) =>
+    '$soil soil retains water for the next $days days. Schedule preventive irrigation ($waterMm mm) mid-week.';
+String kIrrigationOptimalRec(Object moisture, Object crop, Object soil) =>
+    'Sufficient water reserve ($moisture%) for $crop in $soil soil. No irrigation required over the next 7 days.';
+
+const String kCompatibilityHigh = 'High Compatibility';
+const String kCompatibilityMedium = 'Medium Compatibility';
+const String kCompatibilityDiscouraged = 'Not Recommended';
+const String kCropBeansLegume = 'Beans (Fabaceae)';
+const String kCropCornSorghumGrass = 'Corn or Sorghum (Grasses)';
+const String kCropRedBeansLegume = 'Red Beans (Legume)';
+const String kCropDroughtBeansSorghum = 'Drought-tolerant Beans / Sorghum';
+const String kCropCrotalariaManure = 'Crotalaria / Green Manure';
+const String kCropSoybean = 'Soybeans';
+const String kCropTolerantSorghum = 'Tolerant Sorghum';
+const String kCropCrotalariaGreenManure = 'Crotalaria (Green Manure)';
+const String kCropVegetables = 'Vegetables';
+const String kCropSesame = 'Sesame';
+const String kCropSunflower = 'Sunflower';
+const String kFamilyUnknown = 'Unknown';
+String kRotationCorridorRiskExp(Object family, Object crop) =>
+    'Neighboring plots share the same botanical family ($family). Rotating with $crop will disrupt pest corridors and fix biological nitrogen.';
+String kRotationStandardExp(Object currentCrop, Object suggestedCrop) =>
+    'The suggested sequence ($currentCrop -> $suggestedCrop) optimizes nutrient usage and leverages current moisture levels.';
+
+const String kWindowStatusOptimal = 'Optimal Planting Window';
+const String kWindowStatusWaitMoisture = 'Wait for Higher Moisture';
+const String kDateRangeNext10To14Days = 'Next 10 to 14 days';
+const String kDateRangePostponeUntilRain = 'Postpone until upcoming rains';
+String kThermalAdviceFavorable(Object gdd) =>
+    'Favorable thermal accumulation ($gdd GDD/week). Germination will occur in 4 to 6 days with low thermal stress risk.';
+String kThermalAdviceMoistureLow(Object moisturePct) =>
+    'Root zone moisture ($moisturePct%) is below the uniform germination threshold (minimum 42%).';
+
+const String kVigorStatusExcellent = 'Excellent Vigor';
+const String kVigorStatusNormal = 'Normal Vigor';
+const String kVigorStatusWaterStress = 'Under Water Stress';
+const String kBiomassConditionDense =
+    'Dense plant canopy with high photosynthetic activity. Harvest projection in the upper percentile.';
+const String kBiomassConditionNormal =
+    'Vegetative development consistent with phenological timing without marked anomalies.';
+String kBiomassConditionStress(Object lossPct) =>
+    'Depressed vigor due to sustained water deficit. Projected yield loss of $lossPct% without irrigation.';
+
+const String kRiskAlertFlashDroughtTitle = 'Flash Drought Alert';
+const String kRiskAlertWaterloggingTitle = 'Waterlogging & Root Asphyxia Risk';
+const String kRiskAlertHeatStressTitle = 'Heat Stress Alert';
+const String kRiskAlertNoneTitle = 'No Active Extreme Weather Risks';
+const String kRiskAdviceFlashDroughtSandy =
+    'Sandy soil with accelerated drainage: moisture evaporates rapidly under intense solar radiation. Apply organic mulch and frequent short irrigation cycles.';
+const String kRiskAdviceFlashDroughtStandard =
+    'Rapid moisture loss from extreme solar radiation. Apply organic mulch to root bases and advance defensive irrigation cycles.';
+const String kRiskAdviceWaterloggingClay =
+    'Clay soil with slow infiltration: standing water asphyxiates roots. Open surface drainage ditches and avoid soil compaction.';
+const String kRiskAdviceWaterloggingStandard =
+    'Excessive accumulated precipitation in saturated soil. Open surface drainage ditches to evacuate stagnant runoff.';
+const String kRiskAdviceHeatStress =
+    'High daytime temperatures that may cause flower abortion in legumes and vegetables. Keep foliage hydrated.';
+const String kRiskAdviceNone =
+    'Hydroclimatic variables remain within safe thresholds for the farm crops.';
+
+String kSoilNutritionDiagnosisLegumeSandy(Object nGain, Object ureaSavings) =>
+    'The proposed legume rotation will contribute ~$nGain kg N/ha. In sandy soil, incorporating green biomass is recommended to prevent leaching, saving ~$ureaSavings kg of urea.';
+String kSoilNutritionDiagnosisLegumeStandard(Object nGain, Object ureaSavings) =>
+    'The proposed legume rotation will contribute an estimated $nGain kg of biological nitrogen per hectare, saving about $ureaSavings kg of commercial urea.';
+const String kSoilNutritionDiagnosisCerealSandy =
+    'Cereals deplete nitrogen (-35 kg N/ha) and rainfall leaching in sandy soil is severe. Incorporate deep green manure or compost immediately.';
+const String kSoilNutritionDiagnosisCerealStandard =
+    'Cereals deplete nitrogen from the profile (-35 kg N/ha). Incorporating cover crops or compost is recommended to maintain soil fertility.';
+
+const String kDefaultCropName = 'Corn';
+const String kDefaultSoilName = 'Loam';
+
+
+
 
 
 
