@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
@@ -53,6 +54,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
     _loadLatestFarm();
   }
 
@@ -90,7 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getDayPeriodName(DayPeriod period, AppStrings s) {
-    final isEs = s.kDashboardWhatToDo == '¿Qué quieres hacer hoy?';
+    final isEs = AppLanguage.current.value == AppLanguageType.spanish;
     switch (period) {
       case DayPeriod.madrugada:
         return isEs ? 'Madrugada' : 'Dawn';
@@ -264,142 +272,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         final report = _getPredictionsReport();
 
-        return Scaffold(
-          backgroundColor: scaffoldBg,
-          body: RefreshIndicator(
-            onRefresh: _loadLatestFarm,
-            color: AppColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, s, displayFarmName, displayLocation),
-                  Transform.translate(
-                    offset: const Offset(0, -28),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeroWeatherCard(context, s),
-                          const SizedBox(height: 12),
-                          _buildNasaClimateSection(context, s),
-                          const SizedBox(height: 14),
-                          Center(
-                            child: Container(
-                              width: 38,
-                              height: 3.5,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF2C3E33)
-                                    : const Color(0xFFDCDFD8),
-                                borderRadius: BorderRadius.circular(2),
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: Brightness.dark,
+            statusBarIconBrightness: Brightness.light,
+          ),
+          child: Scaffold(
+            backgroundColor: scaffoldBg,
+            body: RefreshIndicator(
+              onRefresh: _loadLatestFarm,
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context, s, displayFarmName, displayLocation),
+                    Transform.translate(
+                      offset: const Offset(0, -28),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeroWeatherCard(context, s),
+                            const SizedBox(height: 10),
+                            _buildNasaClimateSection(context, s),
+                            const SizedBox(height: 12),
+                            Text(
+                              AppLanguage.current.value == AppLanguageType.spanish
+                                  ? 'Gestiona tu campo'
+                                  : 'Manage your fields',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                                letterSpacing: -0.2,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            s.kDashboardWhatToDo == '¿Qué quieres hacer hoy?'
-                                ? 'Gestiona tu campo'
-                                : 'Manage your fields',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _buildFieldsGrid(context, s, displaySurface),
-                          const SizedBox(height: 14),
-                          _buildPredictionsSection(context, s, report),
-                          const SizedBox(height: 14),
-                          Text(
-                            s.kDashboardWhatToDo,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildActionCard(
-                            context: context,
-                            backgroundColor: const Color(0xFFEAF5EC),
-                            iconBoxColor: const Color(0xFF2E7D32),
-                            icon: Icons.eco_rounded,
-                            iconColor: Colors.white,
-                            title: s.kDashboardAction1,
-                            chevronColor: const Color(0xFF4A7C59),
-                            onTap: () {
-                              Navigator.of(context).pushReplacement(
-                                createBottomNavPageRoute(
-                                  const PredictionsScreen(initialTab: 1),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 6),
-                          _buildActionCard(
-                            context: context,
-                            backgroundColor: const Color(0xFFEBF3FB),
-                            iconBoxColor: const Color(0xFFD4E7F7),
-                            icon: Icons.cloud_outlined,
-                            iconColor: const Color(0xFF1976D2),
-                            title: s.kDashboardAction2,
-                            chevronColor: const Color(0xFF5B8FB9),
-                            onTap: () {
-                              Navigator.of(context).pushReplacement(
-                                createBottomNavPageRoute(
-                                  const PredictionsScreen(initialTab: 0),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 6),
-                          _buildActionCard(
-                            context: context,
-                            backgroundColor: const Color(0xFFFEF8E7),
-                            iconBoxColor: const Color(0xFFFEEBC2),
-                            icon: Icons.lightbulb_outline_rounded,
-                            iconColor: const Color(0xFFF57F17),
-                            title: s.kDashboardAction3,
-                            chevronColor: const Color(0xFFBCA05A),
-                            onTap: () {
-                              Navigator.of(context).pushReplacement(
-                                createBottomNavPageRoute(
-                                  const PredictionsScreen(initialTab: 5),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                            const SizedBox(height: 8),
+                            _buildFieldsGrid(context, s, displaySurface),
+                            const SizedBox(height: 12),
+                            _buildPredictionsSection(context, s, report),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+            floatingActionButton: EveFloatingLauncherButton(
+              tooltip: s.kAskIvyTooltip,
+              farmData: _dbFarm ??
+                  {
+                    'name': widget.farmName ?? 'Mi Finca',
+                    'zone': widget.location ?? 'Nicaragua',
+                    'total_surface': 2.5,
+                    'unit': 'ha',
+                  },
+              nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
+              report: report,
+              graph: _farmGraph,
+              subplots: _farmSubplots,
+            ),
+            bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: EveFloatingLauncherButton(
-            tooltip: s.kAskIvyTooltip,
-            farmData: _dbFarm ??
-                {
-                  'name': widget.farmName ?? 'Mi Finca',
-                  'zone': widget.location ?? 'Nicaragua',
-                  'total_surface': 2.5,
-                  'unit': 'ha',
-                },
-            nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
-            report: report,
-            graph: _farmGraph,
-            subplots: _farmSubplots,
-          ),
-          bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
         );
       },
     );
@@ -416,7 +357,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .trim();
     final headerBg = AppColors.getHeaderBg(context);
 
-    return Container(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+      ),
+      child: Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: headerBg,
@@ -550,8 +497,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHeroWeatherCard(BuildContext context, AppStrings s) {
     final summary = _nasaData?['summary'] as Map<String, dynamic>? ?? {};
@@ -988,15 +936,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _buildEnvironmentalStatusBanner(context, s),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         GridView.count(
+          padding: EdgeInsets.zero,
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
           childAspectRatio: 1.38,
           children: [
             _buildTelemetryCard(
@@ -1312,7 +1261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _buildPredictionCard(
           context: context,
           badgeText: '${report.rotation.score}% Compatibilidad',
@@ -1335,7 +1284,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _buildPredictionCard(
           context: context,
           badgeText: report.calendar.windowStatus,
@@ -1361,7 +1310,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _buildPredictionCard(
           context: context,
           badgeText: '${report.nutrition.soilHealthScore}/100 Salud',
@@ -1565,11 +1514,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String surfaceText,
   ) {
     return GridView.count(
+      padding: EdgeInsets.zero,
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
       childAspectRatio: 1.25,
       children: [
         _buildGridCard(
@@ -1715,79 +1665,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionCard({
-    required BuildContext context,
-    required Color backgroundColor,
-    required Color iconBoxColor,
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required Color chevronColor,
-    VoidCallback? onTap,
-  }) {
-    final isDark = AppColors.isDark(context);
-    final cardColor = isDark ? const Color(0xFF1E2822) : backgroundColor;
-    final titleColor =
-        isDark ? AppColors.textPrimaryDark : const Color(0xFF1B2E1C);
-    final borderCol = isDark ? AppColors.borderDark : Colors.transparent;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark ? Border.all(color: borderCol) : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? iconBoxColor.withValues(alpha: 0.25)
-                        : iconBoxColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      icon,
-                      color: isDark ? AppColors.primaryLight : iconColor,
-                      size: 24,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: titleColor,
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: isDark ? AppColors.primaryLight : chevronColor,
-                  size: 24,
-                ),
-              ],
-            ),
           ),
         ),
       ),
