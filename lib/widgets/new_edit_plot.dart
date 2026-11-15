@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
+import '../services/app_settings.dart';
 
 /// Shows a bottom sheet modal to either create a new lot or edit an existing lot.
 Future<bool?> showNewOrEditLotModal(
   BuildContext context, {
   Map<String, dynamic>? lot,
   required VoidCallback onSaved,
-  String surfaceUnit = 'ha',
+  String? surfaceUnit,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -25,16 +26,19 @@ Future<bool?> showNewOrEditLotModal(
 class NewEditPlotSheet extends StatefulWidget {
   final Map<String, dynamic>? lot;
   final VoidCallback onSaved;
-  final String surfaceUnit;
+  final String? surfaceUnit;
 
   const NewEditPlotSheet({
     super.key,
     this.lot,
     required this.onSaved,
-    this.surfaceUnit = 'ha',
+    this.surfaceUnit,
   });
 
   bool get isEditing => lot != null;
+
+  String get effectiveSurfaceUnit =>
+      surfaceUnit ?? AppSettings.getSurfaceUnitShort();
 
   @override
   State<NewEditPlotSheet> createState() => _NewEditPlotSheetState();
@@ -381,7 +385,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
 
               // Surface Area Field
               Text(
-                '${s.kLotSurfaceLabel} (${widget.surfaceUnit})',
+                '${s.kLotSurfaceLabel} (${widget.effectiveSurfaceUnit})',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -401,7 +405,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                     Icons.square_foot_rounded,
                     color: AppColors.primary,
                   ),
-                  suffixText: widget.surfaceUnit,
+                  suffixText: widget.effectiveSurfaceUnit,
                   suffixStyle: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,

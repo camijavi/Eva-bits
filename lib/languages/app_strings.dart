@@ -183,6 +183,28 @@ abstract class AppStrings {
   String get kLanguage;
   String get kEnglish;
   String get kSpanish;
+
+  // Settings Screen
+  String get kSettingsTitle;
+  String get kSettingsSubtitle;
+  String get kLanguageSectionTitle;
+  String get kLanguageSectionSubtitle;
+  String get kThemeSectionTitle;
+  String get kThemeSectionSubtitle;
+  String get kThemeLight;
+  String get kThemeDark;
+  String get kThemeSystem;
+  String get kUnitsSectionTitle;
+  String get kUnitsSectionSubtitle;
+  String get kSurfaceUnitsTitle;
+  String get kTemperatureUnitsTitle;
+  String get kUnitManzanas;
+  String get kUnitManzanasShort;
+  String get kUnitCelsius;
+  String get kUnitFahrenheit;
+  String get kUnitCelsiusShort;
+  String get kUnitFahrenheitShort;
+  String get kSettingsSaved;
 }
 
 class EngStrings implements AppStrings {
@@ -505,6 +527,48 @@ class EngStrings implements AppStrings {
   String get kEnglish => eng.kEnglish;
   @override
   String get kSpanish => eng.kSpanish;
+
+  // Settings Screen
+  @override
+  String get kSettingsTitle => eng.kSettingsTitle;
+  @override
+  String get kSettingsSubtitle => eng.kSettingsSubtitle;
+  @override
+  String get kLanguageSectionTitle => eng.kLanguageSectionTitle;
+  @override
+  String get kLanguageSectionSubtitle => eng.kLanguageSectionSubtitle;
+  @override
+  String get kThemeSectionTitle => eng.kThemeSectionTitle;
+  @override
+  String get kThemeSectionSubtitle => eng.kThemeSectionSubtitle;
+  @override
+  String get kThemeLight => eng.kThemeLight;
+  @override
+  String get kThemeDark => eng.kThemeDark;
+  @override
+  String get kThemeSystem => eng.kThemeSystem;
+  @override
+  String get kUnitsSectionTitle => eng.kUnitsSectionTitle;
+  @override
+  String get kUnitsSectionSubtitle => eng.kUnitsSectionSubtitle;
+  @override
+  String get kSurfaceUnitsTitle => eng.kSurfaceUnitsTitle;
+  @override
+  String get kTemperatureUnitsTitle => eng.kTemperatureUnitsTitle;
+  @override
+  String get kUnitManzanas => eng.kUnitManzanas;
+  @override
+  String get kUnitManzanasShort => eng.kUnitManzanasShort;
+  @override
+  String get kUnitCelsius => eng.kUnitCelsius;
+  @override
+  String get kUnitFahrenheit => eng.kUnitFahrenheit;
+  @override
+  String get kUnitCelsiusShort => eng.kUnitCelsiusShort;
+  @override
+  String get kUnitFahrenheitShort => eng.kUnitFahrenheitShort;
+  @override
+  String get kSettingsSaved => eng.kSettingsSaved;
 }
 
 class SpaStrings implements AppStrings {
@@ -827,6 +891,48 @@ class SpaStrings implements AppStrings {
   String get kEnglish => spa.kEnglish;
   @override
   String get kSpanish => spa.kSpanish;
+
+  // Settings Screen
+  @override
+  String get kSettingsTitle => spa.kSettingsTitle;
+  @override
+  String get kSettingsSubtitle => spa.kSettingsSubtitle;
+  @override
+  String get kLanguageSectionTitle => spa.kLanguageSectionTitle;
+  @override
+  String get kLanguageSectionSubtitle => spa.kLanguageSectionSubtitle;
+  @override
+  String get kThemeSectionTitle => spa.kThemeSectionTitle;
+  @override
+  String get kThemeSectionSubtitle => spa.kThemeSectionSubtitle;
+  @override
+  String get kThemeLight => spa.kThemeLight;
+  @override
+  String get kThemeDark => spa.kThemeDark;
+  @override
+  String get kThemeSystem => spa.kThemeSystem;
+  @override
+  String get kUnitsSectionTitle => spa.kUnitsSectionTitle;
+  @override
+  String get kUnitsSectionSubtitle => spa.kUnitsSectionSubtitle;
+  @override
+  String get kSurfaceUnitsTitle => spa.kSurfaceUnitsTitle;
+  @override
+  String get kTemperatureUnitsTitle => spa.kTemperatureUnitsTitle;
+  @override
+  String get kUnitManzanas => spa.kUnitManzanas;
+  @override
+  String get kUnitManzanasShort => spa.kUnitManzanasShort;
+  @override
+  String get kUnitCelsius => spa.kUnitCelsius;
+  @override
+  String get kUnitFahrenheit => spa.kUnitFahrenheit;
+  @override
+  String get kUnitCelsiusShort => spa.kUnitCelsiusShort;
+  @override
+  String get kUnitFahrenheitShort => spa.kUnitFahrenheitShort;
+  @override
+  String get kSettingsSaved => spa.kSettingsSaved;
 }
 
 class AppLanguage {

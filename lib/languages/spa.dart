@@ -188,3 +188,25 @@ const String kLanguage = 'Idioma';
 const String kEnglish = 'Inglés';
 const String kSpanish = 'Español';
 
+// Settings Screen
+const String kSettingsTitle = 'Configuración';
+const String kSettingsSubtitle = 'Personaliza idioma, tema y unidades de medida';
+const String kLanguageSectionTitle = 'Idioma';
+const String kLanguageSectionSubtitle = 'Selecciona el idioma de la aplicación';
+const String kThemeSectionTitle = 'Tema';
+const String kThemeSectionSubtitle = 'Elige apariencia clara, oscura o del sistema';
+const String kThemeLight = 'Claro';
+const String kThemeDark = 'Oscuro';
+const String kThemeSystem = 'Sistema';
+const String kUnitsSectionTitle = 'Unidades de Medida';
+const String kUnitsSectionSubtitle = 'Configura las unidades de superficie y temperatura';
+const String kSurfaceUnitsTitle = 'Unidad de Superficie';
+const String kTemperatureUnitsTitle = 'Unidad de Temperatura';
+const String kUnitManzanas = 'Manzanas (mz)';
+const String kUnitManzanasShort = 'mz';
+const String kUnitCelsius = 'Celsius (°C)';
+const String kUnitFahrenheit = 'Fahrenheit (°F)';
+const String kUnitCelsiusShort = '°C';
+const String kUnitFahrenheitShort = '°F';
+const String kSettingsSaved = 'Configuración actualizada';
+

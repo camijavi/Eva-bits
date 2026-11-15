@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_eva_bits/screens/dashboard_screen.dart';
@@ -57,7 +58,8 @@ void main() {
 
     // Verify Lots option is present in the nav bar
     expect(find.text(s.kNavLots), findsOneWidget);
-    expect(find.byIcon(Icons.layers_outlined), findsOneWidget);
+    expect(find.byType(CupertinoTabBar), findsOneWidget);
+    expect(find.byIcon(CupertinoIcons.layers), findsOneWidget);
 
     // Tap on Lots option
     await tester.tap(find.text(s.kNavLots));
@@ -65,6 +67,24 @@ void main() {
 
     // Verify callback was called with index 1
     expect(tappedIndex, 1);
+  });
+
+  testWidgets('createBottomNavPageRoute builds animated transitions for all NavAnimationType options',
+      (WidgetTester tester) async {
+    for (final type in NavAnimationType.values) {
+      final route = createBottomNavPageRoute(
+        const Scaffold(body: Text('Test Page')),
+        animationType: type,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          onGenerateRoute: (_) => route,
+        ),
+      );
+
+      expect(find.text('Test Page'), findsOneWidget);
+    }
   });
 
   testWidgets('DashboardScreen navbar navigates to LotsScreen when Lots is tapped',

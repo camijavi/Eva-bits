@@ -4,6 +4,8 @@ import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/new_edit_plot.dart';
+import '../services/app_settings.dart';
+import 'dashboard_screen.dart';
 
 enum LotFilterPriority {
   all,
@@ -71,10 +73,10 @@ class _LotsScreenState extends State<LotsScreen> {
       final latestFarm = await DatabaseManager().getLatestFarm();
       if (latestFarm != null) {
         _farmId = latestFarm['id'] as int?;
-        _surfaceUnit = latestFarm['surface_unit']?.toString() ?? 'ha';
+        _surfaceUnit = latestFarm['surface_unit']?.toString() ?? AppSettings.getSurfaceUnitShort();
       } else {
         _farmId = await DatabaseManager().getOrCreateDefaultFarmId();
-        _surfaceUnit = 'ha';
+        _surfaceUnit = AppSettings.getSurfaceUnitShort();
       }
 
       if (_farmId != null) {
@@ -247,6 +249,13 @@ class _LotsScreenState extends State<LotsScreen> {
           onTap: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pushReplacement(
+                createBottomNavPageRoute(
+                  const DashboardScreen(),
+                  fromLeft: true,
+                ),
+              );
             }
           },
           child: Container(

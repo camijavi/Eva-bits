@@ -72,30 +72,6 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
               ),
             ),
             actions: [
-              // Language Switcher
-              TextButton.icon(
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.white.withValues(alpha: 0.15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                ),
-                onPressed: () => AppLanguage.toggleLanguage(),
-                icon: const Icon(Icons.language_rounded,
-                    size: 16, color: Colors.white),
-                label: Text(
-                  AppLanguage.isSpanish ? 'ES' : 'EN',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
               if (_farm != null)
                 IconButton(
                   tooltip: s.kEditFarm,

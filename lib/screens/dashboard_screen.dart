@@ -3,7 +3,9 @@ import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../services/app_settings.dart';
 import 'farm_info.dart';
+import 'settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String? farmName;
@@ -174,20 +176,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.white,
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(
-                Icons.person_outline,
-                color: Color(0xFF0F5A37),
-                size: 24,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.settings_outlined,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                tooltip: s.kSettingsTitle,
+                onPressed: () {
+                  Navigator.of(context).push(
+                    createBottomNavPageRoute(
+                      const SettingsScreen(),
+                      fromLeft: false,
+                    ),
+                  );
+                },
               ),
-              onPressed: () {
-                // Mockup: No functionality
-              },
-            ),
+              const SizedBox(width: 4),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.white,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(
+                    Icons.person_outline,
+                    color: Color(0xFF0F5A37),
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    // Mockup: No functionality
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -236,13 +260,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '28 °C',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                        ValueListenableBuilder<AppTemperatureUnit>(
+                          valueListenable: AppSettings.temperatureUnit,
+                          builder: (context, tempUnit, _) {
+                            final tempVal = tempUnit == AppTemperatureUnit.celsius ? '28 °C' : '82 °F';
+                            return Text(
+                              tempVal,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            );
+                          },
                         ),
                         Text(
                           s.kDashboardWeatherSummary,

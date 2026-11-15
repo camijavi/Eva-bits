@@ -204,6 +204,23 @@ class DatabaseManager {
     );
   }
 
+  /// Updates only the surface unit of the current farm.
+  Future<void> updateFarmSurfaceUnit(String newUnit) async {
+    final Database db = await database;
+    final latestFarm = await getLatestFarm();
+    if (latestFarm != null && latestFarm['id'] != null) {
+      await db.update(
+        'farms',
+        {
+          'surface_unit': newUnit,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [latestFarm['id']],
+      );
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Lot Operations
   // ---------------------------------------------------------------------------
