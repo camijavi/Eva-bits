@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/crop_types.dart';
 import '../constants/soil_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
+import 'crop_picker_sheet.dart';
 
 /// Shows a bottom sheet modal to either create a new subplot or edit an existing subplot.
 Future<bool?> showNewOrEditSubplotModal(
@@ -63,6 +65,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
   late TextEditingController _nameController;
   late TextEditingController _surfaceController;
   String? _selectedSoilType;
+  String? _selectedCrop;
   bool _isSaving = false;
 
   @override
@@ -77,6 +80,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
     final initialSoil = widget.subplot?['soil_type']?.toString();
     final isValid = SoilTypes.all.any((s) => s.key == initialSoil);
     _selectedSoilType = isValid ? initialSoil : 'arenoso';
+    _selectedCrop = widget.subplot?['crop']?.toString();
   }
 
   @override
@@ -124,6 +128,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
         subplotMap['name'] = nameVal;
         subplotMap['surface'] = surfaceVal;
         subplotMap['soil_type'] = _selectedSoilType;
+        subplotMap['crop'] = _selectedCrop;
 
         await DatabaseManager().updateSubplot(subplotMap);
 
@@ -148,6 +153,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
           'name': nameVal,
           'surface': surfaceVal,
           'soil_type': _selectedSoilType,
+          'crop': _selectedCrop,
         });
 
         if (mounted) {
@@ -554,6 +560,19 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                   });
                 },
               ),
+              const SizedBox(height: 18),
+
+              // Crop Selector
+              Text(
+                s.kCropLabel,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B2E1C),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildCropSelector(s),
               const SizedBox(height: 26),
 
               // Action Buttons
@@ -630,6 +649,101 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               const SizedBox(height: 10),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCropSelector(AppStrings s) {
+    final isSpanish = AppLanguage.isSpanish;
+    final crop = CropTypes.getByKey(_selectedCrop);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () async {
+        final result = await showCropPickerModal(
+          context,
+          selectedCropKey: _selectedCrop,
+        );
+        if (result != null) {
+          setState(() {
+            _selectedCrop = result.isEmpty ? null : result;
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FBF8),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            if (crop != null) ...[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: crop.bgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    crop.emoji,
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  crop.localizedName(isSpanish),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B2E1C),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF5EC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  s.kChangeCrop,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F5A37),
+                  ),
+                ),
+              ),
+            ] else ...[
+              const Icon(
+                Icons.eco_outlined,
+                color: AppColors.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  s.kCropHint,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.grey,
+                size: 22,
+              ),
+            ],
+          ],
         ),
       ),
     );

@@ -244,5 +244,21 @@ const String kSoilOrganic = 'Humífero / Orgánico';
 const String kSoilRocky = 'Pedregoso';
 const String kSoilUnknown = 'Sin especificar';
 
+// Crop Selection & Management
+const String kCropLabel = 'Cultivo Actual';
+const String kCropHint = 'Selecciona un cultivo (Opcional)';
+const String kAssignCrop = 'Asignar Cultivo';
+const String kChangeCrop = 'Cambiar';
+const String kNoCropAssigned = 'Sin cultivo asignado';
+const String kClearCrop = 'Ninguno (Quitar cultivo)';
+const String kPopularCrops = 'Cultivos Frecuentes';
+const String kAllCrops = 'Todos los Cultivos';
+const String kSearchCropHint = 'Buscar cultivo por nombre...';
+const String kCategoryGrains = 'Granos y Legumbres';
+const String kCategoryFruits = 'Frutales';
+const String kCategoryCommercial = 'Comerciales y Agroforestales';
+const String kCropUpdatedSuccessfully = '¡Cultivo actualizado con éxito!';
+
+
 
 

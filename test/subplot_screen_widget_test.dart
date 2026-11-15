@@ -5,6 +5,9 @@ import 'package:flutter_eva_bits/screens/subplot_screen.dart';
 import 'package:flutter_eva_bits/widgets/new_edit_subplot.dart';
 import 'package:flutter_eva_bits/languages/app_strings.dart';
 import 'package:flutter_eva_bits/constants/soil_types.dart';
+import 'package:flutter_eva_bits/constants/crop_types.dart';
+import 'package:flutter_eva_bits/widgets/crop_picker_sheet.dart';
+import 'package:flutter_eva_bits/widgets/new_edit_plot.dart';
 
 void main() {
   final sampleLot = {
@@ -80,7 +83,7 @@ void main() {
     expect(find.text(s.kSubplotsTitle), findsOneWidget);
     expect(find.text('2'), findsWidgets); // 2 subplots count
     expect(find.byType(FloatingActionButton), findsOneWidget);
-    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.add_rounded), findsWidgets);
     expect(find.byTooltip(s.kAddNewSubplot), findsOneWidget);
 
     // 4. Subplot Cards
@@ -203,5 +206,121 @@ void main() {
 
     final labels = SoilTypes.all.map((t) => t.label(s)).toList();
     expect(labels, containsAll([s.kSoilSandy, s.kSoilClay, s.kSoilSilt, s.kSoilLoam]));
+  });
+
+  testWidgets('CropTypes contains all 16 required crops',
+      (WidgetTester tester) async {
+    expect(CropTypes.all.length, 16);
+
+    final expectedEnNames = [
+      'Corn',
+      'Soybean',
+      'Wheat',
+      'Sugarcane',
+      'Rice',
+      'Coffee',
+      'Beans',
+      'Plantain',
+      'Banana',
+      'Watermelon',
+      'Apple',
+      'Grapes',
+      'Orange',
+      'Mango',
+      'Melon',
+      'Pineapple',
+    ];
+
+    final actualEnNames = CropTypes.all.map((c) => c.nameEn).toList();
+    expect(actualEnNames, containsAll(expectedEnNames));
+  });
+
+  testWidgets('CropPickerSheet renders search field, frequent crops, categories, and items',
+      (WidgetTester tester) async {
+    String? selectedCrop;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (ctx) => ElevatedButton(
+              onPressed: () async {
+                selectedCrop = await showCropPickerModal(ctx);
+              },
+              child: const Text('Open Picker'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Open picker
+    await tester.tap(find.text('Open Picker'));
+    await tester.pumpAndSettle();
+
+    final s = AppLanguage.strings;
+
+    // Verify search and headers
+    expect(find.text(s.kAssignCrop), findsOneWidget);
+    expect(find.text(s.kSearchCropHint), findsOneWidget);
+    expect(find.text(s.kPopularCrops), findsOneWidget);
+
+    // Verify categories
+    expect(find.text(s.kAllCrops), findsOneWidget);
+    expect(find.text(s.kCategoryGrains), findsOneWidget);
+    expect(find.text(s.kCategoryCommercial), findsOneWidget);
+    expect(find.text(s.kCategoryFruits), findsOneWidget);
+
+    // Tap on Corn (Maíz)
+    final corn = CropTypes.getByKey('corn')!;
+    expect(find.text(corn.localizedName(AppLanguage.isSpanish)), findsWidgets);
+
+    await tester.tap(find.text(corn.localizedName(AppLanguage.isSpanish)).first);
+    await tester.pumpAndSettle();
+
+    expect(selectedCrop, 'corn');
+  });
+
+  testWidgets('NewEditPlotSheet renders crop selector field',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NewEditPlotSheet(
+            onSaved: () {},
+            surfaceUnit: 'ha',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final s = AppLanguage.strings;
+    expect(find.text(s.kCropLabel), findsOneWidget);
+    expect(find.text(s.kCropHint), findsOneWidget);
+  });
+
+  testWidgets('NewEditSubplotSheet renders crop selector field',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NewEditSubplotSheet(
+            lotId: 1,
+            lotSurface: 2.5,
+            currentOtherSubplotsSurface: 0.0,
+            surfaceUnit: 'ha',
+            onSaved: () {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final s = AppLanguage.strings;
+    expect(find.text(s.kCropLabel), findsOneWidget);
+    expect(find.text(s.kCropHint), findsOneWidget);
   });
 }

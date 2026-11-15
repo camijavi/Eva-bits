@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/crop_types.dart';
 import '../constants/soil_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
+import '../widgets/crop_picker_sheet.dart';
 import '../widgets/new_edit_plot.dart';
 import '../widgets/new_edit_subplot.dart';
 
@@ -151,6 +153,67 @@ class _SubplotScreenState extends State<SubplotScreen> {
     );
   }
 
+  Future<void> _pickCropForLot(AppStrings s) async {
+    final result = await showCropPickerModal(
+      context,
+      selectedCropKey: _currentLot['crop']?.toString(),
+    );
+    if (result != null) {
+      final newCrop = result.isEmpty ? null : result;
+      if (_lotId > 0) {
+        await DatabaseManager().updateLotCrop(_lotId, newCrop);
+      }
+      setState(() {
+        _currentLot['crop'] = newCrop;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            content: Text(
+              s.kCropUpdatedSuccessfully,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickCropForSubplot(Map<String, dynamic> subplot, AppStrings s) async {
+    final result = await showCropPickerModal(
+      context,
+      selectedCropKey: subplot['crop']?.toString(),
+    );
+    if (result != null) {
+      final newCrop = result.isEmpty ? null : result;
+      final subplotId = subplot['id'] as int? ?? 0;
+      if (subplotId > 0) {
+        await DatabaseManager().updateSubplotCrop(subplotId, newCrop);
+        _loadSubplots();
+      } else {
+        setState(() {
+          subplot['crop'] = newCrop;
+        });
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            content: Text(
+              s.kCropUpdatedSuccessfully,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppLanguageType>(
@@ -293,6 +356,8 @@ class _SubplotScreenState extends State<SubplotScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    _buildLotCropPill(s),
                   ],
                 ),
               ),
@@ -549,6 +614,8 @@ class _SubplotScreenState extends State<SubplotScreen> {
     final percentage = _lotSurface > 0 ? (surface / _lotSurface) * 100 : 0.0;
     final soilKey = subplot['soil_type']?.toString();
     final soilDef = SoilTypes.getByKey(soilKey);
+    final isSpanish = AppLanguage.isSpanish;
+    final crop = CropTypes.getByKey(subplot['crop']?.toString());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -646,6 +713,8 @@ class _SubplotScreenState extends State<SubplotScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(width: 6),
+                          _buildSubplotCropPill(subplot, crop, s, isSpanish),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -674,6 +743,136 @@ class _SubplotScreenState extends State<SubplotScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLotCropPill(AppStrings s) {
+    final isSpanish = AppLanguage.isSpanish;
+    final lotCrop = CropTypes.getByKey(_currentLot['crop']?.toString());
+
+    if (lotCrop != null) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _pickCropForLot(s),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: lotCrop.bgColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: lotCrop.color.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(lotCrop.emoji, style: const TextStyle(fontSize: 13)),
+              const SizedBox(width: 5),
+              Text(
+                '${s.kCropLabel}: ${lotCrop.localizedName(isSpanish)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: lotCrop.textColor,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.edit_rounded, size: 12, color: lotCrop.textColor),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => _pickCropForLot(s),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F8F2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFC8E6C9)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.add_rounded, size: 14, color: Color(0xFF0F5A37)),
+            const SizedBox(width: 4),
+            Text(
+              s.kAssignCrop,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F5A37),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubplotCropPill(
+    Map<String, dynamic> subplot,
+    CropDefinition? crop,
+    AppStrings s,
+    bool isSpanish,
+  ) {
+    if (crop != null) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _pickCropForSubplot(subplot, s),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+          decoration: BoxDecoration(
+            color: crop.bgColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: crop.color.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(crop.emoji, style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 4),
+              Text(
+                crop.localizedName(isSpanish),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: crop.textColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => _pickCropForSubplot(subplot, s),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F2),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.add_rounded, size: 11, color: Color(0xFF0F5A37)),
+            const SizedBox(width: 2),
+            Text(
+              s.kCropLabel,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F5A37),
+              ),
+            ),
+          ],
         ),
       ),
     );

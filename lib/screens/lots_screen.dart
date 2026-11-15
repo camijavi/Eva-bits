@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/crop_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -108,13 +109,15 @@ class _LotsScreenState extends State<LotsScreen> {
       result = result.where((lot) {
         final name = (lot['name'] ?? '').toString().toLowerCase();
         final surface = (lot['surface'] ?? '').toString().toLowerCase();
+        final cropKey = (lot['crop'] ?? '').toString().toLowerCase();
         final subplots = (lot['subplots'] as List<dynamic>?) ?? [];
         final hasMatchingSubplot = subplots.any((sub) =>
-            (sub['name'] ?? '').toString().toLowerCase().contains(
-                _searchQuery));
+            (sub['name'] ?? '').toString().toLowerCase().contains(_searchQuery) ||
+            (sub['crop'] ?? '').toString().toLowerCase().contains(_searchQuery));
 
         return name.contains(_searchQuery) ||
             surface.contains(_searchQuery) ||
+            cropKey.contains(_searchQuery) ||
             hasMatchingSubplot;
       }).toList();
     }
@@ -546,15 +549,36 @@ class _LotsScreenState extends State<LotsScreen> {
     final surface = lot['surface']?.toString() ?? '0';
     final subplots = (lot['subplots'] as List<dynamic>?) ?? [];
     final subplotsCount = subplots.length;
+    final isSpanish = AppLanguage.isSpanish;
+
+    // Direct lot crop or collected from subplots
+    final lotCrop = CropTypes.getByKey(lot['crop']?.toString());
+    final subplotsCrops = <CropDefinition>[];
+    for (final sub in subplots) {
+      final c = CropTypes.getByKey(sub['crop']?.toString());
+      if (c != null && !subplotsCrops.any((existing) => existing.key == c.key)) {
+        subplotsCrops.add(c);
+      }
+    }
+
+    final cropBadgeText = lotCrop != null
+        ? '${lotCrop.emoji} ${lotCrop.localizedName(isSpanish)}'
+        : (subplotsCrops.isNotEmpty
+            ? subplotsCrops.map((c) => '${c.emoji} ${c.localizedName(isSpanish)}').join(', ')
+            : null);
 
     final subplotsInfo = subplotsCount > 0
-        ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s
-        .kSubplotsCount}'
+        ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s.kSubplotsCount}'
         : null;
 
-    final detailsText = subplotsInfo != null
-        ? '$surface $_surfaceUnit • $subplotsInfo'
-        : '$surface $_surfaceUnit';
+    final parts = <String>['$surface $_surfaceUnit'];
+    if (cropBadgeText != null) {
+      parts.add(cropBadgeText);
+    }
+    if (subplotsInfo != null) {
+      parts.add(subplotsInfo);
+    }
+    final detailsText = parts.join(' • ');
 
     // UI mirrors the image attached:
     // White rounded rectangle card with subtle light gray border.

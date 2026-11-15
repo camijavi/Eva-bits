@@ -239,6 +239,21 @@ abstract class AppStrings {
   String get kSoilOrganic;
   String get kSoilRocky;
   String get kSoilUnknown;
+
+  // Crop Selection & Management
+  String get kCropLabel;
+  String get kCropHint;
+  String get kAssignCrop;
+  String get kChangeCrop;
+  String get kNoCropAssigned;
+  String get kClearCrop;
+  String get kPopularCrops;
+  String get kAllCrops;
+  String get kSearchCropHint;
+  String get kCategoryGrains;
+  String get kCategoryFruits;
+  String get kCategoryCommercial;
+  String get kCropUpdatedSuccessfully;
 }
 
 class EngStrings implements AppStrings {
@@ -667,6 +682,34 @@ class EngStrings implements AppStrings {
   String get kSoilRocky => eng.kSoilRocky;
   @override
   String get kSoilUnknown => eng.kSoilUnknown;
+
+  // Crop Selection & Management
+  @override
+  String get kCropLabel => eng.kCropLabel;
+  @override
+  String get kCropHint => eng.kCropHint;
+  @override
+  String get kAssignCrop => eng.kAssignCrop;
+  @override
+  String get kChangeCrop => eng.kChangeCrop;
+  @override
+  String get kNoCropAssigned => eng.kNoCropAssigned;
+  @override
+  String get kClearCrop => eng.kClearCrop;
+  @override
+  String get kPopularCrops => eng.kPopularCrops;
+  @override
+  String get kAllCrops => eng.kAllCrops;
+  @override
+  String get kSearchCropHint => eng.kSearchCropHint;
+  @override
+  String get kCategoryGrains => eng.kCategoryGrains;
+  @override
+  String get kCategoryFruits => eng.kCategoryFruits;
+  @override
+  String get kCategoryCommercial => eng.kCategoryCommercial;
+  @override
+  String get kCropUpdatedSuccessfully => eng.kCropUpdatedSuccessfully;
 }
 
 class SpaStrings implements AppStrings {
@@ -1095,6 +1138,34 @@ class SpaStrings implements AppStrings {
   String get kSoilRocky => spa.kSoilRocky;
   @override
   String get kSoilUnknown => spa.kSoilUnknown;
+
+  // Crop Selection & Management
+  @override
+  String get kCropLabel => spa.kCropLabel;
+  @override
+  String get kCropHint => spa.kCropHint;
+  @override
+  String get kAssignCrop => spa.kAssignCrop;
+  @override
+  String get kChangeCrop => spa.kChangeCrop;
+  @override
+  String get kNoCropAssigned => spa.kNoCropAssigned;
+  @override
+  String get kClearCrop => spa.kClearCrop;
+  @override
+  String get kPopularCrops => spa.kPopularCrops;
+  @override
+  String get kAllCrops => spa.kAllCrops;
+  @override
+  String get kSearchCropHint => spa.kSearchCropHint;
+  @override
+  String get kCategoryGrains => spa.kCategoryGrains;
+  @override
+  String get kCategoryFruits => spa.kCategoryFruits;
+  @override
+  String get kCategoryCommercial => spa.kCategoryCommercial;
+  @override
+  String get kCropUpdatedSuccessfully => spa.kCropUpdatedSuccessfully;
 }
 
 class AppLanguage {

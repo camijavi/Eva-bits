@@ -40,6 +40,16 @@ class DatabaseManager {
       if (!hasSoilType) {
         await db.execute('ALTER TABLE subplots ADD COLUMN soil_type TEXT');
       }
+      final hasCrop = info.any((col) => col['name'] == 'crop');
+      if (!hasCrop) {
+        await db.execute('ALTER TABLE subplots ADD COLUMN crop TEXT');
+      }
+
+      final lotInfo = await db.rawQuery('PRAGMA table_info(lots)');
+      final hasLotCrop = lotInfo.any((col) => col['name'] == 'crop');
+      if (!hasLotCrop) {
+        await db.execute('ALTER TABLE lots ADD COLUMN crop TEXT');
+      }
     } catch (_) {}
   }
 
@@ -75,6 +85,7 @@ class DatabaseManager {
         farm_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         surface REAL NOT NULL,
+        crop TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (farm_id) REFERENCES farms (id) ON DELETE CASCADE
       )
@@ -88,6 +99,7 @@ class DatabaseManager {
         name TEXT NOT NULL,
         surface REAL NOT NULL,
         soil_type TEXT,
+        crop TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (lot_id) REFERENCES lots (id) ON DELETE CASCADE
       )
@@ -278,6 +290,16 @@ class DatabaseManager {
     );
   }
 
+  Future<int> updateLotCrop(int lotId, String? crop) async {
+    final Database db = await database;
+    return await db.update(
+      'lots',
+      {'crop': crop},
+      where: 'id = ?',
+      whereArgs: [lotId],
+    );
+  }
+
   Future<int> deleteLot(int lotId) async {
     final Database db = await database;
     return await db.delete(
@@ -340,36 +362,42 @@ class DatabaseManager {
         'farm_id': farmId,
         'name': 'Lote 1 - Norte (Maíz y Frijol)',
         'surface': 2.5,
+        'crop': 'corn',
       });
       await txn.insert('subplots', {
         'lot_id': lot1Id,
         'name': 'Subparcela A - Maíz blanco',
         'surface': 1.5,
         'soil_type': 'franco',
+        'crop': 'corn',
       });
       await txn.insert('subplots', {
         'lot_id': lot1Id,
         'name': 'Subparcela B - Frijol rojo',
         'surface': 1.0,
         'soil_type': 'arenoso',
+        'crop': 'beans',
       });
 
       final lot2Id = await txn.insert('lots', {
         'farm_id': farmId,
         'name': 'Lote 2 - Sur (Frijolar)',
         'surface': 1.8,
+        'crop': 'beans',
       });
       await txn.insert('subplots', {
         'lot_id': lot2Id,
         'name': 'Subparcela Principal',
         'surface': 1.8,
         'soil_type': 'arcilloso',
+        'crop': 'beans',
       });
 
       await txn.insert('lots', {
         'farm_id': farmId,
         'name': 'Lote 3 - Este (Rotación Crotalaria)',
         'surface': 3.0,
+        'crop': 'coffee',
       });
     });
   }
@@ -401,6 +429,16 @@ class DatabaseManager {
       subplotMap,
       where: 'id = ?',
       whereArgs: [subplot['id']],
+    );
+  }
+
+  Future<int> updateSubplotCrop(int subplotId, String? crop) async {
+    final Database db = await database;
+    return await db.update(
+      'subplots',
+      {'crop': crop},
+      where: 'id = ?',
+      whereArgs: [subplotId],
     );
   }
 

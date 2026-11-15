@@ -241,5 +241,21 @@ const String kSoilOrganic = 'Organic-rich (Humífero)';
 const String kSoilRocky = 'Rocky (Pedregoso)';
 const String kSoilUnknown = 'Unspecified';
 
+// Crop Selection & Management
+const String kCropLabel = 'Current Crop';
+const String kCropHint = 'Select a crop (Optional)';
+const String kAssignCrop = 'Assign Crop';
+const String kChangeCrop = 'Change';
+const String kNoCropAssigned = 'No crop assigned';
+const String kClearCrop = 'None (Clear crop)';
+const String kPopularCrops = 'Frequent Crops';
+const String kAllCrops = 'All Crops';
+const String kSearchCropHint = 'Search crop by name...';
+const String kCategoryGrains = 'Grains & Legumes';
+const String kCategoryFruits = 'Fruits';
+const String kCategoryCommercial = 'Commercial & Cash Crops';
+const String kCropUpdatedSuccessfully = 'Crop updated successfully!';
+
+
 
 
