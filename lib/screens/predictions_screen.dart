@@ -29,16 +29,15 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   Map<String, dynamic>? _farm;
   Map<String, dynamic>? _nasaData;
   SubplotGraph? _graph;
+  List<Map<String, dynamic>> _lots = [];
   List<Map<String, dynamic>> _subplots = [];
   bool _isLoading = true;
 
   // Active filter / simulator
   int? _activeSubplotId;
+  String _selectedContextValue = 'farm';
   String _selectedCrop = 'Maíz';
   String _selectedSoil = 'Franco';
-
-  // Toggle between 2.5D Map view and compact list view
-  bool _show2dMap = true;
 
   final List<String> _cropOptions = [
     'Maíz',
@@ -84,6 +83,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           _graph = await SubplotGraphService.getGraphForFarm(farmId);
           final lotsWithSubplots =
               await DatabaseManager().getAllLotsWithSubplots(farmId: farmId);
+          _lots = lotsWithSubplots;
           final List<Map<String, dynamic>> flat = [];
           for (final lot in lotsWithSubplots) {
             final spList = lot['subplots'] as List<dynamic>? ?? [];
@@ -98,6 +98,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           _subplots = flat;
 
           if (_activeSubplotId != null) {
+            _selectedContextValue = 'sub:$_activeSubplotId';
             final found = _subplots.firstWhere(
               (s) => s['id'] == _activeSubplotId,
               orElse: () => _subplots.isNotEmpty ? _subplots.first : {},
@@ -107,6 +108,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               _selectedSoil = found['soil_type']?.toString() ?? 'Franco';
             }
           } else if (_subplots.isNotEmpty) {
+            _selectedContextValue = 'farm';
             _selectedCrop = _subplots.first['crop']?.toString() ?? 'Maíz';
             _selectedSoil = _subplots.first['soil_type']?.toString() ?? 'Franco';
           }
@@ -155,17 +157,44 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     );
   }
 
-  void _onSubplotSelected(int? subplotId) {
+  void _onContextDropdownChanged(String? val) {
+    if (val == null) return;
     setState(() {
-      _activeSubplotId = subplotId;
-      if (subplotId != null) {
-        final match = _subplots.firstWhere(
-          (s) => s['id'] == subplotId,
-          orElse: () => {},
-        );
-        if (match.isNotEmpty) {
-          _selectedCrop = match['crop']?.toString() ?? 'Maíz';
-          _selectedSoil = match['soil_type']?.toString() ?? 'Franco';
+      _selectedContextValue = val;
+      if (val == 'farm') {
+        _activeSubplotId = null;
+      } else if (val.startsWith('lot:')) {
+        final lotId = int.tryParse(val.substring(4));
+        _activeSubplotId = null;
+        if (lotId != null) {
+          final matchLot = _lots.firstWhere(
+            (l) => l['id'] == lotId,
+            orElse: () => {},
+          );
+          if (matchLot.isNotEmpty) {
+            final spList = matchLot['subplots'] as List<dynamic>? ?? [];
+            if (spList.isNotEmpty && spList.first is Map<String, dynamic>) {
+              final firstSp = spList.first as Map<String, dynamic>;
+              _selectedCrop =
+                  (matchLot['crop'] ?? firstSp['crop'])?.toString() ?? 'Maíz';
+              _selectedSoil = firstSp['soil_type']?.toString() ?? 'Franco';
+            } else {
+              _selectedCrop = matchLot['crop']?.toString() ?? 'Maíz';
+            }
+          }
+        }
+      } else if (val.startsWith('sub:')) {
+        final subplotId = int.tryParse(val.substring(4));
+        _activeSubplotId = subplotId;
+        if (subplotId != null) {
+          final match = _subplots.firstWhere(
+            (s) => s['id'] == subplotId,
+            orElse: () => {},
+          );
+          if (match.isNotEmpty) {
+            _selectedCrop = match['crop']?.toString() ?? 'Maíz';
+            _selectedSoil = match['soil_type']?.toString() ?? 'Franco';
+          }
         }
       }
     });
@@ -204,20 +233,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       return Icons.yard_rounded;
     }
     return Icons.eco_rounded;
-  }
-
-  Color _getSoilColor(String soil) {
-    final lower = soil.toLowerCase();
-    if (lower.contains('arenoso') || lower.contains('sandy')) {
-      return const Color(0xFFD7CCC8);
-    }
-    if (lower.contains('arcilloso') || lower.contains('clay')) {
-      return const Color(0xFFBCAAA4);
-    }
-    if (lower.contains('limoso') || lower.contains('silt')) {
-      return const Color(0xFFCFD8DC);
-    }
-    return const Color(0xFFA5D6A7); // Franco
   }
 
   Widget _buildIconBadge({
@@ -408,85 +423,57 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                   containerSize: 28,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  s.kPredictionContext,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E2D24),
-                  ),
-                ),
-                const Spacer(),
-                // View Mode Toggle (2.5D Map vs Horizontal List)
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => setState(() => _show2dMap = !_show2dMap),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F6F2),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFCFD8DC)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _show2dMap
-                                ? Icons.view_in_ar_rounded
-                                : Icons.view_carousel_rounded,
-                            size: 14,
-                            color: const Color(0xFF2E7D32),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _show2dMap ? s.kVisualParcelView : s.kCompactListView,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2E7D32),
-                            ),
-                          ),
-                        ],
-                      ),
+                Expanded(
+                  child: Text(
+                    s.kPredictionContext,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E2D24),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 // What-If Simulator Button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _showWhatIfSimulatorDialog(s),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFE8F5E9), Color(0xFFC8E6C9)],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFA5D6A7)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.tune_rounded,
-                              size: 14, color: Color(0xFF1B5E20)),
-                          const SizedBox(width: 4),
-                          Text(
-                            s.kWhatIfSimulator,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B5E20),
-                            ),
+                Flexible(
+                  flex: 0,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showWhatIfSimulatorDialog(s),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFE8F5E9), Color(0xFFC8E6C9)],
                           ),
-                        ],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFA5D6A7)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.tune_rounded,
+                                size: 14, color: Color(0xFF1B5E20)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                s.kWhatIfSimulator,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B5E20),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -495,402 +482,241 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             ),
           ),
 
-          // Visual 2.5D Isometric View or Horizontal Carousel
-          if (_show2dMap)
-            _buildIsometricParcelOverview(s)
-          else
-            _buildHorizontalSubplotCarousel(s),
+          // Dropdown Field for Lots & Subplots
+          _buildLotSubplotDropdown(s),
 
-          const SizedBox(height: 6),
-        ],
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // 2.5D ISOMETRIC PARCEL OVERVIEW (TACTILE & FARMER-FRIENDLY)
-  // ===========================================================================
-  Widget _buildIsometricParcelOverview(AppStrings s) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9F6F0),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5DECF)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.touch_app_rounded,
-                  size: 14, color: Color(0xFF6D4C41)),
-              const SizedBox(width: 6),
-              Text(
-                s.kTapToInspectSubplot,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF5D4037),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$_selectedCrop • $_selectedSoil',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B5E20),
-                  ),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 10),
-
-          // Isometric Parcel Tiles Grid
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              // Whole Farm Card
-              _buildIsometricTile(
-                title: s.kWholeFarmGeneral,
-                crop: _selectedCrop,
-                soil: _selectedSoil,
-                isSelected: _activeSubplotId == null,
-                onTap: () => _onSubplotSelected(null),
-                isWholeFarm: true,
-                badgeLabel: s.kActiveSubplotBadge,
-              ),
-
-              // Individual Subplots
-              ..._subplots.map((sp) {
-                final id = sp['id'] as int;
-                final name = sp['name'] ?? '${s.kSubplot} $id';
-                final crop = sp['crop'] ?? 'Maíz';
-                final soil = sp['soil_type'] ?? 'Franco';
-                final surface = sp['surface']?.toString() ?? '1.0';
-                final isSelected = _activeSubplotId == id;
-
-                return _buildIsometricTile(
-                  title: name,
-                  crop: crop,
-                  soil: soil,
-                  surface: surface,
-                  isSelected: isSelected,
-                  onTap: () => _onSubplotSelected(id),
-                  badgeLabel: s.kActiveSubplotBadge,
-                );
-              }),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildIsometricTile({
-    required String title,
-    required String crop,
-    required String soil,
-    required bool isSelected,
-    required VoidCallback onTap,
-    String? surface,
-    bool isWholeFarm = false,
-    required String badgeLabel,
-  }) {
-    final soilBaseColor = _getSoilColor(soil);
-    final cropIcon = _getCropIcon(crop);
+  // ===========================================================================
+  // LOT & SUBPLOT DROPDOWN FIELD
+  // ===========================================================================
+  Widget _buildLotSubplotDropdown(AppStrings s) {
+    final validValues = <String>{'farm'};
+    for (final lot in _lots) {
+      validValues.add('lot:${lot['id']}');
+    }
+    for (final sp in _subplots) {
+      validValues.add('sub:${sp['id']}');
+    }
+    final effectiveValue =
+        validValues.contains(_selectedContextValue) ? _selectedContextValue : 'farm';
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 145,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1B5E20) : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected
-                  ? const Color(0xFFFFD54F)
-                  : const Color(0xFFD7CCC8),
-              width: isSelected ? 2.0 : 1.0,
+    final items = <DropdownMenuItem<String>>[
+      // Option 0: Whole Farm General
+      DropdownMenuItem<String>(
+        value: 'farm',
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B5E20),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.nature_people_rounded,
+                color: Color(0xFFFFD54F),
+                size: 18,
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isSelected
-                    ? const Color(0xFFFFD54F).withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.04),
-                blurRadius: isSelected ? 8 : 3,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Isometric Ground Plate Layer
-              Container(
-                height: 38,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      soilBaseColor.withValues(alpha: 0.8),
-                      soilBaseColor.withValues(alpha: 0.3),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFFFFD54F)
-                        : Colors.grey.shade300,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    // Soil layer stripe
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 8,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF5D4037).withValues(alpha: 0.4),
-                          borderRadius: const BorderRadius.vertical(
-                              bottom: Radius.circular(7)),
-                        ),
-                      ),
-                    ),
-                    // Floating Center Crop Pin
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFFFD54F) : Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 3,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isWholeFarm ? Icons.nature_people_rounded : cropIcon,
-                          size: 15,
-                          color: isSelected
-                              ? const Color(0xFF1B5E20)
-                              : const Color(0xFF2E7D32),
-                        ),
-                      ),
-                    ),
-                    if (isSelected)
-                      Positioned(
-                        top: 2,
-                        right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFD54F),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            badgeLabel,
-                            style: const TextStyle(
-                              fontSize: 7,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B5E20),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : const Color(0xFF1E2D24),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Text(
-                      isWholeFarm ? '$crop • $soil' : '$crop ($soil)',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: isSelected
-                            ? const Color(0xFFC8E6C9)
-                            : Colors.grey.shade600,
-                      ),
+                  Text(
+                    s.kWholeFarmGeneral,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E2D24),
                     ),
                   ),
-                  if (surface != null)
-                    Text(
-                      '$surface ha',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? const Color(0xFFFFD54F)
-                            : const Color(0xFF2E7D32),
-                      ),
+                  Text(
+                    '$_selectedCrop • $_selectedSoil',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
                     ),
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ];
 
-  // ===========================================================================
-  // HORIZONTAL SUBPLOT CAROUSEL
-  // ===========================================================================
-  Widget _buildHorizontalSubplotCarousel(AppStrings s) {
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        children: [
-          _buildSubplotFilterCard(
-            title: s.kWholeFarmGeneral,
-            crop: _selectedCrop,
-            soil: _selectedSoil,
-            isSelected: _activeSubplotId == null,
-            onTap: () => _onSubplotSelected(null),
-            isWholeFarm: true,
-          ),
-          ..._subplots.map((sp) {
-            final id = sp['id'] as int;
-            final name = sp['name'] ?? '${s.kSubplot} $id';
-            final crop = sp['crop'] ?? 'Maíz';
-            final soil = sp['soil_type'] ?? 'Franco';
-            final isSelected = _activeSubplotId == id;
+    for (final lot in _lots) {
+      final lotId = lot['id'];
+      final lotName = lot['name']?.toString() ?? '${s.kLot} $lotId';
+      final lotSurface = lot['surface']?.toString() ?? '0';
+      final lotCrop = lot['crop']?.toString() ?? _selectedCrop;
+      final lotIcon = _getCropIcon(lotCrop);
 
-            return _buildSubplotFilterCard(
-              title: name,
-              crop: crop,
-              soil: soil,
-              isSelected: isSelected,
-              onTap: () => _onSubplotSelected(id),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubplotFilterCard({
-    required String title,
-    required String crop,
-    required String soil,
-    required bool isSelected,
-    required VoidCallback onTap,
-    bool isWholeFarm = false,
-  }) {
-    final cropIcon = _getCropIcon(crop);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFF1B5E20)
-                  : const Color(0xFFF1F6F2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? const Color(0xFF1B5E20)
-                    : const Color(0xFFE0E0E0),
-                width: isSelected ? 1.5 : 1.0,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF1B5E20).withValues(alpha: 0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      )
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isWholeFarm ? Icons.nature_people_rounded : cropIcon,
-                  size: 16,
-                  color: isSelected ? const Color(0xFFFFD54F) : const Color(0xFF2E7D32),
+      items.add(
+        DropdownMenuItem<String>(
+          value: 'lot:$lotId',
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F2F1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFB2DFDB)),
                 ),
-                const SizedBox(width: 8),
-                Column(
+                child: Icon(
+                  lotIcon,
+                  color: const Color(0xFF00695C),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 12,
+                      '${s.kLot}: $lotName',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : const Color(0xFF1E2D24),
+                        color: Color(0xFF1E2D24),
                       ),
                     ),
                     Text(
-                      '$crop • $soil',
+                      '$lotCrop • $lotSurface ha',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 9,
-                        color: isSelected
-                            ? const Color(0xFFC8E6C9)
-                            : Colors.grey.shade600,
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final spList = lot['subplots'] as List<dynamic>? ?? [];
+      for (final sp in spList) {
+        if (sp is! Map<String, dynamic>) continue;
+        final spId = sp['id'];
+        final spName = sp['name']?.toString() ?? '${s.kSubplot} $spId';
+        final spCrop = sp['crop']?.toString() ?? s.kDefaultCropName;
+        final spSoil = sp['soil_type']?.toString() ?? s.kDefaultSoilName;
+        final spSurface = sp['surface']?.toString() ?? '1.0';
+        final spIcon = _getCropIcon(spCrop);
+
+        items.add(
+          DropdownMenuItem<String>(
+            value: 'sub:$spId',
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFC8E6C9)),
+                  ),
+                  child: Icon(
+                    spIcon,
+                    color: const Color(0xFF2E7D32),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$lotName › $spName',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E2D24),
+                        ),
+                      ),
+                      Text(
+                        '$spCrop ($spSoil) • $spSurface ha',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
+          ),
+        );
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      child: Container(
+        height: 54,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F8F5),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFFA5D6A7),
+            width: 1.4,
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: effectiveValue,
+            isExpanded: true,
+            itemHeight: 52,
+            icon: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF1B5E20),
+                size: 20,
+              ),
+            ),
+            dropdownColor: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            items: items,
+            onChanged: _onContextDropdownChanged,
           ),
         ),
       ),
@@ -920,7 +746,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // Hero Moisture Gauge Card
         Container(
@@ -1152,7 +978,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // ===========================================================================
   Widget _buildRotationTab(RotationCompatibilityPrediction item, AppStrings s) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // Compatibility Hero Meter
         Container(
@@ -1229,21 +1055,29 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(
-                          '${s.kCropPrefix} $_selectedCrop',
-                          style: TextStyle(
-                              fontSize: 11, color: Colors.grey.shade700),
+                        Flexible(
+                          child: Text(
+                            '${s.kCropPrefix} $_selectedCrop',
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey.shade700),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         const Icon(Icons.arrow_forward_rounded,
                             size: 12, color: Color(0xFF2E7D32)),
                         const SizedBox(width: 4),
-                        Text(
-                          item.suggestedCrop,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B5E20),
+                        Flexible(
+                          child: Text(
+                            item.suggestedCrop,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1B5E20),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -1326,12 +1160,14 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     containerSize: 30,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    s.kAgroJustificationTitle,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Color(0xFF1E2D24),
+                  Expanded(
+                    child: Text(
+                      s.kAgroJustificationTitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1E2D24),
+                      ),
                     ),
                   ),
                 ],
@@ -1356,12 +1192,14 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     containerSize: 28,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    s.kAlternativeCropsTitle,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: Color(0xFF1E2D24),
+                  Expanded(
+                    child: Text(
+                      s.kAlternativeCropsTitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Color(0xFF1E2D24),
+                      ),
                     ),
                   ),
                 ],
@@ -1411,7 +1249,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // ===========================================================================
   Widget _buildCalendarTab(PlantingCalendarPrediction item, AppStrings s) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // Planting Window Hero Card
         Container(
@@ -1527,7 +1365,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // ===========================================================================
   Widget _buildHealthTab(CropHealthPrediction item, AppStrings s) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // Biomass Vigor Hero Card
         Container(
@@ -1627,7 +1465,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         : (isWarning ? Icons.report_problem_rounded : Icons.shield_rounded);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         Container(
           padding: const EdgeInsets.all(18),
@@ -1691,7 +1529,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
   // ===========================================================================
   Widget _buildNutritionTab(SoilNutritionPrediction item, AppStrings s) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // Fertilizer Sack Savings Hero Card
         Container(
@@ -1718,12 +1556,14 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     containerSize: 34,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    s.kMetricBiologicalNFixation,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFF1B5E20),
+                  Expanded(
+                    child: Text(
+                      s.kMetricBiologicalNFixation,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF1B5E20),
+                      ),
                     ),
                   ),
                 ],
@@ -1746,11 +1586,15 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                               const Icon(Icons.eco_rounded,
                                   size: 14, color: Color(0xFF1B5E20)),
                               const SizedBox(width: 4),
-                              Text(s.kBiologicalNFixationPerHa,
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey)),
+                              Flexible(
+                                child: Text(s.kBiologicalNFixationPerHa,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey)),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -1782,11 +1626,15 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                               const Icon(Icons.inventory_2_rounded,
                                   size: 14, color: Color(0xFF2E7D32)),
                               const SizedBox(width: 4),
-                              Text(s.kUreaSavingsShort,
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey)),
+                              Flexible(
+                                child: Text(s.kUreaSavingsShort,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey)),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -1924,143 +1772,164 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
-            return Container(
-              padding: const EdgeInsets.all(22),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildIconBadge(
-                        icon: Icons.tune_rounded,
-                        color: const Color(0xFF1B5E20),
-                        bgColor: const Color(0xFFE8F5E9),
-                        size: 20,
-                        containerSize: 36,
+                      Row(
+                        children: [
+                          _buildIconBadge(
+                            icon: Icons.tune_rounded,
+                            color: const Color(0xFF1B5E20),
+                            bgColor: const Color(0xFFE8F5E9),
+                            size: 20,
+                            containerSize: 36,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              s.kSimulatorTitle,
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(height: 14),
                       Text(
-                        s.kSimulatorTitle,
+                        s.kSimulatorCropQuestion,
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                            fontSize: 12, fontWeight: FontWeight.bold),
                       ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => Navigator.pop(ctx),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: tempCrop,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF1F6F2),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                        items: _cropOptions.map((c) {
+                          final cIcon = _getCropIcon(c);
+                          return DropdownMenuItem(
+                            value: c,
+                            child: Row(
+                              children: [
+                                Icon(cIcon,
+                                    size: 16, color: const Color(0xFF2E7D32)),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    c,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => tempCrop = val);
+                          }
+                        },
                       ),
+                      const SizedBox(height: 14),
+                      Text(
+                        s.kSimulatorSoilQuestion,
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: soilOptionsLocalized.firstWhere(
+                          (item) => item['key']!
+                              .toLowerCase()
+                              .contains(tempSoil.toLowerCase()),
+                          orElse: () => soilOptionsLocalized.first,
+                        )['key'],
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF1F6F2),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                        items: soilOptionsLocalized.map((item) {
+                          return DropdownMenuItem(
+                            value: item['key'],
+                            child: Text(
+                              item['desc']!,
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => tempSoil = val);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1B5E20),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon: const Icon(Icons.calculate_rounded),
+                          label: Text(
+                            s.kSimulatorApplyButton,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _selectedCrop = tempCrop;
+                              _selectedSoil = tempSoil;
+                            });
+                            Navigator.pop(ctx);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Text(
-                    s.kSimulatorCropQuestion,
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    initialValue: tempCrop,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFFF1F6F2),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                    ),
-                    items: _cropOptions.map((c) {
-                      final cIcon = _getCropIcon(c);
-                      return DropdownMenuItem(
-                        value: c,
-                        child: Row(
-                          children: [
-                            Icon(cIcon, size: 16, color: const Color(0xFF2E7D32)),
-                            const SizedBox(width: 8),
-                            Text(c),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setModalState(() => tempCrop = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    s.kSimulatorSoilQuestion,
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    initialValue: soilOptionsLocalized.firstWhere(
-                      (item) => item['key']!
-                          .toLowerCase()
-                          .contains(tempSoil.toLowerCase()),
-                      orElse: () => soilOptionsLocalized.first,
-                    )['key'],
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFFF1F6F2),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                    ),
-                    items: soilOptionsLocalized.map((item) {
-                      return DropdownMenuItem(
-                        value: item['key'],
-                        child: Text(
-                          item['desc']!,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setModalState(() => tempSoil = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B5E20),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: const Icon(Icons.calculate_rounded),
-                      label: Text(
-                        s.kSimulatorApplyButton,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _selectedCrop = tempCrop;
-                          _selectedSoil = tempSoil;
-                        });
-                        Navigator.pop(ctx);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
+                ),
               ),
             );
           },
@@ -2193,10 +2062,14 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+    final availableHeight =
+        (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
+            .clamp(280.0, mediaQuery.size.height * 0.90);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.90,
+      height: availableHeight,
       margin: EdgeInsets.only(bottom: bottomInset),
       decoration: const BoxDecoration(
         color: Colors.white,

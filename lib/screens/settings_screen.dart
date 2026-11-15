@@ -325,12 +325,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               size: 26,
             ),
             const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? const Color(0xFF0F5A37) : textColor,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? const Color(0xFF0F5A37) : textColor,
+                ),
               ),
             ),
           ],
@@ -368,20 +373,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.square_foot_rounded, color: Color(0xFF0F5A37), size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            s.kSurfaceUnitsTitle,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(Icons.square_foot_rounded, color: Color(0xFF0F5A37), size: 20),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                s.kSurfaceUnitsTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       // Current unit badge as shown on new_edit_plot.dart
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -460,12 +472,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const Icon(Icons.thermostat_rounded, color: Color(0xFF0F5A37), size: 20),
               const SizedBox(width: 8),
-              Text(
-                s.kTemperatureUnitsTitle,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
+              Expanded(
+                child: Text(
+                  s.kTemperatureUnitsTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
               ),
             ],
@@ -531,6 +547,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Center(
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
