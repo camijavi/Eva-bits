@@ -141,12 +141,12 @@ void main() {
     expect(find.byIcon(Icons.add_circle_rounded), findsOneWidget);
     expect(find.text(s.kAddLot), findsOneWidget);
 
-    // 4. Priority filter chips (matches screenshot!)
+    // 4. Priority filter chips
     expect(find.text(s.kFilterPriorityTitle), findsOneWidget);
     expect(find.text(s.kFilterAll), findsOneWidget);
     expect(find.text(s.kFilterLargest), findsOneWidget);
     expect(find.text(s.kFilterSmallest), findsOneWidget);
-    expect(find.text(s.kFilterWithSubplots), findsOneWidget);
+    expect(find.text(s.kFilterWithSubplots), findsNothing);
 
     // 5. Registered lots section & cards
     expect(find.text(s.kRegisteredLotsTitle), findsOneWidget);
@@ -157,11 +157,12 @@ void main() {
     // 6. Pen icon for editing on lot cards
     expect(find.byIcon(Icons.edit_outlined), findsNWidgets(3));
 
-    // 7. Plant / Sprout circular icon badges on cards (as in screenshot)
+    // 7. Plant / Sprout circular icon badges on cards
     expect(find.byIcon(Icons.eco_rounded), findsNWidgets(3));
 
-    // 8. Bottom action button "+ Agregar nuevo lote"
-    expect(find.text(s.kAddNewLot), findsOneWidget);
+    // 8. Only one add button is kept (top button kAddLot), bottom button kAddNewLot is removed
+    expect(find.text(s.kAddLot), findsOneWidget);
+    expect(find.text(s.kAddNewLot), findsNothing);
   });
 
   testWidgets('LotsScreen search functionality filters lot cards',
@@ -221,13 +222,21 @@ void main() {
 
     final s = AppLanguage.strings;
 
-    // Tap "Con subparcelas" chip (Lot 3 has 0 subplots)
-    await tester.tap(find.text(s.kFilterWithSubplots));
+    // Tap "Mayor superficie" chip
+    await tester.tap(find.text(s.kFilterLargest));
     await tester.pumpAndSettle();
 
     expect(find.text('Lote 1 - Norte (Maíz y Frijol)'), findsOneWidget);
     expect(find.text('Lote 2 - Sur (Frijolar)'), findsOneWidget);
-    expect(find.text('Lote 3 - Este (Rotación Crotalaria)'), findsNothing);
+    expect(find.text('Lote 3 - Este (Rotación Crotalaria)'), findsOneWidget);
+
+    // Tap "Menor superficie" chip
+    await tester.tap(find.text(s.kFilterSmallest));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lote 1 - Norte (Maíz y Frijol)'), findsOneWidget);
+    expect(find.text('Lote 2 - Sur (Frijolar)'), findsOneWidget);
+    expect(find.text('Lote 3 - Este (Rotación Crotalaria)'), findsOneWidget);
 
     // Tap "Todos" chip again
     await tester.tap(find.text(s.kFilterAll));

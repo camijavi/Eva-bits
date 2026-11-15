@@ -5,7 +5,6 @@ import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/new_edit_plot.dart';
 import '../services/app_settings.dart';
-import 'dashboard_screen.dart';
 
 enum LotFilterPriority {
   all,
@@ -230,7 +229,6 @@ class _LotsScreenState extends State<LotsScreen> {
                     else
                       ...filteredLots.map((lot) => _buildLotCard(s, lot)),
                     const SizedBox(height: 20),
-
                   ],
                 ),
               ),
@@ -243,61 +241,42 @@ class _LotsScreenState extends State<LotsScreen> {
   }
 
   Widget _buildTopBar(BuildContext context, AppStrings s) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        InkWell(
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              Navigator.of(context).pushReplacement(
-                createBottomNavPageRoute(
-                  const DashboardScreen(),
-                  fromLeft: true,
+          onTap: _openAddLotModal,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF5EC),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFC8E6C9)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.add_circle_rounded,
+                  color: Color(0xFF0F5A37),
+                  size: 22,
                 ),
-              );
-            }
-          },
-          
-        ),
-        // Plus icon button to add new lots
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: _openAddLotModal,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF5EC),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFC8E6C9)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.add_circle_rounded,
+                const SizedBox(width: 6),
+                Text(
+                  s.kAddLot,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                     color: Color(0xFF0F5A37),
-                    size: 22,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    s.kAddLot,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F5A37),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -420,14 +399,6 @@ class _LotsScreenState extends State<LotsScreen> {
                 onTap: () =>
                     setState(() =>
                 _selectedPriority = LotFilterPriority.smallestSurface),
-              ),
-              const SizedBox(width: 8),
-              _buildFilterChip(
-                label: s.kFilterWithSubplots,
-                isSelected: _selectedPriority == LotFilterPriority.withSubplots,
-                onTap: () =>
-                    setState(() =>
-                _selectedPriority = LotFilterPriority.withSubplots),
               ),
             ],
           ),
