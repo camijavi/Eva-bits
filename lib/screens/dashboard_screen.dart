@@ -63,10 +63,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               await DatabaseManager().getAllLotsWithSubplots(farmId: farmId);
           final List<Map<String, dynamic>> flatSubplots = [];
           for (final lot in lotsWithSubplots) {
+            final lotCrop = lot['crop']?.toString();
             final spList = lot['subplots'] as List<dynamic>? ?? [];
+            if (spList.isEmpty && lotCrop != null && lotCrop.isNotEmpty) {
+              flatSubplots.add({
+                'name': lot['name'] ?? 'Lote',
+                'crop': lotCrop,
+                'soil_type': 'Franco',
+              });
+            }
             for (final sp in spList) {
               if (sp is Map<String, dynamic>) {
-                flatSubplots.add(sp);
+                final copy = Map<String, dynamic>.from(sp);
+                if ((copy['crop'] == null ||
+                        copy['crop'].toString().trim().isEmpty) &&
+                    lotCrop != null &&
+                    lotCrop.isNotEmpty) {
+                  copy['crop'] = lotCrop;
+                }
+                flatSubplots.add(copy);
               }
             }
           }
@@ -214,10 +229,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: s.kDashboardAction1,
                           chevronColor: const Color(0xFF4A7C59),
                           onTap: () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) =>
-                                    const PredictionsScreen(initialTab: 1),
+                            Navigator.of(context).pushReplacement(
+                              createBottomNavPageRoute(
+                                const PredictionsScreen(initialTab: 1),
                               ),
                             );
                           },
@@ -231,10 +245,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: s.kDashboardAction2,
                           chevronColor: const Color(0xFF5B8FB9),
                           onTap: () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) =>
-                                    const PredictionsScreen(initialTab: 0),
+                            Navigator.of(context).pushReplacement(
+                              createBottomNavPageRoute(
+                                const PredictionsScreen(initialTab: 0),
                               ),
                             );
                           },
@@ -248,10 +261,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: s.kDashboardAction3,
                           chevronColor: const Color(0xFFBCA05A),
                           onTap: () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) =>
-                                    const PredictionsScreen(initialTab: 5),
+                            Navigator.of(context).pushReplacement(
+                              createBottomNavPageRoute(
+                                const PredictionsScreen(initialTab: 5),
                               ),
                             );
                           },

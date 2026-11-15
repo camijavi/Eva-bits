@@ -1399,13 +1399,35 @@ class EveKnowledgeBase {
     final List<String> sections = [];
 
     if (asksPests) {
-      final pestLines = pests
-          .map((p) =>
-              '• ${p.pestName}:\n  Qué le hace al cultivo: ${p.symptomsAndImpact}\n  Cómo cuidarlo: ${p.preventionAction}')
-          .join('\n\n');
-      sections.add(es
-          ? 'Cuidado contra plagas en $targetCrop:\n\n$pestLines'
-          : 'Pest care for $targetCrop:\n\n$pestLines');
+      if (!userNamedSpecificCrop && registeredCrops.length > 1) {
+        final multiBlocks = <String>[];
+        for (final c in registeredCrops) {
+          final cropPests = getPestWarningsForCrop(
+            crop: c,
+            tempC: tempC,
+            rain7dMm: rainMm,
+            soilMoisture: soilMoisture,
+            soilType: targetSoil,
+            isSpanish: es,
+          );
+          final lines = cropPests
+              .map((p) =>
+                  '• ${p.pestName} ($c):\n  Qué le hace al cultivo: ${p.symptomsAndImpact}\n  Cómo cuidarlo: ${p.preventionAction}')
+              .join('\n\n');
+          multiBlocks.add(es
+              ? 'Plagas a vigilar en tu lote de $c:\n$lines'
+              : 'Pests to watch in your $c plot:\n$lines');
+        }
+        sections.add(multiBlocks.join('\n\n'));
+      } else {
+        final pestLines = pests
+            .map((p) =>
+                '• ${p.pestName}:\n  Qué le hace al cultivo: ${p.symptomsAndImpact}\n  Cómo cuidarlo: ${p.preventionAction}')
+            .join('\n\n');
+        sections.add(es
+            ? 'Cuidado contra plagas en $targetCrop:\n\n$pestLines'
+            : 'Pest care for $targetCrop:\n\n$pestLines');
+      }
     }
 
     if (asksIrrigation) {
@@ -1504,10 +1526,34 @@ class EveKnowledgeBase {
     // If the user mentioned a specific crop (e.g. "¿Y qué tal el café?") without a narrower keyword, give a complete farmer summary for that crop!
     final mainPest = pests.first;
     final mainPhenomenon = phenomena.first;
+    final bool hasMultipleFarmCrops =
+        !userNamedSpecificCrop && registeredCrops.length > 1;
+    final cropsHeaderLabel = hasMultipleFarmCrops
+        ? registeredCrops.join(', ')
+        : targetCrop;
+
+    String multiPestOverviewSection = '';
+    if (hasMultipleFarmCrops) {
+      final items = <String>[];
+      for (final c in registeredCrops) {
+        final cp = getPestWarningsForCrop(
+          crop: c,
+          tempC: tempC,
+          rain7dMm: rainMm,
+          soilMoisture: soilMoisture,
+          soilType: targetSoil,
+          isSpanish: es,
+        ).first;
+        items.add(es
+            ? '• En $c (${cp.pestName}): ${cp.symptomsAndImpact} Prevención: ${cp.preventionAction}'
+            : '• In $c (${cp.pestName}): ${cp.symptomsAndImpact} Prevention: ${cp.preventionAction}');
+      }
+      multiPestOverviewSection = items.join('\n');
+    }
 
     if (!es) {
       return '''
-Hello! Here is the practical field guide for your $targetCrop crop on $targetSoil soil:
+Hello! Here is the practical field guide for your farm ($cropsHeaderLabel on $targetSoil soil):
 
 1. Water & Soil Care:
 • ${report.irrigation.actionTitle} (Soil moisture: ${report.irrigation.soilMoisturePct}%, apply ${report.irrigation.recommendedWaterMm} L/m²).
@@ -1517,9 +1563,8 @@ Hello! Here is the practical field guide for your $targetCrop crop on $targetSoi
 2. Weather Watch:
 • ${mainPhenomenon.phenomenonName}: ${mainPhenomenon.preventionMeasure}
 
-3. Main Pest to Watch in $targetCrop:
-• ${mainPest.pestName}: ${mainPest.symptomsAndImpact}
-• How to prevent it: ${mainPest.preventionAction}
+3. Main Pests to Watch ($cropsHeaderLabel):
+${hasMultipleFarmCrops ? multiPestOverviewSection : '• ${mainPest.pestName}: ${mainPest.symptomsAndImpact}\n• How to prevent it: ${mainPest.preventionAction}'}
 
 4. Next 3 Weeks & Rotation (${projection3w.fullDateRange}):
 • ${projection3w.phases.first.title}: ${projection3w.phases.first.recommendedAction}
@@ -1528,7 +1573,7 @@ Hello! Here is the practical field guide for your $targetCrop crop on $targetSoi
     }
 
     return '''
-Hola, aquí tienes la guía práctica de campo para tu cultivo de $targetCrop en suelo $targetSoil:
+Hola, aquí tienes la guía práctica de campo para tu parcela ($cropsHeaderLabel en suelo $targetSoil):
 
 1. Agua y Cuidado de tu Tierra:
 • ${report.irrigation.actionTitle} (Humedad actual: ${report.irrigation.soilMoisturePct}%, aplicar ${report.irrigation.recommendedWaterMm} litros por m²).
@@ -1538,9 +1583,8 @@ Hola, aquí tienes la guía práctica de campo para tu cultivo de $targetCrop en
 2. Clima en tu Zona:
 • ${mainPhenomenon.phenomenonName}: ${mainPhenomenon.preventionMeasure}
 
-3. Plaga Principal a Vigilar en $targetCrop:
-• ${mainPest.pestName}: ${mainPest.symptomsAndImpact}
-• Cómo prevenirla: ${mainPest.preventionAction}
+3. Plagas a Vigilar ($cropsHeaderLabel):
+${hasMultipleFarmCrops ? multiPestOverviewSection : '• ${mainPest.pestName}: ${mainPest.symptomsAndImpact}\n• Cómo prevenirla: ${mainPest.preventionAction}'}
 
 4. Plan a 3 Semanas y Rotación (${projection3w.fullDateRange}):
 • ${projection3w.phases.first.title}: ${projection3w.phases.first.recommendedAction}

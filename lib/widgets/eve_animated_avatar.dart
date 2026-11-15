@@ -6,6 +6,7 @@ import '../languages/app_strings.dart';
 import '../services/agro_prediction_engine.dart';
 import '../services/app_settings.dart';
 import '../services/azure_ai_service.dart';
+import '../services/eve_knowledge_base.dart';
 import '../services/nasa_power_service.dart';
 import '../services/subplot_graph_service.dart';
 
@@ -28,6 +29,7 @@ class EveAnimatedAvatar extends StatefulWidget {
   final VoidCallback? onTap;
   final bool respectVisibilitySetting;
   final bool isWalking;
+  final bool isSpeaking;
 
   const EveAnimatedAvatar({
     super.key,
@@ -36,13 +38,41 @@ class EveAnimatedAvatar extends StatefulWidget {
     this.onTap,
     this.respectVisibilitySetting = false,
     this.isWalking = false,
+    this.isSpeaking = false,
   });
+
+  /// Returns a farmer-friendly reaction label for the current [EveEmote].
+  static String getEmoteReactionLabel(EveEmote emote, {bool isSpanish = true}) {
+    switch (emote) {
+      case EveEmote.alert:
+        return isSpanish ? 'Alerta de campo' : 'Field alert';
+      case EveEmote.sad:
+        return isSpanish ? 'Cuidado urgente' : 'Urgent care';
+      case EveEmote.thumbsDown:
+        return isSpanish ? 'Evitar en tu lote' : 'Avoid in your plot';
+      case EveEmote.jumping:
+        return isSpanish ? 'Gran beneficio' : 'Great benefit';
+      case EveEmote.thumbsUp:
+        return isSpanish ? 'Recomendado' : 'Recommended';
+      case EveEmote.pointing:
+        return isSpanish ? 'Paso a paso' : 'Step by step';
+      case EveEmote.surprised:
+        return isSpanish ? 'Cambio detectado' : 'Change detected';
+      case EveEmote.greeting:
+        return isSpanish ? 'Saludando' : 'Greeting';
+      case EveEmote.happy:
+        return isSpanish ? 'Buen estado' : 'Good condition';
+      case EveEmote.calm:
+        return isSpanish ? 'Explicando' : 'Explaining';
+    }
+  }
 
   /// Evaluates the message content given to the farmer and selects the most
   /// appropriate [EveEmote] so Eve's body language matches what she is saying.
   static EveEmote evaluateEmoteFromContent(
     String content, {
     bool isLoading = false,
+    bool isExplainingInStage = false,
   }) {
     if (isLoading) {
       return EveEmote.surprised;
@@ -66,13 +96,15 @@ class EveAnimatedAvatar extends StatefulWidget {
     }
 
     // 1. Greeting / Welcome
-    addScore(EveEmote.greeting, 5, [
+    addScore(EveEmote.greeting, 6, [
       'soy eve',
+      'tu compañera de campo',
       'tu ayudante de campo',
       'tu guía agrícola',
       'puedes preguntarme con confianza',
       'qué te gustaría revisar hoy',
       'i am eve',
+      'your field partner',
       'your field helper',
       'what would you like to check',
     ]);
@@ -91,18 +123,23 @@ class EveAnimatedAvatar extends StatefulWidget {
       scores[EveEmote.greeting] = (scores[EveEmote.greeting] ?? 0) + 5;
     }
 
-    // 2. Alert (!) -> Pests, diseases, fungi, insects, or severe weather warnings
-    addScore(EveEmote.alert, 4, [
+    // 2. Alert (!) -> Pests, diseases, fungi, insects, damage symptoms, or severe weather warnings
+    addScore(EveEmote.alert, 5, [
       'cuidado contra plagas',
+      'plagas a vigilar',
       'plagas que debes vigilar',
       'vigila principalmente estas plagas',
+      'qué le hace al cultivo',
       'alerta',
       'urgente',
       'riesgo alto',
       'peligro',
       'gusano cogollero',
+      'barrenador del tallo',
+      'gusano de la mazorca',
       'broca del café',
       'roya del café',
+      'araña roja',
       'mosca blanca',
       'picudo',
       'gorgojo',
@@ -117,9 +154,10 @@ class EveAnimatedAvatar extends StatefulWidget {
       'lluvias muy fuertes',
       'golpe de calor',
       'pest alert',
+      'pest care',
       'main pests to watch',
     ]);
-    addScore(EveEmote.alert, 2, [
+    addScore(EveEmote.alert, 3, [
       'plaga',
       'gusano',
       'larva',
@@ -132,6 +170,14 @@ class EveAnimatedAvatar extends StatefulWidget {
       'enfermedad',
       'hongo',
       'mildiú',
+      'túneles por dentro',
+      'dañando los granos',
+      'mastica las hojas',
+      'chupa la savia',
+      'perfora',
+      'manchas',
+      'cochinilla',
+      'nematodo',
       'pest',
       'disease',
       'fungus',
@@ -150,6 +196,7 @@ class EveAnimatedAvatar extends StatefulWidget {
       'asfixia de la raíz',
       'asfixia la raíz',
       'pudrición de raíz',
+      'pudre la raíz',
       'no pude conectarme',
       'lo siento',
       'severe drought',
@@ -163,6 +210,8 @@ class EveAnimatedAvatar extends StatefulWidget {
       'marchitez',
       'marchita',
       'pierde agua rápido',
+      'se caiga antes de tiempo',
+      'debilitando la planta',
       'pérdida',
       'daño severo',
       'error',
@@ -176,10 +225,12 @@ class EveAnimatedAvatar extends StatefulWidget {
       'se lava el abono',
       'sin que la planta lo aproveche',
       'no conviene sembrar',
+      'no siembres maíz tras maíz',
       'baja compatibilidad',
       'ventana cerrada',
       'no riegues',
       'no apliques',
+      'evita mojar las hojas',
       'avoid heavy flood irrigation',
       'washes away fertilizer',
       'low compatibility',
@@ -196,16 +247,20 @@ class EveAnimatedAvatar extends StatefulWidget {
     ]);
 
     // 5. Jumping -> Big urea/fertilizer savings, free nitrogen, exciting benefits
-    addScore(EveEmote.jumping, 5, [
+    addScore(EveEmote.jumping, 6, [
       'ahorro estimado de',
+      'ahorro para tu bolsillo',
+      'ahorras cerca de',
+      'ahorra ~',
       'ahorro de fertilizante',
-      'nitrógeno por hectárea de forma natural',
+      'nitrógeno por hectárea en la tierra',
       'nitrógeno gratis',
-      'abono gratis',
+      'abono natural',
+      'abonar la tierra gratis',
       'gran beneficio',
       'excelente noticia',
       'estimated savings of',
-      'fertilizer and urea savings',
+      'pocket savings',
       'free nitrogen',
     ]);
     addScore(EveEmote.jumping, 3, [
@@ -214,28 +269,33 @@ class EveAnimatedAvatar extends StatefulWidget {
       'gana cerca de',
       'atención',
       'muy importante',
+      'fijan +',
       'aporta +',
     ]);
 
-    // 6. Thumbs Up -> High compatibility, optimal irrigation system, optimal window/moisture
+    // 6. Thumbs Up -> High compatibility, optimal irrigation system, good prevention steps
     addScore(EveEmote.thumbsUp, 4, [
       'alta compatibilidad',
+      'compatibilidad —',
       'compatibilidad del 9',
       'compatibilidad: 9',
+      'mejor sistema para tu terreno',
+      'mejor forma de regar',
       'sistema ideal',
       'sistema más conveniente',
       'humedad óptima',
       'ventana óptima',
+      'buenas condiciones para sembrar',
       'te conviene sembrar',
-      'excelente opción',
+      'próximo cultivo ideal',
       'high compatibility',
+      'best system for your land',
       'ideal system',
-      'best system for your',
       'optimal window',
     ]);
     addScore(EveEmote.thumbsUp, 2, [
       'eficiencia 9',
-      'eficiencia: 9',
+      'aprovecha el 9',
       'recomendado',
       'recomendada',
       'óptimo',
@@ -247,45 +307,57 @@ class EveAnimatedAvatar extends StatefulWidget {
 
     // 7. Surprised -> Weekly changes, sudden shifts, accumulated heat/moisture changes
     addScore(EveEmote.surprised, 5, [
+      'lo que cambió en los últimos 7 días',
       'cambios de la última semana',
+      'en estos últimos 7 días',
       'en los últimos 7 días',
+      'what changed over the last 7 days',
       'changes over the past week',
-      'over the last 7 days',
     ]);
     addScore(EveEmote.surprised, 3, [
       'pasó de ',
       'acumularon',
+      'aceleró el crecimiento',
       'cambio brusco',
       'repentino',
       'variación',
     ]);
 
-    // 8. Pointing -> Step-by-step plans, 3-week projections, calendar dates, soil explanation
+    // 8. Pointing -> Step-by-step plans, 3-week projections, how to care/prevent, calendar, soil guide
     addScore(EveEmote.pointing, 4, [
       'plan de trabajo para las próximas 3 semanas',
+      'plan a 3 semanas',
       'próximas 3 semanas',
       'semana 1:',
       'semana 2:',
       'semana 3:',
-      'calendario y fechas de siembra',
+      'cómo cuidarlo:',
+      'cómo prevenirla:',
+      'qué hacer en el lote:',
+      'qué hacer:',
+      'calendario y momento de siembra',
       'fechas recomendadas',
+      'cómo trabaja tu tipo de tierra',
       'cómo se comporta tu suelo',
-      '3-week work plan',
+      'work plan for the next 3 weeks',
       'next 3 weeks',
       'week 1:',
       'week 2:',
       'week 3:',
-      'planting calendar',
-      'how your',
+      'how to prevent it:',
     ]);
     addScore(EveEmote.pointing, 2, [
       'meta:',
       'acción:',
       'lámina recomendada',
-      '1. agua y riego',
-      '2. clima en tu zona',
-      '3. cuidado contra plagas',
-      '4. próximas 3 semanas',
+      '1. agua y',
+      '2. clima en',
+      '3. plaga',
+      '4. plan a',
+      'pica e incorpora',
+      'coloca trampas',
+      'revisa los cogollos',
+      'deja buena distancia',
       'goal:',
       'action:',
     ]);
@@ -297,9 +369,11 @@ class EveAnimatedAvatar extends StatefulWidget {
       'crezca sano',
       'condiciones favorables',
       'tierra equilibrada',
+      'guía práctica de campo',
       'stable weather for your crop',
       'grow healthy',
       'favorable conditions',
+      'practical field guide',
     ]);
     addScore(EveEmote.happy, 2, [
       'resumen práctico',
@@ -309,7 +383,7 @@ class EveAnimatedAvatar extends StatefulWidget {
       'practical summary',
     ]);
 
-    EveEmote bestEmote = EveEmote.calm;
+    EveEmote bestEmote = isExplainingInStage ? EveEmote.pointing : EveEmote.calm;
     int highestScore = 0;
 
     // Priority order in case of ties
@@ -334,7 +408,9 @@ class EveAnimatedAvatar extends StatefulWidget {
       }
     }
 
-    return highestScore > 0 ? bestEmote : EveEmote.calm;
+    return highestScore > 0
+        ? bestEmote
+        : (isExplainingInStage ? EveEmote.pointing : EveEmote.calm);
   }
 
   @override
@@ -435,6 +511,7 @@ class _EveAnimatedAvatarState extends State<EveAnimatedAvatar>
                     progress: t,
                     cycleCount: _cycleCount,
                     isWalking: widget.isWalking,
+                    isSpeaking: widget.isSpeaking,
                   ),
                 ),
                 if (badgeIcon != null)
@@ -483,12 +560,14 @@ class _EveCowPainter extends CustomPainter {
   final double progress;
   final int cycleCount;
   final bool isWalking;
+  final bool isSpeaking;
 
   _EveCowPainter({
     required this.emote,
     required this.progress,
     this.cycleCount = 0,
     this.isWalking = false,
+    this.isSpeaking = false,
   });
 
   @override
@@ -500,6 +579,7 @@ class _EveCowPainter extends CustomPainter {
     final sinVal = math.sin(progress * 2 * math.pi);
     final cosVal = math.cos(progress * 2 * math.pi);
     final fastSin = math.sin(progress * 4 * math.pi);
+    final talkPulse = isSpeaking ? math.sin(progress * 8 * math.pi).abs() : 0.0;
     // Smooth 0.0 -> 1.0 (jump up + open arms) -> 0.0 (land + close arms)
     final jumpPhase = sinVal.abs();
     // For EveEmote.calm: calm 75% of the time, waves hello every 4th cycle
@@ -519,53 +599,54 @@ class _EveCowPainter extends CustomPainter {
     } else {
       switch (emote) {
         case EveEmote.calm:
-          bounceY = sinVal * -h * 0.012;
-          headTilt = isCalmWavingNow ? (sinVal * 0.055) : (sinVal * 0.018);
-          earAngleOffset = isCalmWavingNow ? (sinVal * 0.07) : (sinVal * 0.025);
+          bounceY = sinVal * -h * 0.015;
+          headTilt = isCalmWavingNow ? (sinVal * 0.055) : (sinVal * 0.025);
+          earAngleOffset = isCalmWavingNow ? (sinVal * 0.07) : (sinVal * 0.03);
           break;
         case EveEmote.greeting:
-          bounceY = sinVal.abs() * -h * 0.025;
-          headTilt = sinVal * 0.06;
-          earAngleOffset = sinVal * 0.08;
+          bounceY = sinVal.abs() * -h * 0.035;
+          headTilt = sinVal * 0.075;
+          earAngleOffset = sinVal * 0.10;
           break;
         case EveEmote.alert:
-          bounceY = fastSin.abs() * -h * 0.03;
-          headTilt = fastSin * 0.03;
-          earAngleOffset = 0.18; // Perked up
+          bounceY = fastSin.abs() * -h * 0.04;
+          headTilt = fastSin * 0.045;
+          earAngleOffset = 0.24; // Perked up high in alarm
           break;
         case EveEmote.sad:
-          bounceY = h * 0.025 + (sinVal * h * 0.008);
-          headTilt = -0.08;
-          earAngleOffset = -0.42; // Drooping ears
+          bounceY = h * 0.03 + (sinVal * h * 0.01);
+          headTilt = -0.11;
+          earAngleOffset = -0.48; // Deeply drooping ears
           break;
         case EveEmote.surprised:
-          bounceY = -sinVal.abs() * h * 0.055;
-          earAngleOffset = 0.22;
+          bounceY = -sinVal.abs() * h * 0.06;
+          headTilt = sinVal * 0.03;
+          earAngleOffset = 0.26;
           break;
         case EveEmote.happy:
-          bounceY = -sinVal.abs() * h * 0.045;
-          headTilt = sinVal * 0.09;
-          earAngleOffset = sinVal.abs() * 0.15;
+          bounceY = -sinVal.abs() * h * 0.05;
+          headTilt = sinVal * 0.10;
+          earAngleOffset = sinVal.abs() * 0.18;
           break;
         case EveEmote.thumbsUp:
-          bounceY = -sinVal.abs() * h * 0.03;
-          headTilt = 0.07;
-          earAngleOffset = 0.12;
+          bounceY = -sinVal.abs() * h * 0.038;
+          headTilt = 0.08 + (sinVal * 0.03);
+          earAngleOffset = 0.15;
           break;
         case EveEmote.thumbsDown:
-          bounceY = h * 0.01;
-          headTilt = sinVal * 0.11; // Shaking head
-          earAngleOffset = -0.20;
+          bounceY = h * 0.012;
+          headTilt = sinVal * 0.14; // Clear side-to-side head shake
+          earAngleOffset = -0.25;
           break;
         case EveEmote.pointing:
-          bounceY = sinVal * h * 0.015;
-          headTilt = 0.05;
-          earAngleOffset = 0.10;
+          bounceY = sinVal * h * 0.022;
+          headTilt = 0.06 + (sinVal * 0.025);
+          earAngleOffset = 0.12;
           break;
         case EveEmote.jumping:
-          bounceY = -jumpPhase * h * 0.11;
-          headTilt = sinVal * 0.04;
-          earAngleOffset = jumpPhase * 0.28;
+          bounceY = -jumpPhase * h * 0.115;
+          headTilt = sinVal * 0.05;
+          earAngleOffset = jumpPhase * 0.30;
           break;
       }
     }
@@ -593,7 +674,6 @@ class _EveCowPainter extends CustomPainter {
     // 1. LEGS & RECTANGULAR HOOVES (Matches designer's drawing)
     // -------------------------------------------------------------------------
     if (emote == EveEmote.jumping) {
-      // Dynamic ground shadow that shrinks as Eve jumps up and expands on landing
       final shadowPaint = Paint()
         ..color = Colors.black.withValues(alpha: 0.14 * (1.0 - jumpPhase * 0.45))
         ..style = PaintingStyle.fill;
@@ -651,34 +731,42 @@ class _EveCowPainter extends CustomPainter {
     Offset rightHand;
     Offset rightControl;
 
-    // Left arm pose
+    // Left arm pose (Expressive for every emotion)
     if (isWalking) {
       leftHand = Offset(
           cx - w * 0.34 - sinVal * w * 0.04, h * 0.56 + bounceY + sinVal * 4);
       leftControl = Offset(cx - w * 0.33, h * 0.46 + bounceY);
     } else if (emote == EveEmote.jumping) {
-      // Opens wide & upward while jumping up (jumpPhase -> 1), closes on landing (jumpPhase -> 0)
       final closedLeftHand = Offset(cx - w * 0.27, h * 0.61);
       final openLeftHand = Offset(cx - w * 0.45, h * 0.20 + bounceY);
       final closedLeftCtrl = Offset(cx - w * 0.28, h * 0.51);
       final openLeftCtrl = Offset(cx - w * 0.36, h * 0.31 + bounceY);
       leftHand = Offset.lerp(closedLeftHand, openLeftHand, jumpPhase)!;
       leftControl = Offset.lerp(closedLeftCtrl, openLeftCtrl, jumpPhase)!;
+    } else if (emote == EveEmote.alert) {
+      // Left arm raised up waving in alarm
+      leftHand = Offset(
+          cx - w * 0.39 - fastSin * w * 0.03, h * 0.28 + bounceY - fastSin * 3);
+      leftControl = Offset(cx - w * 0.34, h * 0.37 + bounceY);
     } else if (emote == EveEmote.surprised) {
-      leftHand = Offset(cx - w * 0.40, h * 0.34 + bounceY - sinVal.abs() * 4);
-      leftControl = Offset(cx - w * 0.34, h * 0.36 + bounceY);
+      leftHand = Offset(cx - w * 0.41, h * 0.30 + bounceY - sinVal.abs() * 4);
+      leftControl = Offset(cx - w * 0.35, h * 0.35 + bounceY);
     } else if (emote == EveEmote.happy) {
-      leftHand = Offset(cx - w * 0.36, h * 0.48 + bounceY + sinVal * 4);
-      leftControl = Offset(cx - w * 0.34, h * 0.42 + bounceY);
+      leftHand = Offset(cx - w * 0.40, h * 0.33 + bounceY + sinVal * 5);
+      leftControl = Offset(cx - w * 0.35, h * 0.39 + bounceY);
+    } else if (emote == EveEmote.pointing) {
+      // Left hand gesturing on hip/side while right hand points
+      leftHand = Offset(cx - w * 0.32, h * 0.52 + bounceY + sinVal * 2);
+      leftControl = Offset(cx - w * 0.36, h * 0.44 + bounceY);
     } else if (emote == EveEmote.sad) {
-      leftHand = Offset(cx - w * 0.29, h * 0.65 + bounceY);
-      leftControl = Offset(cx - w * 0.30, h * 0.54 + bounceY);
+      leftHand = Offset(cx - w * 0.27, h * 0.67 + bounceY);
+      leftControl = Offset(cx - w * 0.29, h * 0.55 + bounceY);
     } else {
       leftHand = Offset(cx - w * 0.34, h * 0.60 + bounceY + cosVal * 1.5);
       leftControl = Offset(cx - w * 0.33, h * 0.46 + bounceY);
     }
 
-    // Right arm pose (Main expressive arm for calm, greeting, pointing, thumbsUp/Down, jumping)
+    // Right arm pose (Main expressive arm)
     if (isWalking) {
       rightHand = Offset(
           cx + w * 0.34 + sinVal * w * 0.04, h * 0.56 + bounceY - sinVal * 4);
@@ -686,7 +774,6 @@ class _EveCowPainter extends CustomPainter {
     } else {
       switch (emote) {
         case EveEmote.calm:
-          // Calm resting arm at side, occasionally lifting smoothly to wave hello
           final restingRightHand =
               Offset(cx + w * 0.34, h * 0.60 + bounceY - cosVal * 1.5);
           final restingRightCtrl = Offset(cx + w * 0.33, h * 0.46 + bounceY);
@@ -708,39 +795,40 @@ class _EveCowPainter extends CustomPainter {
           rightControl = Offset.lerp(closedRightCtrl, openRightCtrl, jumpPhase)!;
           break;
         case EveEmote.greeting:
-          final waveX = sinVal * w * 0.06;
-          rightHand = Offset(cx + w * 0.37 + waveX, h * 0.24 + bounceY);
-          rightControl = Offset(cx + w * 0.35, h * 0.36 + bounceY);
+          final waveX = sinVal * w * 0.065;
+          rightHand = Offset(cx + w * 0.38 + waveX, h * 0.23 + bounceY);
+          rightControl = Offset(cx + w * 0.35, h * 0.35 + bounceY);
           break;
         case EveEmote.pointing:
-          final reachX = sinVal.abs() * w * 0.04;
-          rightHand = Offset(cx + w * 0.43 + reachX, h * 0.38 + bounceY);
-          rightControl = Offset(cx + w * 0.33, h * 0.39 + bounceY);
-          break;
-        case EveEmote.thumbsUp:
-          rightHand = Offset(cx + w * 0.36, h * 0.28 + bounceY + sinVal * 2);
+          final reachX = sinVal.abs() * w * 0.05;
+          rightHand = Offset(cx + w * 0.44 + reachX, h * 0.35 + bounceY);
           rightControl = Offset(cx + w * 0.34, h * 0.38 + bounceY);
           break;
+        case EveEmote.thumbsUp:
+          rightHand = Offset(cx + w * 0.38, h * 0.26 + bounceY + sinVal * 2.5);
+          rightControl = Offset(cx + w * 0.34, h * 0.37 + bounceY);
+          break;
         case EveEmote.thumbsDown:
-          rightHand = Offset(cx + w * 0.36, h * 0.56 + bounceY);
+          rightHand = Offset(cx + w * 0.37, h * 0.58 + bounceY + sinVal.abs() * 2);
           rightControl = Offset(cx + w * 0.34, h * 0.47 + bounceY);
           break;
         case EveEmote.surprised:
           rightHand =
-              Offset(cx + w * 0.40, h * 0.34 + bounceY - sinVal.abs() * 4);
-          rightControl = Offset(cx + w * 0.34, h * 0.36 + bounceY);
+              Offset(cx + w * 0.41, h * 0.30 + bounceY - sinVal.abs() * 4);
+          rightControl = Offset(cx + w * 0.35, h * 0.35 + bounceY);
           break;
         case EveEmote.happy:
-          rightHand = Offset(cx + w * 0.36, h * 0.48 + bounceY - sinVal * 4);
-          rightControl = Offset(cx + w * 0.34, h * 0.42 + bounceY);
+          rightHand = Offset(cx + w * 0.40, h * 0.33 + bounceY - sinVal * 5);
+          rightControl = Offset(cx + w * 0.35, h * 0.39 + bounceY);
           break;
         case EveEmote.alert:
-          rightHand = Offset(cx + w * 0.36, h * 0.34 + bounceY + fastSin * 3);
-          rightControl = Offset(cx + w * 0.34, h * 0.40 + bounceY);
+          rightHand = Offset(
+              cx + w * 0.39 + fastSin * w * 0.03, h * 0.28 + bounceY + fastSin * 3);
+          rightControl = Offset(cx + w * 0.34, h * 0.37 + bounceY);
           break;
         case EveEmote.sad:
-          rightHand = Offset(cx + w * 0.29, h * 0.65 + bounceY);
-          rightControl = Offset(cx + w * 0.30, h * 0.54 + bounceY);
+          rightHand = Offset(cx + w * 0.27, h * 0.67 + bounceY);
+          rightControl = Offset(cx + w * 0.29, h * 0.55 + bounceY);
           break;
       }
     }
@@ -758,7 +846,7 @@ class _EveCowPainter extends CustomPainter {
     canvas.drawCircle(bodyCenter, bodyRadius, whiteFill);
     canvas.drawCircle(bodyCenter, bodyRadius, outlinePaint);
 
-    // Characteristic black spot on left chest (angled oval + lower lobe)
+    // Characteristic black spot on left chest
     canvas.save();
     final spotCenter = Offset(cx - w * 0.095, h * 0.46 + bounceY);
     canvas.translate(spotCenter.dx, spotCenter.dy);
@@ -776,7 +864,7 @@ class _EveCowPainter extends CustomPainter {
     );
 
     // -------------------------------------------------------------------------
-    // 4. HEAD, EARS, PINK SNOUT & EXPRESSIVE EYES
+    // 4. HEAD, EARS, EYEBROWS, EXPRESSIVE EYES, CHEEKS & PINK SNOUT
     // -------------------------------------------------------------------------
     final headCenter = Offset(cx, h * 0.265 + bounceY);
     canvas.save();
@@ -809,13 +897,152 @@ class _EveCowPainter extends CustomPainter {
     canvas.drawOval(headRect, whiteFill);
     canvas.drawOval(headRect, outlinePaint);
 
-    // Eyes based on Emote
+    // Rosy Blush Cheeks for positive emotes
+    if (emote == EveEmote.happy ||
+        emote == EveEmote.jumping ||
+        emote == EveEmote.thumbsUp ||
+        emote == EveEmote.greeting) {
+      final blushPaint = Paint()
+        ..color = const Color(0xFFFF8A80).withValues(alpha: 0.45)
+        ..style = PaintingStyle.fill;
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(-w * 0.095, -h * 0.002),
+          width: w * 0.048,
+          height: h * 0.026,
+        ),
+        blushPaint,
+      );
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(w * 0.095, -h * 0.002),
+          width: w * 0.048,
+          height: h * 0.026,
+        ),
+        blushPaint,
+      );
+    }
+
+    // Expressive Eyebrows & Eyes based on Emote
     final leftEyePos = Offset(-w * 0.055, -h * 0.032);
     final rightEyePos = Offset(w * 0.055, -h * 0.032);
-    final isBlinking = progress > 0.92;
+    final isBlinking = progress > 0.94;
 
-    if (emote == EveEmote.happy || emote == EveEmote.thumbsUp) {
-      // Happy curved eyes
+    final browPaint = Paint()
+      ..color = const Color(0xFF1A1A1A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (w * 0.024).clamp(1.4, 2.6)
+      ..strokeCap = StrokeCap.round;
+
+    // Draw expressive eyebrows for each emotion
+    switch (emote) {
+      case EveEmote.alert:
+        // Urgent V-shaped eyebrows (\ /)
+        canvas.drawLine(
+          Offset(leftEyePos.dx - w * 0.032, leftEyePos.dy - h * 0.042),
+          Offset(leftEyePos.dx + w * 0.024, leftEyePos.dy - h * 0.026),
+          browPaint,
+        );
+        canvas.drawLine(
+          Offset(rightEyePos.dx - w * 0.024, rightEyePos.dy - h * 0.026),
+          Offset(rightEyePos.dx + w * 0.032, rightEyePos.dy - h * 0.042),
+          browPaint,
+        );
+        break;
+      case EveEmote.sad:
+      case EveEmote.thumbsDown:
+        // Worried / Sad eyebrows (/ \)
+        canvas.drawLine(
+          Offset(leftEyePos.dx - w * 0.032, leftEyePos.dy - h * 0.024),
+          Offset(leftEyePos.dx + w * 0.024, leftEyePos.dy - h * 0.042),
+          browPaint,
+        );
+        canvas.drawLine(
+          Offset(rightEyePos.dx - w * 0.024, rightEyePos.dy - h * 0.042),
+          Offset(rightEyePos.dx + w * 0.032, rightEyePos.dy - h * 0.024),
+          browPaint,
+        );
+        break;
+      case EveEmote.pointing:
+        // Smart explaining look: one eyebrow raised higher
+        canvas.drawLine(
+          Offset(leftEyePos.dx - w * 0.026, leftEyePos.dy - h * 0.032),
+          Offset(leftEyePos.dx + w * 0.024, leftEyePos.dy - h * 0.034),
+          browPaint,
+        );
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: Offset(rightEyePos.dx, rightEyePos.dy - h * 0.042),
+            width: w * 0.055,
+            height: h * 0.026,
+          ),
+          math.pi,
+          math.pi,
+          false,
+          browPaint,
+        );
+        break;
+      case EveEmote.surprised:
+        // High arched eyebrows
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: Offset(leftEyePos.dx, leftEyePos.dy - h * 0.045),
+            width: w * 0.055,
+            height: h * 0.03,
+          ),
+          math.pi,
+          math.pi,
+          false,
+          browPaint,
+        );
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: Offset(rightEyePos.dx, rightEyePos.dy - h * 0.045),
+            width: w * 0.055,
+            height: h * 0.03,
+          ),
+          math.pi,
+          math.pi,
+          false,
+          browPaint,
+        );
+        break;
+      case EveEmote.happy:
+      case EveEmote.jumping:
+      case EveEmote.thumbsUp:
+      case EveEmote.greeting:
+        // Cheerful raised eyebrows
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: Offset(leftEyePos.dx, leftEyePos.dy - h * 0.038),
+            width: w * 0.05,
+            height: h * 0.022,
+          ),
+          math.pi,
+          math.pi,
+          false,
+          browPaint,
+        );
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: Offset(rightEyePos.dx, rightEyePos.dy - h * 0.038),
+            width: w * 0.05,
+            height: h * 0.022,
+          ),
+          math.pi,
+          math.pi,
+          false,
+          browPaint,
+        );
+        break;
+      case EveEmote.calm:
+        break;
+    }
+
+    if (emote == EveEmote.happy ||
+        emote == EveEmote.thumbsUp ||
+        emote == EveEmote.jumping) {
+      // Happy curved smiling eyes (^ ^)
       final happyEyePaint = Paint()
         ..color = const Color(0xFF111111)
         ..style = PaintingStyle.stroke
@@ -823,7 +1050,7 @@ class _EveCowPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round;
       canvas.drawArc(
         Rect.fromCenter(
-            center: leftEyePos, width: w * 0.055, height: h * 0.045),
+            center: leftEyePos, width: w * 0.058, height: h * 0.048),
         math.pi,
         math.pi,
         false,
@@ -831,7 +1058,7 @@ class _EveCowPainter extends CustomPainter {
       );
       canvas.drawArc(
         Rect.fromCenter(
-            center: rightEyePos, width: w * 0.055, height: h * 0.045),
+            center: rightEyePos, width: w * 0.058, height: h * 0.048),
         math.pi,
         math.pi,
         false,
@@ -840,7 +1067,6 @@ class _EveCowPainter extends CustomPainter {
     } else if (isBlinking &&
         emote != EveEmote.alert &&
         emote != EveEmote.surprised) {
-      // Natural blink line
       canvas.drawLine(
         Offset(leftEyePos.dx - w * 0.025, leftEyePos.dy),
         Offset(leftEyePos.dx + w * 0.025, leftEyePos.dy),
@@ -853,30 +1079,45 @@ class _EveCowPainter extends CustomPainter {
       );
     } else {
       final eyeRadius = (emote == EveEmote.surprised || emote == EveEmote.alert)
-          ? w * 0.028
-          : w * 0.022;
+          ? w * 0.030
+          : (emote == EveEmote.sad ? w * 0.026 : w * 0.023);
       canvas.drawCircle(leftEyePos, eyeRadius, blackFill);
       canvas.drawCircle(rightEyePos, eyeRadius, blackFill);
 
-      // Sad / Concerned eyebrows
-      if (emote == EveEmote.sad || emote == EveEmote.thumbsDown) {
-        canvas.drawLine(
-          Offset(leftEyePos.dx - w * 0.03, leftEyePos.dy - h * 0.022),
-          Offset(leftEyePos.dx + w * 0.02, leftEyePos.dy - h * 0.035),
-          outlinePaint,
-        );
-        canvas.drawLine(
-          Offset(rightEyePos.dx - w * 0.02, rightEyePos.dy - h * 0.035),
-          Offset(rightEyePos.dx + w * 0.03, rightEyePos.dy - h * 0.022),
-          outlinePaint,
+      // Expressive white eye catchlight shine
+      final shineRadius = eyeRadius * 0.34;
+      canvas.drawCircle(
+        Offset(leftEyePos.dx - eyeRadius * 0.28, leftEyePos.dy - eyeRadius * 0.28),
+        shineRadius,
+        whiteFill,
+      );
+      canvas.drawCircle(
+        Offset(rightEyePos.dx - eyeRadius * 0.28, rightEyePos.dy - eyeRadius * 0.28),
+        shineRadius,
+        whiteFill,
+      );
+
+      // Animated tear drop when Eve is sad
+      if (emote == EveEmote.sad) {
+        final tearDropY = leftEyePos.dy + h * 0.022 + (progress * h * 0.025);
+        final tearPaint = Paint()
+          ..color = const Color(0xFF29B6F6)
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(
+          Offset(leftEyePos.dx - w * 0.018, tearDropY),
+          w * 0.016,
+          tearPaint,
         );
       }
     }
 
-    // Pink Snout Oval (overlapping lower head, matching designer's artwork)
-    final snoutCenter = Offset(0, h * 0.048);
+    // Pink Snout Oval (with lively talking motion when isSpeaking is true)
+    final snoutCenter = Offset(0, h * 0.048 + (talkPulse * h * 0.008));
     final snoutRect = Rect.fromCenter(
-        center: snoutCenter, width: w * 0.285, height: h * 0.125);
+      center: snoutCenter,
+      width: w * 0.285,
+      height: h * (0.125 + talkPulse * 0.018),
+    );
     canvas.drawOval(snoutRect, pinkFill);
     canvas.drawOval(snoutRect, outlinePaint);
 
@@ -884,7 +1125,7 @@ class _EveCowPainter extends CustomPainter {
     final nostrilSize = w * 0.038;
     canvas.drawRect(
       Rect.fromCenter(
-        center: Offset(-w * 0.042, snoutCenter.dy - h * 0.004),
+        center: Offset(-w * 0.042, snoutCenter.dy - h * 0.008),
         width: nostrilSize,
         height: nostrilSize,
       ),
@@ -892,12 +1133,66 @@ class _EveCowPainter extends CustomPainter {
     );
     canvas.drawRect(
       Rect.fromCenter(
-        center: Offset(w * 0.042, snoutCenter.dy - h * 0.004),
+        center: Offset(w * 0.042, snoutCenter.dy - h * 0.008),
         width: nostrilSize,
         height: nostrilSize,
       ),
       blackFill,
     );
+
+    // Subtle expressive mouth line at bottom of snout
+    final mouthPaint = Paint()
+      ..color = const Color(0xFF1A1A1A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (w * 0.018).clamp(1.1, 2.0)
+      ..strokeCap = StrokeCap.round;
+
+    if (isSpeaking && talkPulse > 0.35) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(0, snoutCenter.dy + h * 0.034),
+          width: w * 0.055,
+          height: h * 0.026 * talkPulse,
+        ),
+        blackFill,
+      );
+    } else if (emote == EveEmote.happy ||
+        emote == EveEmote.jumping ||
+        emote == EveEmote.thumbsUp ||
+        emote == EveEmote.greeting) {
+      canvas.drawArc(
+        Rect.fromCenter(
+          center: Offset(0, snoutCenter.dy + h * 0.024),
+          width: w * 0.075,
+          height: h * 0.032,
+        ),
+        0.15,
+        math.pi - 0.3,
+        false,
+        mouthPaint,
+      );
+    } else if (emote == EveEmote.sad || emote == EveEmote.thumbsDown) {
+      canvas.drawArc(
+        Rect.fromCenter(
+          center: Offset(0, snoutCenter.dy + h * 0.044),
+          width: w * 0.07,
+          height: h * 0.028,
+        ),
+        math.pi + 0.2,
+        math.pi - 0.4,
+        false,
+        mouthPaint,
+      );
+    } else if (emote == EveEmote.alert || emote == EveEmote.surprised) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(0, snoutCenter.dy + h * 0.032),
+          width: w * 0.042,
+          height: h * 0.028,
+        ),
+        blackFill,
+      );
+    }
 
     canvas.restore();
 
@@ -905,7 +1200,7 @@ class _EveCowPainter extends CustomPainter {
     // 5. VECTOR ALERT "!" OR SURPRISED RAYS OVERLAY
     // -------------------------------------------------------------------------
     if (emote == EveEmote.alert) {
-      final pulse = 1.0 + (fastSin.abs() * 0.15);
+      final pulse = 1.0 + (fastSin.abs() * 0.16);
       final alertCenter = Offset(cx + w * 0.28, h * 0.14);
       final alertPaint = Paint()
         ..color = const Color(0xFFD32F2F)
@@ -916,14 +1211,14 @@ class _EveCowPainter extends CustomPainter {
       canvas.scale(pulse);
 
       // Red alert circle with white "!"
-      canvas.drawCircle(Offset.zero, w * 0.12, alertPaint);
+      canvas.drawCircle(Offset.zero, w * 0.125, alertPaint);
       canvas.drawCircle(
           Offset.zero,
-          w * 0.12,
+          w * 0.125,
           Paint()
             ..color = Colors.white
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5);
+            ..strokeWidth = 1.6);
 
       final exclamPaint = Paint()
         ..color = Colors.white
@@ -944,7 +1239,7 @@ class _EveCowPainter extends CustomPainter {
       final rayPaint = Paint()
         ..color = const Color(0xFFF57F17)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0
+        ..strokeWidth = 2.2
         ..strokeCap = StrokeCap.round;
 
       final topY = h * 0.06 + bounceY;
@@ -955,7 +1250,6 @@ class _EveCowPainter extends CustomPainter {
       canvas.drawLine(Offset(cx + w * 0.14, topY + h * 0.02),
           Offset(cx + w * 0.19, topY - h * 0.03), rayPaint);
     } else if (emote == EveEmote.jumping && jumpPhase > 0.45) {
-      // Attention-calling motion arcs above hands when Eve is airborne with open arms
       final attentionOpacity = ((jumpPhase - 0.45) / 0.55).clamp(0.0, 1.0);
       final motionPaint = Paint()
         ..color = const Color(0xFF2E7D32).withValues(alpha: attentionOpacity * 0.85)
@@ -1032,7 +1326,8 @@ class _EveCowPainter extends CustomPainter {
     return oldDelegate.emote != emote ||
         oldDelegate.progress != progress ||
         oldDelegate.cycleCount != cycleCount ||
-        oldDelegate.isWalking != isWalking;
+        oldDelegate.isWalking != isWalking ||
+        oldDelegate.isSpeaking != isSpeaking;
   }
 }
 
@@ -1428,7 +1723,7 @@ class EveFloatingLauncherButton extends StatelessWidget {
                 alignment: Alignment.bottomRight,
                 children: [
                   Positioned(
-                    right: 36,
+                    right: 0,
                     bottom: 14,
                     child: SizedBox(
                       width: 48,
@@ -1437,7 +1732,7 @@ class EveFloatingLauncherButton extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    right: 0,
+                    right: 36,
                     bottom: 0,
                     child: _buildAddButton(),
                   ),
@@ -1456,15 +1751,15 @@ class EveFloatingLauncherButton extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.bottomRight,
               children: [
-                // Eve positioned behind the "+" button on the right side
-                Positioned(
-                  right: 34,
-                  bottom: 14,
-                  child: _buildRoundedEveCircle(context, badgeOnLeft: true),
-                ),
-                // Foreground "+" action button
+                // Eve positioned on the right side behind the "+" button
                 Positioned(
                   right: 0,
+                  bottom: 14,
+                  child: _buildRoundedEveCircle(context, badgeOnLeft: false),
+                ),
+                // Foreground "+" action button on the left side
+                Positioned(
+                  right: 42,
                   bottom: 0,
                   child: _buildAddButton(),
                 ),
@@ -1493,6 +1788,9 @@ class EveDuolingoConversationStage extends StatefulWidget {
   final bool showEveStage;
   final bool isNormalChatFolded;
   final VoidCallback? onToggleFoldChat;
+  final List<String> registeredCrops;
+  final String? selectedCropFilter;
+  final ValueChanged<String?>? onCropFilterChanged;
 
   const EveDuolingoConversationStage({
     super.key,
@@ -1505,6 +1803,9 @@ class EveDuolingoConversationStage extends StatefulWidget {
     this.showEveStage = true,
     this.isNormalChatFolded = false,
     this.onToggleFoldChat,
+    this.registeredCrops = const [],
+    this.selectedCropFilter,
+    this.onCropFilterChanged,
   });
 
   @override
@@ -1637,7 +1938,6 @@ class _EveDuolingoConversationStageState
     if (widget.isLoading || _chunks.isEmpty) return;
     final currentFullText = _chunks[_currentChunkIndex];
     if (_revealedCharCount < currentFullText.length) {
-      // Complete current step immediately if still typing
       _typewriterTimer?.cancel();
       setState(() {
         _revealedCharCount = currentFullText.length;
@@ -1658,6 +1958,46 @@ class _EveDuolingoConversationStageState
     _startTypewriterForCurrentChunk();
   }
 
+  Color _getEmoteBadgeBg(EveEmote emote) {
+    switch (emote) {
+      case EveEmote.alert:
+        return const Color(0xFFFFEBEE);
+      case EveEmote.sad:
+      case EveEmote.thumbsDown:
+        return const Color(0xFFFFF3E0);
+      case EveEmote.jumping:
+      case EveEmote.thumbsUp:
+      case EveEmote.happy:
+        return const Color(0xFFE8F5E9);
+      case EveEmote.pointing:
+        return const Color(0xFFE1F5FE);
+      case EveEmote.surprised:
+        return const Color(0xFFFFF8E1);
+      default:
+        return const Color(0xFFF1F8E9);
+    }
+  }
+
+  Color _getEmoteBadgeTextColor(EveEmote emote) {
+    switch (emote) {
+      case EveEmote.alert:
+        return const Color(0xFFC62828);
+      case EveEmote.sad:
+      case EveEmote.thumbsDown:
+        return const Color(0xFFE65100);
+      case EveEmote.jumping:
+      case EveEmote.thumbsUp:
+      case EveEmote.happy:
+        return const Color(0xFF1B5E20);
+      case EveEmote.pointing:
+        return const Color(0xFF01579B);
+      case EveEmote.surprised:
+        return const Color(0xFFF57F17);
+      default:
+        return const Color(0xFF2E7D32);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSpanish = AppLanguage.current.value == AppLanguageType.spanish;
@@ -1669,6 +2009,8 @@ class _EveDuolingoConversationStageState
 
     final currentFullChunk =
         _chunks.isNotEmpty ? _chunks[_currentChunkIndex] : '';
+    final isTypingChunk =
+        !widget.isLoading && _revealedCharCount < currentFullChunk.length;
     final visibleChunkText = currentFullChunk.substring(
       0,
       _revealedCharCount.clamp(0, currentFullChunk.length),
@@ -1676,6 +2018,11 @@ class _EveDuolingoConversationStageState
     final evaluatedEmote = EveAnimatedAvatar.evaluateEmoteFromContent(
       currentFullChunk.isNotEmpty ? currentFullChunk : widget.speechBubbleText,
       isLoading: widget.isLoading,
+      isExplainingInStage: true,
+    );
+    final reactionLabel = EveAnimatedAvatar.getEmoteReactionLabel(
+      evaluatedEmote,
+      isSpanish: isSpanish,
     );
 
     return Container(
@@ -1684,7 +2031,7 @@ class _EveDuolingoConversationStageState
         16,
         4,
         12,
-        widget.showEveStage ? 10 : 6,
+        widget.showEveStage ? (widget.isNormalChatFolded ? 20 : 10) : 6,
       ),
       decoration: BoxDecoration(
         gradient: widget.showEveStage
@@ -1793,6 +2140,34 @@ class _EveDuolingoConversationStageState
             ],
           ),
 
+          // Crop selector bar when the farmer has multiple crops registered in their farm
+          if (widget.registeredCrops.length > 1 &&
+              widget.onCropFilterChanged != null) ...[
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 28,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildCropFilterPill(
+                    label: isSpanish
+                        ? 'Todos (${widget.registeredCrops.length})'
+                        : 'All (${widget.registeredCrops.length})',
+                    isSelected: widget.selectedCropFilter == null,
+                    onTap: () => widget.onCropFilterChanged!(null),
+                  ),
+                  ...widget.registeredCrops.map(
+                    (c) => _buildCropFilterPill(
+                      label: c,
+                      isSelected: widget.selectedCropFilter == c,
+                      onTap: () => widget.onCropFilterChanged!(c),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // Upper Duolingo Stage (Hidden completely when Eve is disabled)
           if (widget.showEveStage) ...[
             const SizedBox(height: 6),
@@ -1872,7 +2247,7 @@ class _EveDuolingoConversationStageState
                                   ConstrainedBox(
                                     constraints: BoxConstraints(
                                       maxHeight:
-                                          widget.isNormalChatFolded ? 220 : 150,
+                                          widget.isNormalChatFolded ? 200 : 145,
                                     ),
                                     child: SingleChildScrollView(
                                       child: Text(
@@ -1886,16 +2261,16 @@ class _EveDuolingoConversationStageState
                                       ),
                                     ),
                                   ),
-                                  if (_chunks.length > 1) ...[
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        // Step counter pills
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      // Step counter + Eve emotion reaction pill
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (_chunks.length > 1) ...[
                                             Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -1916,9 +2291,33 @@ class _EveDuolingoConversationStageState
                                                 ),
                                               ),
                                             ),
+                                            const SizedBox(width: 6),
                                           ],
-                                        ),
-                                        // Prev / Next controls
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: _getEmoteBadgeBg(
+                                                  evaluatedEmote),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              reactionLabel,
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: _getEmoteBadgeTextColor(
+                                                    evaluatedEmote),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      // Prev / Next controls
+                                      if (_chunks.length > 1)
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -2005,9 +2404,8 @@ class _EveDuolingoConversationStageState
                                             ],
                                           ],
                                         ),
-                                      ],
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ],
                               ),
                       ),
@@ -2025,7 +2423,10 @@ class _EveDuolingoConversationStageState
               ),
             ),
 
-            // Centered Large Eve Walking In & Growing Larger
+            // Increased distance between speech bubble and Eve when normal chat is folded
+            SizedBox(height: widget.isNormalChatFolded ? 18 : 4),
+
+            // Centered Large Eve Walking In & Growing Larger (Elevated higher when chat is folded)
             AnimatedBuilder(
               animation: _walkCurve,
               builder: (context, _) {
@@ -2034,13 +2435,16 @@ class _EveDuolingoConversationStageState
                 final dx = (1.0 - v) * 115.0;
                 final dy = (1.0 - v) * 18.0;
                 final scale = 0.45 + (0.55 * v);
-                final avatarHeight = widget.isNormalChatFolded ? 124.0 : 102.0;
-                final avatarSize = widget.isNormalChatFolded ? 114.0 : 96.0;
+                final avatarHeight = widget.isNormalChatFolded ? 132.0 : 102.0;
+                final avatarSize = widget.isNormalChatFolded ? 118.0 : 96.0;
 
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 280),
                   curve: Curves.easeOutCubic,
                   height: avatarHeight,
+                  margin: EdgeInsets.only(
+                    bottom: widget.isNormalChatFolded ? 36.0 : 0.0,
+                  ),
                   child: Center(
                     child: Transform.translate(
                       offset: Offset(dx, dy),
@@ -2051,7 +2455,7 @@ class _EveDuolingoConversationStageState
                           children: [
                             // Subtle Duolingo-style floor shadow oval under Eve
                             Container(
-                              width: 58,
+                              width: 62,
                               height: 11,
                               margin: const EdgeInsets.only(bottom: 4),
                               decoration: BoxDecoration(
@@ -2063,6 +2467,7 @@ class _EveDuolingoConversationStageState
                               emote: evaluatedEmote,
                               size: avatarSize,
                               isWalking: isStillWalking,
+                              isSpeaking: isTypingChunk,
                             ),
                           ],
                         ),
@@ -2074,6 +2479,44 @@ class _EveDuolingoConversationStageState
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildCropFilterPill({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF1B5E20)
+                : const Color(0xFFE8F5E9),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF1B5E20)
+                  : const Color(0xFFA5D6A7),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : const Color(0xFF1B5E20),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -2166,6 +2609,8 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
   FarmPredictionsReport? _report;
   SubplotGraph? _graph;
   List<Map<String, dynamic>> _subplots = [];
+  List<String> _registeredCrops = [];
+  String? _selectedCropFilter;
   String _activeCrop = 'Maíz';
   String _activeSoil = 'Franco';
 
@@ -2193,8 +2638,13 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
     _report = widget.report;
     _graph = widget.graph;
     _subplots = widget.subplots ?? [];
-    _activeCrop = widget.activeCrop ?? 'Maíz';
-    _activeSoil = widget.activeSoil ?? 'Franco';
+    if (widget.activeCrop != null && widget.activeCrop!.trim().isNotEmpty) {
+      _activeCrop = EveKnowledgeBase.normalizeCropName(widget.activeCrop);
+      _selectedCropFilter = _activeCrop;
+    }
+    if (widget.activeSoil != null && widget.activeSoil!.trim().isNotEmpty) {
+      _activeSoil = EveKnowledgeBase.normalizeSoilName(widget.activeSoil);
+    }
 
     _initializeAndAskFirst();
   }
@@ -2227,50 +2677,142 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
     final s = AppLanguage.strings;
     final firstQuery = widget.initialQuery ?? s.kIvyInitialPrompt;
 
-    if (widget.farmData == null || widget.report == null) {
-      try {
-        final db = DatabaseManager();
-        final latestFarm = await db.getLatestFarm();
-        if (latestFarm != null) {
-          _farmData = latestFarm;
-          final farmId = latestFarm['id'] as int?;
-          final lots = await db.getAllLotsWithSubplots(farmId: farmId);
-          final spList = <Map<String, dynamic>>[];
-          for (final lot in lots) {
-            final sps = lot['subplots'] as List<dynamic>? ?? [];
-            for (final sp in sps) {
-              if (sp is Map<String, dynamic>) {
-                spList.add(sp);
+    // Always load real farm, lots, and subplots from SQLite so we never ignore
+    // the farmer's registered crops across their lots and subplots.
+    try {
+      final db = DatabaseManager();
+      final latestFarm = await db.getLatestFarm();
+      if (latestFarm != null) {
+        _farmData = latestFarm;
+        final farmId = latestFarm['id'] as int?;
+        final lots = await db.getAllLotsWithSubplots(farmId: farmId);
+        final spList = <Map<String, dynamic>>[];
+        final cropsSet = <String>{};
+
+        for (final lot in lots) {
+          final rawLotCrop = lot['crop']?.toString();
+          if (rawLotCrop != null && rawLotCrop.trim().isNotEmpty) {
+            cropsSet.add(EveKnowledgeBase.normalizeCropName(rawLotCrop));
+          }
+          final sps = lot['subplots'] as List<dynamic>? ?? [];
+          if (sps.isEmpty && rawLotCrop != null && rawLotCrop.trim().isNotEmpty) {
+            spList.add({
+              'name': lot['name'] ?? 'Lote',
+              'crop': EveKnowledgeBase.normalizeCropName(rawLotCrop),
+              'soil_type': 'Franco',
+            });
+          }
+          for (final sp in sps) {
+            if (sp is Map<String, dynamic>) {
+              final copy = Map<String, dynamic>.from(sp);
+              final rawSpCrop = copy['crop']?.toString();
+              final effectiveRawCrop =
+                  (rawSpCrop != null && rawSpCrop.trim().isNotEmpty)
+                      ? rawSpCrop
+                      : rawLotCrop;
+              if (effectiveRawCrop != null && effectiveRawCrop.trim().isNotEmpty) {
+                final normalizedCrop =
+                    EveKnowledgeBase.normalizeCropName(effectiveRawCrop);
+                copy['crop'] = normalizedCrop;
+                cropsSet.add(normalizedCrop);
               }
+              if (copy['soil_type'] != null) {
+                copy['soil_type'] = EveKnowledgeBase.normalizeSoilName(
+                    copy['soil_type']?.toString());
+              }
+              spList.add(copy);
             }
           }
-          _subplots = spList;
-          if (_subplots.isNotEmpty) {
-            _activeCrop =
-                widget.activeCrop ?? (_subplots.first['crop']?.toString() ?? 'Maíz');
-            _activeSoil = widget.activeSoil ??
-                (_subplots.first['soil_type']?.toString() ?? 'Franco');
-          }
-          if (farmId != null) {
-            _graph = await SubplotGraphService.getGraphForFarm(farmId);
-          }
         }
-      } catch (_) {}
 
-      _report ??= AgroPredictionEngine.generateReport(
+        if (spList.isNotEmpty) {
+          _subplots = spList;
+        }
+        _registeredCrops = cropsSet.toList();
+
+        if (widget.activeCrop != null && widget.activeCrop!.trim().isNotEmpty) {
+          _activeCrop = EveKnowledgeBase.normalizeCropName(widget.activeCrop);
+          if (!_registeredCrops.contains(_activeCrop)) {
+            _registeredCrops.insert(0, _activeCrop);
+          }
+          _selectedCropFilter = _activeCrop;
+        } else if (_registeredCrops.isNotEmpty) {
+          _activeCrop = _registeredCrops.first;
+          // If the farmer has multiple crops across their farm and opened Eve from a general screen,
+          // default to showing all their registered crops ("Todos")!
+          _selectedCropFilter =
+              _registeredCrops.length > 1 ? null : _registeredCrops.first;
+        }
+
+        if (widget.activeSoil != null && widget.activeSoil!.trim().isNotEmpty) {
+          _activeSoil = EveKnowledgeBase.normalizeSoilName(widget.activeSoil);
+        } else if (_subplots.isNotEmpty) {
+          _activeSoil = EveKnowledgeBase.normalizeSoilName(
+              _subplots.first['soil_type']?.toString());
+        }
+
+        if (farmId != null) {
+          _graph ??= await SubplotGraphService.getGraphForFarm(farmId);
+        }
+      }
+    } catch (_) {}
+
+    _report = AgroPredictionEngine.generateReport(
+      farmData: _farmData,
+      nasaData: _nasaData,
+      graph: _graph,
+      subplots: _subplots,
+      targetCrop: _activeCrop,
+      targetSoilType: _activeSoil,
+      strings: s,
+    );
+
+    if (mounted) {
+      setState(() {});
+      await _askEve(firstQuery);
+    }
+  }
+
+  void _onCropFilterSelected(String? cropFilter) {
+    if (_isLoading) return;
+    setState(() {
+      _selectedCropFilter = cropFilter;
+      if (cropFilter != null) {
+        _activeCrop = cropFilter;
+        // Also match soil type of the first subplot with this crop if available
+        final matchSp = _subplots.firstWhere(
+          (sp) =>
+              EveKnowledgeBase.normalizeCropName(sp['crop']?.toString()) ==
+              cropFilter,
+          orElse: () => <String, dynamic>{},
+        );
+        if (matchSp.isNotEmpty && matchSp['soil_type'] != null) {
+          _activeSoil = EveKnowledgeBase.normalizeSoilName(
+              matchSp['soil_type']?.toString());
+        }
+      } else if (_registeredCrops.isNotEmpty) {
+        _activeCrop = _registeredCrops.first;
+      }
+      _report = AgroPredictionEngine.generateReport(
         farmData: _farmData,
         nasaData: _nasaData,
         graph: _graph,
         subplots: _subplots,
         targetCrop: _activeCrop,
         targetSoilType: _activeSoil,
-        strings: s,
+        strings: AppLanguage.strings,
       );
-    }
+    });
 
-    if (mounted) {
-      await _askEve(firstQuery);
+    // Re-answer the last user question (or initial overview) for the newly selected crop filter
+    String lastUserQuery = AppLanguage.strings.kIvyInitialPrompt;
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i]['role'] == 'user') {
+        lastUserQuery = _messages[i]['text'] ?? lastUserQuery;
+        break;
+      }
     }
+    _askEve(lastUserQuery);
   }
 
   Future<void> _askEve(String query) async {
@@ -2294,6 +2836,10 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
             strings: s,
           );
 
+      final cropsToPass = _selectedCropFilter != null
+          ? <String>[_selectedCropFilter!]
+          : (_registeredCrops.isNotEmpty ? _registeredCrops : <String>[_activeCrop]);
+
       final reply = await AzureAiService.askEve(
         userQuery: cleanQuery,
         farmData: _farmData,
@@ -2303,6 +2849,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
         subplots: _subplots,
         activeCrop: _activeCrop,
         activeSoil: _activeSoil,
+        allFarmCrops: cropsToPass,
       );
 
       if (mounted) {
@@ -2356,6 +2903,11 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
         (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
             .clamp(320.0, mediaQuery.size.height * 0.92);
 
+    final cropsSubtitle = (_selectedCropFilter == null &&
+            _registeredCrops.length > 1)
+        ? '${_registeredCrops.join(', ')} • ${s.kSoilPrefix} $_activeSoil'
+        : '$_activeCrop • ${s.kSoilPrefix} $_activeSoil';
+
     return ValueListenableBuilder<bool>(
       valueListenable: AppSettings.showEve,
       builder: (context, showEve, _) {
@@ -2390,7 +2942,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                   ),
                   EveDuolingoConversationStage(
                     title: s.kIvyCopilotTitle,
-                    subtitle: '$_activeCrop • ${s.kSoilPrefix} $_activeSoil',
+                    subtitle: cropsSubtitle,
                     speechBubbleText: _getLatestEveSpeechText(s),
                     isLoading: _isLoading,
                     loadingText: s.kIvyAnalyzingScenario,
@@ -2398,6 +2950,9 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                     showEveStage: showEve,
                     isNormalChatFolded: effectiveFolded,
                     onToggleFoldChat: showEve ? _toggleFoldNormalChat : null,
+                    registeredCrops: _registeredCrops,
+                    selectedCropFilter: _selectedCropFilter,
+                    onCropFilterChanged: _onCropFilterSelected,
                   ),
                   const Divider(height: 1),
 

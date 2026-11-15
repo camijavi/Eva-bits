@@ -87,11 +87,18 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           _lots = lotsWithSubplots;
           final List<Map<String, dynamic>> flat = [];
           for (final lot in lotsWithSubplots) {
+            final lotCrop = lot['crop']?.toString();
             final spList = lot['subplots'] as List<dynamic>? ?? [];
             for (final sp in spList) {
               if (sp is Map<String, dynamic>) {
                 final copy = Map<String, dynamic>.from(sp);
                 copy['lot_name'] = lot['name'] ?? 'Lote';
+                if ((copy['crop'] == null ||
+                        copy['crop'].toString().trim().isEmpty) &&
+                    lotCrop != null &&
+                    lotCrop.isNotEmpty) {
+                  copy['crop'] = lotCrop;
+                }
                 flat.add(copy);
               }
             }
@@ -105,13 +112,21 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               orElse: () => _subplots.isNotEmpty ? _subplots.first : {},
             );
             if (found.isNotEmpty) {
-              _selectedCrop = found['crop']?.toString() ?? 'Maíz';
-              _selectedSoil = found['soil_type']?.toString() ?? 'Franco';
+              _selectedCrop = EveKnowledgeBase.normalizeCropName(
+                  found['crop']?.toString());
+              _selectedSoil = EveKnowledgeBase.normalizeSoilName(
+                  found['soil_type']?.toString());
             }
           } else if (_subplots.isNotEmpty) {
             _selectedContextValue = 'farm';
-            _selectedCrop = _subplots.first['crop']?.toString() ?? 'Maíz';
-            _selectedSoil = _subplots.first['soil_type']?.toString() ?? 'Franco';
+            _selectedCrop = EveKnowledgeBase.normalizeCropName(
+                _subplots.first['crop']?.toString());
+            _selectedSoil = EveKnowledgeBase.normalizeSoilName(
+                _subplots.first['soil_type']?.toString());
+          } else if (_lots.isNotEmpty) {
+            _selectedContextValue = 'farm';
+            _selectedCrop = EveKnowledgeBase.normalizeCropName(
+                _lots.first['crop']?.toString());
           }
         } catch (_) {}
 
@@ -176,11 +191,13 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             final spList = matchLot['subplots'] as List<dynamic>? ?? [];
             if (spList.isNotEmpty && spList.first is Map<String, dynamic>) {
               final firstSp = spList.first as Map<String, dynamic>;
-              _selectedCrop =
-                  (matchLot['crop'] ?? firstSp['crop'])?.toString() ?? 'Maíz';
-              _selectedSoil = firstSp['soil_type']?.toString() ?? 'Franco';
+              _selectedCrop = EveKnowledgeBase.normalizeCropName(
+                  (matchLot['crop'] ?? firstSp['crop'])?.toString());
+              _selectedSoil = EveKnowledgeBase.normalizeSoilName(
+                  firstSp['soil_type']?.toString());
             } else {
-              _selectedCrop = matchLot['crop']?.toString() ?? 'Maíz';
+              _selectedCrop = EveKnowledgeBase.normalizeCropName(
+                  matchLot['crop']?.toString());
             }
           }
         }
@@ -193,8 +210,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             orElse: () => {},
           );
           if (match.isNotEmpty) {
-            _selectedCrop = match['crop']?.toString() ?? 'Maíz';
-            _selectedSoil = match['soil_type']?.toString() ?? 'Franco';
+            _selectedCrop = EveKnowledgeBase.normalizeCropName(
+                match['crop']?.toString());
+            _selectedSoil = EveKnowledgeBase.normalizeSoilName(
+                match['soil_type']?.toString());
           }
         }
       }
@@ -268,6 +287,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
           return Scaffold(
             backgroundColor: const Color(0xFFF7FAF7),
             appBar: AppBar(
+              automaticallyImplyLeading: false,
               title: Text(s.kPredictionsTitle),
               backgroundColor: const Color(0xFF0F5A37),
               foregroundColor: Colors.white,
@@ -283,6 +303,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         return Scaffold(
           backgroundColor: const Color(0xFFF7FAF7),
           appBar: AppBar(
+            automaticallyImplyLeading: false,
             elevation: 0,
             backgroundColor: const Color(0xFF0F5A37),
             foregroundColor: Colors.white,

@@ -25,16 +25,29 @@ class AzureAiService {
     List<Map<String, dynamic>>? subplots,
     String? activeCrop,
     String? activeSoil,
+    List<String>? allFarmCrops,
   }) async {
     final s = AppLanguage.strings;
-    final defaultCrop = activeCrop ??
-        (subplots != null && subplots.isNotEmpty
-            ? (subplots.first['crop']?.toString() ?? s.kDefaultCropName)
-            : s.kDefaultCropName);
-    final defaultSoil = activeSoil ??
-        (subplots != null && subplots.isNotEmpty
-            ? (subplots.first['soil_type']?.toString() ?? s.kDefaultSoilName)
-            : s.kDefaultSoilName);
+    final defaultCrop = EveKnowledgeBase.normalizeCropName(
+      activeCrop ??
+          (subplots != null && subplots.isNotEmpty
+              ? (subplots.first['crop']?.toString() ?? s.kDefaultCropName)
+              : s.kDefaultCropName),
+    );
+    final defaultSoil = EveKnowledgeBase.normalizeSoilName(
+      activeSoil ??
+          (subplots != null && subplots.isNotEmpty
+              ? (subplots.first['soil_type']?.toString() ?? s.kDefaultSoilName)
+              : s.kDefaultSoilName),
+    );
+
+    final List<String> extractedCrops = allFarmCrops ??
+        (subplots ?? [])
+            .map((sp) => sp['crop']?.toString() ?? '')
+            .where((c) => c.trim().isNotEmpty)
+            .map((c) => EveKnowledgeBase.normalizeCropName(c))
+            .toSet()
+            .toList();
 
     final crop = EveKnowledgeBase.detectTargetCropFromPrompt(
       userQuery,
@@ -116,6 +129,7 @@ class AzureAiService {
       query: userQuery,
       crop: crop,
       soil: soil,
+      allFarmCrops: extractedCrops,
     );
   }
 
@@ -257,6 +271,7 @@ $projectionText
     required String query,
     required String crop,
     required String soil,
+    List<String>? allFarmCrops,
   }) {
     final es = AppLanguage.isSpanish;
     return EveKnowledgeBase.answerFarmerPrompt(
@@ -266,6 +281,7 @@ $projectionText
       report: report,
       activeCrop: crop,
       activeSoil: soil,
+      allFarmCrops: allFarmCrops,
       isSpanish: es,
     );
   }

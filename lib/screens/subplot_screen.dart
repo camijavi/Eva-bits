@@ -305,6 +305,14 @@ class _SubplotScreenState extends State<SubplotScreen> {
             tooltip: s.kAskIvyTooltip,
             onAddPressed: _openAddSubplotModal,
             addTooltip: s.kAddNewSubplot,
+            subplots: _subplots,
+            activeCrop: _currentLot['crop']?.toString() ??
+                (_subplots.isNotEmpty
+                    ? _subplots.first['crop']?.toString()
+                    : null),
+            activeSoil: _subplots.isNotEmpty
+                ? _subplots.first['soil_type']?.toString()
+                : null,
           ),
         );
       },
