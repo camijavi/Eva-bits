@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
 import '../widgets/eve_animated_avatar.dart';
@@ -19,6 +20,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     AppSettings.syncFromDatabase();
+    final isDark = AppSettings.themeMode.value == ThemeMode.dark;
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+    );
   }
 
   @override
@@ -37,17 +46,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
             final textColor = isDark ? Colors.white : const Color(0xFF1B2E1C);
             final subtextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
-            return Scaffold(
-              body: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTopBar(context, s),
-                      const SizedBox(height: 12),
-                      _buildHeader(s, textColor, subtextColor),
-                      const SizedBox(height: 24),
+            final overlayStyle = SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+              statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            );
+
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: overlayStyle,
+              child: Scaffold(
+                backgroundColor: isDark ? const Color(0xFF121A15) : const Color(0xFFF8FAF8),
+                body: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTopBar(context, s),
+                        const SizedBox(height: 12),
+                        _buildHeader(s, textColor, subtextColor),
+                        const SizedBox(height: 24),
 
                       // 1. Language Section
                       _buildSectionTitle(
@@ -100,8 +118,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
-            );
-          },
+            ),
+          );
+        },
         );
       },
     );
@@ -228,22 +247,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E2822) : Colors.white,
+              color: isDark ? const Color(0xFF1E2B20) : const Color(0xFFE8F5E9),
               shape: BoxShape.circle,
               border: Border.all(
-                color: isDark ? const Color(0xFF2C3E33) : const Color(0xFFE5E7EB),
+                color: isDark ? const Color(0xFF2E7D32) : const Color(0xFFA5D6A7),
+                width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 4,
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                  blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.chevron_back,
-              color: Color(0xFF0F5A37),
+              color: isDark ? Colors.white : const Color(0xFF1B5E20),
               size: 22,
             ),
           ),

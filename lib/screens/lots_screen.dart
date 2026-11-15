@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/crop_types.dart';
 import '../database/database_manager.dart';
@@ -208,8 +209,15 @@ class _LotsScreenState extends State<LotsScreen> {
         final s = AppLanguage.strings;
         final filteredLots = _filteredAndSortedLots;
         final scaffoldBg = AppColors.getBackground(context);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        return Scaffold(
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          ),
+          child: Scaffold(
           backgroundColor: scaffoldBg,
           body: SafeArea(
             child: RefreshIndicator(
@@ -260,8 +268,9 @@ class _LotsScreenState extends State<LotsScreen> {
             addTooltip: s.kAddLot,
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 
