@@ -6,6 +6,9 @@ import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../services/app_settings.dart';
 import '../services/nasa_power_service.dart';
+import '../services/agro_prediction_engine.dart';
+import '../services/subplot_graph_service.dart';
+import '../services/azure_ai_service.dart';
 import 'farm_info.dart';
 import 'settings_screen.dart';
 
@@ -31,7 +34,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? _dbFarm;
   Map<String, dynamic>? _nasaData;
   bool _isLoadingNasa = false;
-  String? _nasaError;
+  SubplotGraph? _farmGraph;
+  List<Map<String, dynamic>> _farmSubplots = [];
+  FarmPredictionsReport? _cachedReport;
 
   @override
   void initState() {
@@ -45,19 +50,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted) {
         setState(() {
           _dbFarm = farm;
+          _cachedReport = null;
         });
-        _loadNasaData();
       }
+
+      if (farm != null && farm['id'] != null) {
+        final farmId = farm['id'] as int;
+        try {
+          final graph = await SubplotGraphService.getGraphForFarm(farmId);
+          final lotsWithSubplots =
+              await DatabaseManager().getAllLotsWithSubplots(farmId: farmId);
+          final List<Map<String, dynamic>> flatSubplots = [];
+          for (final lot in lotsWithSubplots) {
+            final spList = lot['subplots'] as List<dynamic>? ?? [];
+            for (final sp in spList) {
+              if (sp is Map<String, dynamic>) {
+                flatSubplots.add(sp);
+              }
+            }
+          }
+          if (mounted) {
+            setState(() {
+              _farmGraph = graph;
+              _farmSubplots = flatSubplots;
+              _cachedReport = null;
+            });
+          }
+        } catch (_) {}
+      }
+      _loadNasaData();
     } catch (_) {
       _loadNasaData();
     }
+  }
+
+  FarmPredictionsReport _getPredictionsReport() {
+    if (_cachedReport != null) return _cachedReport!;
+    final report = AgroPredictionEngine.generateReport(
+      farmData: _dbFarm ?? {
+        'name': widget.farmName ?? 'Mi Finca',
+        'zone': widget.location ?? 'Nicaragua',
+        'total_surface': 2.5,
+        'unit': 'ha',
+      },
+      nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
+      graph: _farmGraph,
+      subplots: _farmSubplots.isNotEmpty ? _farmSubplots : null,
+    );
+    _cachedReport = report;
+    return report;
   }
 
   Future<void> _loadNasaData() async {
     if (!mounted) return;
     setState(() {
       _isLoadingNasa = true;
-      _nasaError = null;
+      _cachedReport = null;
     });
 
     try {
@@ -95,11 +143,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _isLoadingNasa = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoadingNasa = false;
-          _nasaError = e.toString();
         });
       }
     }
@@ -165,6 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           iconColor: Colors.white,
                           title: s.kDashboardAction1,
                           chevronColor: const Color(0xFF4A7C59),
+                          onTap: () => _showRotationSimulatorModal(context),
                         ),
                         const SizedBox(height: 12),
                         _buildActionCard(
@@ -174,6 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           iconColor: const Color(0xFF1976D2),
                           title: s.kDashboardAction2,
                           chevronColor: const Color(0xFF5B8FB9),
+                          onTap: () => _showWeatherAndIrrigationModal(context),
                         ),
                         const SizedBox(height: 12),
                         _buildActionCard(
@@ -183,6 +232,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           iconColor: const Color(0xFFF57F17),
                           title: s.kDashboardAction3,
                           chevronColor: const Color(0xFFBCA05A),
+                          onTap: () => _showIvyConsultationSheet(
+                            context,
+                            initialQuery:
+                                '¿Cuáles son las recomendaciones agroecológicas prioritarias para mi finca hoy?',
+                          ),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -192,6 +246,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: const Color(0xFF1B5E20),
+          foregroundColor: Colors.white,
+          elevation: 3,
+          icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+          label: const Text(
+            'Preguntar a Ivy',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          onPressed: () => _showIvyConsultationSheet(context),
         ),
         bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
         );
@@ -462,6 +527,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color iconColor,
     required String title,
     required Color chevronColor,
+    VoidCallback? onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -472,9 +538,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            // Mockup: No functionality
-          },
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
@@ -848,6 +912,1083 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // ACTION MODALS (AGRO-PREDICTIONS & IVY AI)
+  // ===========================================================================
+
+  void _showRotationSimulatorModal(BuildContext context) {
+    final report = _getPredictionsReport();
+    final rotation = report.rotation;
+    final nutrition = report.nutrition;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.eco_rounded,
+                          color: Color(0xFF2E7D32), size: 26),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Simulador de Rotación Espacial',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E2D24),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF2E7D32),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Análisis botánico + Grafo de sublotes',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey.shade700),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // Compatibility Score Box
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E7D32).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFC8E6C9)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF2E7D32),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${rotation.score}%',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rotation.compatibilityLevel,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E2D24),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Cultivo óptimo: ${rotation.suggestedCrop}',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF2E7D32),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Corridor Risk Warning if present
+                    if (rotation.hasSpatialCorridorRisk) ...[
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFFCC80)),
+                        ),
+                        child: const Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.warning_amber_rounded,
+                                color: Color(0xFFE65100), size: 24),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Alerta de Corredor Biológico de Plagas',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: Color(0xFFE65100),
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  Text(
+                                    'Se detectaron sublotes vecinos con cultivos de la misma familia botánica. Rotar con leguminosas romperá el avance biológico de insectos y patógenos.',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Color(0xFF5D4037)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    Text(
+                      'Fundamento Agroecológico',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.grey.shade900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      rotation.explanation,
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.grey.shade700, height: 1.4),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Nitrogen & Urea Regeneration Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F8E9),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFDCEDC8)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.science_rounded,
+                                  color: Color(0xFF33691E), size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Fijación Biológica de Nitrógeno (FBN)',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Color(0xFF33691E),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${nutrition.projectedNitrogenGainKgPerHa > 0 ? '+' : ''}${nutrition.projectedNitrogenGainKgPerHa} kg/ha',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1B5E20),
+                                      ),
+                                    ),
+                                    Text('Aporte de N al suelo',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey.shade700)),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${nutrition.estimatedUreaSavingsKg.toStringAsFixed(0)} kg',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1B5E20),
+                                      ),
+                                    ),
+                                    Text('Ahorro estimado en urea',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey.shade700)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            nutrition.regenerationDiagnosis,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade800),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    Text(
+                      'Otras alternativas compatibles:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: rotation.alternativeCrops.map((crop) {
+                        return Chip(
+                          backgroundColor: const Color(0xFFE8F5E9),
+                          label: Text(
+                            crop,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF2E7D32),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          avatar: const Icon(Icons.check,
+                              size: 16, color: Color(0xFF2E7D32)),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B5E20),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+                      label: const Text(
+                        'Profundizar con Ivy AI',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _showIvyConsultationSheet(
+                          context,
+                          initialQuery:
+                              'Explícame a detalle la rotación con ${rotation.suggestedCrop} y cómo regenerará el suelo.',
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showWeatherAndIrrigationModal(BuildContext context) {
+    final report = _getPredictionsReport();
+    final irrigation = report.irrigation;
+    final risks = report.risks;
+    final calendar = report.calendar;
+
+    final Color statusColor;
+    final IconData statusIcon;
+    if (irrigation.status == 'critical') {
+      statusColor = const Color(0xFFD32F2F);
+      statusIcon = Icons.error_outline_rounded;
+    } else if (irrigation.status == 'moderate') {
+      statusColor = const Color(0xFFF57F17);
+      statusIcon = Icons.warning_amber_rounded;
+    } else {
+      statusColor = const Color(0xFF2E7D32);
+      statusIcon = Icons.check_circle_outline_rounded;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE1F5FE),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.water_drop_rounded,
+                          color: Color(0xFF0288D1), size: 26),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Gestor Hídrico y Alertas Satelitales',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E2D24),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF0288D1),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'NASA SMAP L4 & POWER',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey.shade700),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border:
+                            Border.all(color: statusColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(statusIcon, color: statusColor, size: 24),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  irrigation.actionTitle,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            irrigation.actionRecommendation,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade800,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildNasaMetricTile(
+                            icon: Icons.water_drop_outlined,
+                            iconColor: const Color(0xFF0288D1),
+                            bgColor: const Color(0xFFE1F5FE),
+                            title: 'Humedad Radicular',
+                            value: '${irrigation.soilMoisturePct}%',
+                            subtext: 'SMAP L4 proxy',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildNasaMetricTile(
+                            icon: Icons.speed_rounded,
+                            iconColor: const Color(0xFFE65100),
+                            bgColor: const Color(0xFFFFF3E0),
+                            title: 'Déficit 7 Días',
+                            value: '${irrigation.weeklyDeficitMm} mm',
+                            subtext: 'Balance hídrico',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildNasaMetricTile(
+                            icon: Icons.timer_outlined,
+                            iconColor: const Color(0xFF5D4037),
+                            bgColor: const Color(0xFFEFEBE9),
+                            title: 'Días hasta Estrés',
+                            value: '${irrigation.daysUntilStress} días',
+                            subtext: 'Reserva radicular',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildNasaMetricTile(
+                            icon: Icons.opacity_rounded,
+                            iconColor: const Color(0xFF2E7D32),
+                            bgColor: const Color(0xFFE8F5E9),
+                            title: 'Lámina Requerida',
+                            value: '${irrigation.recommendedWaterMm} mm',
+                            subtext: 'Riego sugerido',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: risks.severity == 'danger'
+                            ? const Color(0xFFFFEBEE)
+                            : (risks.severity == 'warning'
+                                ? const Color(0xFFFFF8E1)
+                                : const Color(0xFFE8F5E9)),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: risks.severity == 'danger'
+                              ? const Color(0xFFFFCDD2)
+                              : (risks.severity == 'warning'
+                                  ? const Color(0xFFFFECB3)
+                                  : const Color(0xFFC8E6C9)),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                risks.severity == 'danger'
+                                    ? Icons.warning_rounded
+                                    : (risks.severity == 'warning'
+                                        ? Icons.report_problem_rounded
+                                        : Icons.shield_rounded),
+                                color: risks.severity == 'danger'
+                                    ? const Color(0xFFC62828)
+                                    : (risks.severity == 'warning'
+                                        ? const Color(0xFFF57F17)
+                                        : const Color(0xFF2E7D32)),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  risks.headline,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: risks.severity == 'danger'
+                                        ? const Color(0xFFC62828)
+                                        : (risks.severity == 'warning'
+                                            ? const Color(0xFFF57F17)
+                                            : const Color(0xFF2E7D32)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            risks.mitigationAdvice,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade800),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FBF8),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_month_rounded,
+                                  color: Color(0xFF2E7D32), size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Ventana de Siembra: ${calendar.windowStatus}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${calendar.recommendedDateRange} • ${calendar.accumulatedGdd7d} GDD acumulados (estimado de floración en ~${calendar.estimatedDaysToFlowering} días).',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade700),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            calendar.thermalAdvice,
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0288D1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+                      label: const Text(
+                        'Pedir Plan Hídrico a Ivy AI',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _showIvyConsultationSheet(
+                          context,
+                          initialQuery:
+                              '¿Cómo programar el riego preventivo según los datos satelitales de NASA SMAP?',
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showIvyConsultationSheet(BuildContext context, {String? initialQuery}) {
+    final report = _getPredictionsReport();
+    final query = initialQuery ??
+        '¿Cuáles son las recomendaciones agroecológicas prioritarias para mi finca hoy?';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return _IvyChatModal(
+          initialQuery: query,
+          farmData: _dbFarm ?? {
+            'name': widget.farmName ?? 'Mi Finca',
+            'zone': widget.location ?? 'Nicaragua',
+            'total_surface': 2.5,
+            'unit': 'ha',
+          },
+          nasaData: _nasaData ?? NasaPowerService.getFallbackData(),
+          report: report,
+          graph: _farmGraph,
+          subplots: _farmSubplots,
+        );
+      },
+    );
+  }
+}
+
+// =============================================================================
+// IVY AI CHAT BOTTOM SHEET (GPT-5-MINI GROUNDED)
+// =============================================================================
+
+class _IvyChatModal extends StatefulWidget {
+  final String initialQuery;
+  final Map<String, dynamic> farmData;
+  final Map<String, dynamic> nasaData;
+  final FarmPredictionsReport report;
+  final SubplotGraph? graph;
+  final List<Map<String, dynamic>> subplots;
+
+  const _IvyChatModal({
+    required this.initialQuery,
+    required this.farmData,
+    required this.nasaData,
+    required this.report,
+    required this.graph,
+    required this.subplots,
+  });
+
+  @override
+  State<_IvyChatModal> createState() => _IvyChatModalState();
+}
+
+class _IvyChatModalState extends State<_IvyChatModal> {
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final List<Map<String, String>> _messages = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _askIvy(widget.initialQuery);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _askIvy(String userQuery) async {
+    setState(() {
+      _messages.add({'role': 'user', 'text': userQuery});
+      _isLoading = true;
+    });
+    _scrollToBottom();
+
+    try {
+      final response = await AzureAiService.askIvy(
+        userQuery: userQuery,
+        farmData: widget.farmData,
+        nasaData: widget.nasaData,
+        predictionsReport: widget.report,
+        graph: widget.graph,
+        subplots: widget.subplots,
+      );
+
+      if (mounted) {
+        setState(() {
+          _messages.add({'role': 'assistant', 'text': response});
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'text':
+                'Ocurrió un error al consultar a Ivy. Por favor intenta de nuevo.'
+          });
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.90,
+      margin: EdgeInsets.only(bottom: bottomInset),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 48,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1B5E20),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.auto_awesome_rounded,
+                        color: Colors.white, size: 24),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ivy • Copiloto Agroclimático',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E2D24),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF2E7D32),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'gpt-5-mini • Grounding NASA',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Message list
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: _messages.length + (_isLoading ? 1 : 0),
+              itemBuilder: (ctx, index) {
+                if (index == _messages.length && _isLoading) {
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F8E9),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFDCEDC8)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF2E7D32),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Ivy está analizando tus datos satelitales...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade800,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final msg = _messages[index];
+                final isUser = msg['role'] == 'user';
+
+                return Align(
+                  alignment:
+                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.82,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? const Color(0xFF1B5E20)
+                          : const Color(0xFFF7FAF7),
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(18),
+                        topRight: const Radius.circular(18),
+                        bottomLeft: isUser
+                            ? const Radius.circular(18)
+                            : const Radius.circular(4),
+                        bottomRight: isUser
+                            ? const Radius.circular(4)
+                            : const Radius.circular(18),
+                      ),
+                      border: isUser
+                          ? null
+                          : Border.all(color: const Color(0xFFE0E0E0)),
+                    ),
+                    child: Text(
+                      msg['text'] ?? '',
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: isUser ? Colors.white : const Color(0xFF1E2D24),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Quick Chips
+          SizedBox(
+            height: 38,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildQuickChip('🌾 ¿Qué rotación me conviene?'),
+                _buildQuickChip('💧 ¿Cuánta agua regar?'),
+                _buildQuickChip('⚡ ¿Hay alertas climáticas?'),
+                _buildQuickChip('🧪 ¿Aporte de nitrógeno?'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Input field
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Colors.grey.shade200),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    textInputAction: TextInputAction.send,
+                    decoration: InputDecoration(
+                      hintText: 'Pregunta a Ivy sobre tu finca...',
+                      hintStyle: TextStyle(
+                          fontSize: 13, color: Colors.grey.shade500),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      filled: true,
+                      fillColor: const Color(0xFFF1F6F2),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onSubmitted: (text) {
+                      final q = text.trim();
+                      if (q.isNotEmpty && !_isLoading) {
+                        _controller.clear();
+                        _askIvy(q);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  icon: const Icon(Icons.send_rounded,
+                      color: Color(0xFF1B5E20)),
+                  onPressed: () {
+                    final q = _controller.text.trim();
+                    if (q.isNotEmpty && !_isLoading) {
+                      _controller.clear();
+                      _askIvy(q);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickChip(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        backgroundColor: const Color(0xFFEAF5EC),
+        side: const BorderSide(color: Color(0xFFC8E6C9)),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF1B5E20),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        onPressed: _isLoading
+            ? null
+            : () {
+                _askIvy(label);
+              },
       ),
     );
   }
