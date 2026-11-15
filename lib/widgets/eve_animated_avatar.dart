@@ -2027,6 +2027,7 @@ class _EveDuolingoConversationStageState
     );
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Container(
       width: double.infinity,
@@ -2034,7 +2035,11 @@ class _EveDuolingoConversationStageState
         16,
         4,
         12,
-        widget.showEveStage ? (widget.isNormalChatFolded ? 20 : 10) : 6,
+        widget.showEveStage
+            ? (widget.isNormalChatFolded
+                ? (isKeyboardOpen ? 8 : 16)
+                : 10)
+            : 6,
       ),
       decoration: BoxDecoration(
         gradient: widget.showEveStage
@@ -2253,8 +2258,9 @@ class _EveDuolingoConversationStageState
                                 children: [
                                   ConstrainedBox(
                                     constraints: BoxConstraints(
-                                      maxHeight:
-                                          widget.isNormalChatFolded ? 200 : 145,
+                                      maxHeight: widget.isNormalChatFolded
+                                          ? (isKeyboardOpen ? 120 : 200)
+                                          : (isKeyboardOpen ? 80 : 145),
                                     ),
                                     child: SingleChildScrollView(
                                       child: Text(
@@ -2430,8 +2436,12 @@ class _EveDuolingoConversationStageState
               ),
             ),
 
-            // Increased distance between speech bubble and Eve when normal chat is folded
-            SizedBox(height: widget.isNormalChatFolded ? 18 : 4),
+            // Distance between speech bubble and Eve
+            SizedBox(
+              height: widget.isNormalChatFolded
+                  ? (isKeyboardOpen ? 8 : 16)
+                  : 4,
+            ),
 
             // Centered Large Eve Walking In & Growing Larger (Elevated higher when chat is folded)
             AnimatedBuilder(
@@ -2442,15 +2452,21 @@ class _EveDuolingoConversationStageState
                 final dx = (1.0 - v) * 115.0;
                 final dy = (1.0 - v) * 18.0;
                 final scale = 0.45 + (0.55 * v);
-                final avatarHeight = widget.isNormalChatFolded ? 132.0 : 102.0;
-                final avatarSize = widget.isNormalChatFolded ? 118.0 : 96.0;
+                final avatarHeight = isKeyboardOpen
+                    ? 60.0
+                    : (widget.isNormalChatFolded ? 124.0 : 98.0);
+                final avatarSize = isKeyboardOpen
+                    ? 54.0
+                    : (widget.isNormalChatFolded ? 110.0 : 92.0);
 
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 280),
                   curve: Curves.easeOutCubic,
                   height: avatarHeight,
                   margin: EdgeInsets.only(
-                    bottom: widget.isNormalChatFolded ? 36.0 : 0.0,
+                    bottom: (widget.isNormalChatFolded && !isKeyboardOpen)
+                        ? 16.0
+                        : 0.0,
                   ),
                   child: Center(
                     child: Transform.translate(
@@ -2606,7 +2622,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
-  bool _isNormalChatFolded = false;
+  late bool _isNormalChatFolded;
 
   late final AnimationController _foldController;
   late final Animation<double> _foldCurve;
@@ -2624,15 +2640,18 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
   @override
   void initState() {
     super.initState();
+    final initialShowEve = AppSettings.showEve.value;
+    _isNormalChatFolded = initialShowEve;
     _foldController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 420),
-      value: 1.0, // 1.0 = normal chat unfolded, 0.0 = normal chat folded
+      value: initialShowEve ? 0.0 : 1.0, // 0.0 = folded when Eve is shown, 1.0 = unfolded when Eve is disabled
     );
     _foldCurve = CurvedAnimation(
       parent: _foldController,
       curve: Curves.easeInOutCubic,
     );
+    AppSettings.showEve.addListener(_onShowEveSettingChanged);
 
     _farmData = widget.farmData ??
         {
@@ -2658,10 +2677,24 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
 
   @override
   void dispose() {
+    AppSettings.showEve.removeListener(_onShowEveSettingChanged);
     _foldController.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onShowEveSettingChanged() {
+    if (!mounted) return;
+    final show = AppSettings.showEve.value;
+    setState(() {
+      _isNormalChatFolded = show;
+      if (show) {
+        _foldController.value = 0.0;
+      } else {
+        _foldController.value = 1.0;
+      }
+    });
   }
 
   void _toggleFoldNormalChat() {
@@ -2948,19 +2981,25 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  EveDuolingoConversationStage(
-                    title: s.kIvyCopilotTitle,
-                    subtitle: cropsSubtitle,
-                    speechBubbleText: _getLatestEveSpeechText(s),
-                    isLoading: _isLoading,
-                    loadingText: s.kIvyAnalyzingScenario,
-                    onClose: () => Navigator.pop(context),
-                    showEveStage: showEve,
-                    isNormalChatFolded: effectiveFolded,
-                    onToggleFoldChat: showEve ? _toggleFoldNormalChat : null,
-                    registeredCrops: _registeredCrops,
-                    selectedCropFilter: _selectedCropFilter,
-                    onCropFilterChanged: _onCropFilterSelected,
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: EveDuolingoConversationStage(
+                        title: s.kIvyCopilotTitle,
+                        subtitle: cropsSubtitle,
+                        speechBubbleText: _getLatestEveSpeechText(s),
+                        isLoading: _isLoading,
+                        loadingText: s.kIvyAnalyzingScenario,
+                        onClose: () => Navigator.pop(context),
+                        showEveStage: showEve,
+                        isNormalChatFolded: effectiveFolded,
+                        onToggleFoldChat: showEve ? _toggleFoldNormalChat : null,
+                        registeredCrops: _registeredCrops,
+                        selectedCropFilter: _selectedCropFilter,
+                        onCropFilterChanged: _onCropFilterSelected,
+                      ),
+                    ),
                   ),
                   Divider(
                     height: 1,

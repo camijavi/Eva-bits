@@ -776,6 +776,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
             value: effectiveValue,
             isExpanded: true,
             itemHeight: 52,
+            menuMaxHeight: 260,
+            elevation: 4,
             icon: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -2582,6 +2584,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
+                        menuMaxHeight: 260,
                         initialValue: tempCrop,
                         dropdownColor: AppColors.getCardBg(ctx),
                         decoration: InputDecoration(
@@ -2636,6 +2639,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
+                        menuMaxHeight: 260,
                         dropdownColor: AppColors.getCardBg(ctx),
                         initialValue: soilOptionsLocalized.firstWhere(
                           (item) => item['key']!
