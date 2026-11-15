@@ -143,10 +143,8 @@ class CustomBottomNavBar extends StatelessWidget {
               );
             } else if (index == 4) {
               Navigator.of(context).push(
-                createBottomNavPageRoute(
-                  const SettingsScreen(),
-                  fromLeft: false,
-                  animationType: animationType,
+                CupertinoPageRoute(
+                  builder: (_) => const SettingsScreen(),
                 ),
               );
             }

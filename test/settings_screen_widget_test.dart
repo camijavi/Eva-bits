@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_eva_bits/screens/dashboard_screen.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_eva_bits/screens/farm_info.dart';
 import 'package:flutter_eva_bits/screens/settings_screen.dart';
 import 'package:flutter_eva_bits/services/app_settings.dart';
 import 'package:flutter_eva_bits/languages/app_strings.dart';
+import 'package:flutter_eva_bits/widgets/bottom_nav_bar.dart';
 import 'package:flutter_eva_bits/widgets/new_edit_plot.dart';
 
 void main() {
@@ -171,7 +173,7 @@ void main() {
     expect(AppSettings.getTemperatureUnitShort(), '°C');
   });
 
-  testWidgets('Dashboard settings icon navigates to SettingsScreen', (WidgetTester tester) async {
+  testWidgets('Dashboard settings icon navigates to SettingsScreen with bottom nav hidden', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: DashboardScreen(),
@@ -181,14 +183,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+    expect(find.byType(CustomBottomNavBar), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
 
     expect(find.byType(SettingsScreen), findsOneWidget);
+    // Bottom nav bar is hidden on screens not linked to it
+    expect(find.byType(CustomBottomNavBar), findsNothing);
+
+    // Tapping back button pops back to Dashboard and restores bottom nav bar
+    await tester.tap(find.byIcon(CupertinoIcons.chevron_back));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DashboardScreen), findsOneWidget);
+    expect(find.byType(CustomBottomNavBar), findsOneWidget);
   });
 
-  testWidgets('CustomBottomNavBar index 4 ("Más") navigates to SettingsScreen', (WidgetTester tester) async {
+  testWidgets('CustomBottomNavBar index 4 ("Más") navigates to SettingsScreen with bottom nav hidden', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: DashboardScreen(),
@@ -200,11 +212,14 @@ void main() {
     final s = AppLanguage.strings;
 
     expect(find.text(s.kNavMore), findsOneWidget);
+    expect(find.byType(CustomBottomNavBar), findsOneWidget);
 
     await tester.tap(find.text(s.kNavMore));
     await tester.pumpAndSettle();
 
     expect(find.byType(SettingsScreen), findsOneWidget);
+    // Bottom nav bar is hidden on screens not linked to it
+    expect(find.byType(CustomBottomNavBar), findsNothing);
   });
 
   testWidgets('Language switcher is removed from FarmInfoDetailScreen', (WidgetTester tester) async {

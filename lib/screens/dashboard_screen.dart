@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
@@ -188,9 +189,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 tooltip: s.kSettingsTitle,
                 onPressed: () {
                   Navigator.of(context).push(
-                    createBottomNavPageRoute(
-                      const SettingsScreen(),
-                      fromLeft: false,
+                    CupertinoPageRoute(
+                      builder: (_) => const SettingsScreen(),
                     ),
                   );
                 },
@@ -354,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 onPressed: () async {
                   await Navigator.of(context).push(
-                    MaterialPageRoute(
+                    CupertinoPageRoute(
                       builder: (_) => const FarmInfoDetailScreen(),
                     ),
                   );

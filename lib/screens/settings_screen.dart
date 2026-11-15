@@ -1,7 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
-import '../widgets/bottom_nav_bar.dart';
 import 'dashboard_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -85,7 +85,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
-              bottomNavigationBar: const CustomBottomNavBar(currentIndex: 4),
             );
           },
         );
@@ -105,9 +104,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.of(context).pop();
             } else {
               Navigator.of(context).pushReplacement(
-                createBottomNavPageRoute(
-                  const DashboardScreen(),
-                  fromLeft: true,
+                CupertinoPageRoute(
+                  builder: (_) => const DashboardScreen(),
                 ),
               );
             }
@@ -130,9 +128,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             child: const Icon(
-              Icons.arrow_back_rounded,
+              CupertinoIcons.chevron_back,
               color: Color(0xFF0F5A37),
-              size: 24,
+              size: 22,
             ),
           ),
         ),

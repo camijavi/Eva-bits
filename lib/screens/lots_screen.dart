@@ -73,7 +73,8 @@ class _LotsScreenState extends State<LotsScreen> {
       final latestFarm = await DatabaseManager().getLatestFarm();
       if (latestFarm != null) {
         _farmId = latestFarm['id'] as int?;
-        _surfaceUnit = latestFarm['surface_unit']?.toString() ?? AppSettings.getSurfaceUnitShort();
+        _surfaceUnit = latestFarm['surface_unit']?.toString() ??
+            AppSettings.getSurfaceUnitShort();
       } else {
         _farmId = await DatabaseManager().getOrCreateDefaultFarmId();
         _surfaceUnit = AppSettings.getSurfaceUnitShort();
@@ -83,7 +84,8 @@ class _LotsScreenState extends State<LotsScreen> {
         await DatabaseManager().seedInitialLotsIfEmpty(_farmId!);
       }
 
-      final lots = await DatabaseManager().getAllLotsWithSubplots(farmId: _farmId);
+      final lots = await DatabaseManager().getAllLotsWithSubplots(
+          farmId: _farmId);
 
       if (mounted) {
         setState(() {
@@ -108,7 +110,8 @@ class _LotsScreenState extends State<LotsScreen> {
         final surface = (lot['surface'] ?? '').toString().toLowerCase();
         final subplots = (lot['subplots'] as List<dynamic>?) ?? [];
         final hasMatchingSubplot = subplots.any((sub) =>
-            (sub['name'] ?? '').toString().toLowerCase().contains(_searchQuery));
+            (sub['name'] ?? '').toString().toLowerCase().contains(
+                _searchQuery));
 
         return name.contains(_searchQuery) ||
             surface.contains(_searchQuery) ||
@@ -139,7 +142,7 @@ class _LotsScreenState extends State<LotsScreen> {
         }).toList();
         break;
       case LotFilterPriority.all:
-        // Keep default order (by id)
+      // Keep default order (by id)
         break;
     }
 
@@ -197,41 +200,40 @@ class _LotsScreenState extends State<LotsScreen> {
               color: AppColors.primary,
               child: _isLoading
                   ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              )
                   : SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTopBar(context, s),
-                          const SizedBox(height: 12),
-                          _buildTitleAndSubtitle(s),
-                          const SizedBox(height: 16),
-                          _buildSearchField(s),
-                          const SizedBox(height: 20),
-                          _buildPriorityFilterSection(s),
-                          const SizedBox(height: 20),
-                          _buildQuickSummaryCard(s),
-                          const SizedBox(height: 24),
-                          _buildRegisteredLotsHeader(s, filteredLots.length),
-                          const SizedBox(height: 12),
-                          if (filteredLots.isEmpty)
-                            _buildEmptyState(s)
-                          else
-                            ...filteredLots.map((lot) => _buildLotCard(s, lot)),
-                          const SizedBox(height: 20),
-                          _buildBottomActionButton(s),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTopBar(context, s),
+                    const SizedBox(height: 12),
+                    _buildTitleAndSubtitle(s),
+                    const SizedBox(height: 16),
+                    _buildSearchField(s),
+                    const SizedBox(height: 20),
+                    _buildPriorityFilterSection(s),
+                    const SizedBox(height: 20),
+                    _buildQuickSummaryCard(s),
+                    const SizedBox(height: 24),
+                    _buildRegisteredLotsHeader(s, filteredLots.length),
+                    const SizedBox(height: 12),
+                    if (filteredLots.isEmpty)
+                      _buildEmptyState(s)
+                    else
+                      ...filteredLots.map((lot) => _buildLotCard(s, lot)),
+                    const SizedBox(height: 20),
+
+                  ],
+                ),
+              ),
             ),
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
@@ -381,12 +383,12 @@ class _LotsScreenState extends State<LotsScreen> {
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear_rounded, color: Colors.grey),
-                  onPressed: () {
-                    _searchController.clear();
-                    _searchFocusNode.unfocus();
-                  },
-                )
+            icon: const Icon(Icons.clear_rounded, color: Colors.grey),
+            onPressed: () {
+              _searchController.clear();
+              _searchFocusNode.unfocus();
+            },
+          )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -418,25 +420,34 @@ class _LotsScreenState extends State<LotsScreen> {
               _buildFilterChip(
                 label: s.kFilterAll,
                 isSelected: _selectedPriority == LotFilterPriority.all,
-                onTap: () => setState(() => _selectedPriority = LotFilterPriority.all),
+                onTap: () =>
+                    setState(() => _selectedPriority = LotFilterPriority.all),
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
                 label: s.kFilterLargest,
-                isSelected: _selectedPriority == LotFilterPriority.largestSurface,
-                onTap: () => setState(() => _selectedPriority = LotFilterPriority.largestSurface),
+                isSelected: _selectedPriority ==
+                    LotFilterPriority.largestSurface,
+                onTap: () =>
+                    setState(() =>
+                _selectedPriority = LotFilterPriority.largestSurface),
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
                 label: s.kFilterSmallest,
-                isSelected: _selectedPriority == LotFilterPriority.smallestSurface,
-                onTap: () => setState(() => _selectedPriority = LotFilterPriority.smallestSurface),
+                isSelected: _selectedPriority ==
+                    LotFilterPriority.smallestSurface,
+                onTap: () =>
+                    setState(() =>
+                _selectedPriority = LotFilterPriority.smallestSurface),
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
                 label: s.kFilterWithSubplots,
                 isSelected: _selectedPriority == LotFilterPriority.withSubplots,
-                onTap: () => setState(() => _selectedPriority = LotFilterPriority.withSubplots),
+                onTap: () =>
+                    setState(() =>
+                _selectedPriority = LotFilterPriority.withSubplots),
               ),
             ],
           ),
@@ -463,17 +474,18 @@ class _LotsScreenState extends State<LotsScreen> {
           color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFF1F5F2),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFE2E8F0),
+            color: isSelected ? const Color(0xFF0F5A37) : const Color(
+                0xFFE2E8F0),
             width: 1.2,
           ),
           boxShadow: isSelected
               ? [
-                  BoxShadow(
-                    color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
+            BoxShadow(
+              color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ]
               : null,
         ),
         child: Text(
@@ -602,7 +614,8 @@ class _LotsScreenState extends State<LotsScreen> {
     final subplotsCount = subplots.length;
 
     final subplotsInfo = subplotsCount > 0
-        ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s.kSubplotsCount}'
+        ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s
+        .kSubplotsCount}'
         : null;
 
     final detailsText = subplotsInfo != null
@@ -777,42 +790,6 @@ class _LotsScreenState extends State<LotsScreen> {
               label: Text(s.kAddNewLot),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBottomActionButton(AppStrings s) {
-    // Large bottom pill button matching the screenshot's green "Comparar rotaciones" button
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0F5A37),
-          foregroundColor: Colors.white,
-          elevation: 2,
-          shadowColor: const Color(0xFF0F5A37).withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-        ),
-        onPressed: _openAddLotModal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add_rounded, color: Colors.white, size: 22),
-            const SizedBox(width: 8),
-            Text(
-              s.kAddNewLot,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
