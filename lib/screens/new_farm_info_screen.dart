@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import '../constants/agricultural_locations.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
@@ -79,6 +80,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   bool _isGettingLocation = false;
   bool _isSaving = false;
   bool _isCheckingExistingFarm = true;
+  String? _selectedLocationId;
+  bool _isCustomLocation = false;
 
   SurfaceUnit _selectedUnit = SurfaceUnit.hectares;
   final List<LotItem> _lots = [];
@@ -87,7 +90,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   void initState() {
     super.initState();
     _farmNameController = TextEditingController();
-    _countryController = TextEditingController();
+    final defaultPreset = AgriculturalLocation.presets.first;
+    _selectedLocationId = defaultPreset.id;
+    _countryController = TextEditingController(text: defaultPreset.displayName);
+    _latitude = defaultPreset.latitude;
+    _longitude = defaultPreset.longitude;
     _totalSurfaceController = TextEditingController();
     _lotsCountController = TextEditingController(text: '0');
 
@@ -665,8 +672,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _countryController,
+                  DropdownButtonFormField<String>(
+                    value: _selectedLocationId,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: s.kCountryLabel,
                       hintText: s.kCountryHint,
@@ -675,13 +683,67 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return s.kFieldRequired;
-                      }
-                      return null;
+                    items: [
+                      ...AgriculturalLocation.presets.map((loc) {
+                        return DropdownMenuItem<String>(
+                          value: loc.id,
+                          child: Text(
+                            loc.displayName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        );
+                      }),
+                      const DropdownMenuItem<String>(
+                        value: AgriculturalLocation.customId,
+                        child: Text(
+                          '🌐 Otra región / Coordenadas mundiales',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val == null) return;
+                      setState(() {
+                        _selectedLocationId = val;
+                        if (val == AgriculturalLocation.customId) {
+                          _isCustomLocation = true;
+                          _countryController.clear();
+                        } else {
+                          _isCustomLocation = false;
+                          final loc = AgriculturalLocation.presets
+                              .firstWhere((p) => p.id == val);
+                          _countryController.text = loc.displayName;
+                          _latitude = loc.latitude;
+                          _longitude = loc.longitude;
+                        }
+                      });
                     },
                   ),
+                  if (_isCustomLocation) ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _countryController,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre de país / estado / región',
+                        hintText: 'Ej. USA, Iowa / España, Sevilla / Brasil',
+                        prefixIcon: const Icon(Icons.edit_location_alt_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return s.kFieldRequired;
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   // GPS Farm Location Card (Automatic & Current GPS)
                   Container(

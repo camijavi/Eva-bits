@@ -1,17 +1,23 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../constants/agricultural_locations.dart';
 
 class NasaPowerService {
   static const String _baseUrl = 'https://power.larc.nasa.gov/api/temporal/daily/point';
 
-  /// Coordinates for standard agricultural regions in Nicaragua (presets)
+  /// Coordinates for standard agricultural regions across Nicaragua, USA, and globally.
   static final Map<String, Map<String, double>> knownRegions = {
-    'Estelí': {'lat': 13.0910, 'lon': -86.3538},
-    'Matagalpa': {'lat': 12.9256, 'lon': -85.9175},
-    'Jinotega': {'lat': 13.0905, 'lon': -86.0028},
-    'León': {'lat': 12.4379, 'lon': -86.8780},
-    'Chinandega': {'lat': 12.6294, 'lon': -87.1311},
-    'Rivas': {'lat': 11.4372, 'lon': -85.8263},
+    for (final loc in AgriculturalLocation.presets)
+      loc.region: {'lat': loc.latitude, 'lon': loc.longitude},
+    for (final loc in AgriculturalLocation.presets)
+      loc.displayName: {'lat': loc.latitude, 'lon': loc.longitude},
+    // Country fallback centroids
+    'Nicaragua': {'lat': 13.0910, 'lon': -86.3538},
+    'United States': {'lat': 41.8780, 'lon': -93.0977},
+    'USA': {'lat': 41.8780, 'lon': -93.0977},
+    'EEUU': {'lat': 41.8780, 'lon': -93.0977},
+    'México': {'lat': 20.6597, 'lon': -103.3496},
+    'Colombia': {'lat': 4.5350, 'lon': -75.6757},
   };
 
   /// Fetches recent agro-climatology data from NASA POWER API.
