@@ -847,14 +847,14 @@ class _LotMapScreenState extends State<LotMapScreen> {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF4A3525),
-            offset: _isIsometricView ? const Offset(-8, 16) : const Offset(0, 8),
+            offset: _isIsometricView ? const Offset(-14, 14) : const Offset(0, 8),
             blurRadius: 0,
             spreadRadius: 2,
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            offset: _isIsometricView ? const Offset(-12, 28) : const Offset(0, 16),
-            blurRadius: 24,
+            color: Colors.black.withValues(alpha: 0.22),
+            offset: _isIsometricView ? const Offset(-22, 22) : const Offset(0, 16),
+            blurRadius: 20,
             spreadRadius: 4,
           ),
         ],
@@ -898,13 +898,45 @@ class _LotMapScreenState extends State<LotMapScreen> {
     );
 
     if (_isIsometricView) {
-      return Transform(
+      return Stack(
         alignment: Alignment.center,
-        transform: Matrix4.identity()
-          ..setEntry(3, 2, 0.0012)
-          ..rotateX(0.78)
-          ..rotateZ(-0.62),
-        child: parcelGrid,
+        children: [
+          // Baseplate pedestal tray (matches 2.5D diorama reference)
+          Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..rotateX(1.04719755) // 60 degrees tilt for 2:1 isometric ratio
+              ..rotateZ(-0.78539816), // -45 degrees (-pi / 4)
+            child: Container(
+              width: 356,
+              height: 356,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F4F1),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: const Color(0xFFCFDCD2),
+                  width: 2.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    offset: const Offset(-18, 18),
+                    blurRadius: 24,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Main elevated terrain slab
+          Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..rotateX(1.04719755) // 60 degrees tilt for 2:1 isometric ratio
+              ..rotateZ(-0.78539816), // -45 degrees (-pi / 4)
+            child: parcelGrid,
+          ),
+        ],
       );
     }
 
@@ -1095,29 +1127,62 @@ class _LotMapScreenState extends State<LotMapScreen> {
     return Positioned.fill(
       child: IgnorePointer(
         child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.all(3),
+          child: Stack(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  8,
-                  (i) => Icon(
-                    Icons.park_rounded,
-                    size: 16,
-                    color: const Color(0xFF1B4D20).withValues(alpha: 0.8),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    8,
+                    (i) => Icon(
+                      Icons.park_rounded,
+                      size: 14,
+                      color: const Color(0xFF1B4D20).withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  8,
-                  (i) => Icon(
-                    Icons.park_rounded,
-                    size: 16,
-                    color: const Color(0xFF1B4D20).withValues(alpha: 0.8),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    8,
+                    (i) => Icon(
+                      Icons.park_rounded,
+                      size: 14,
+                      color: const Color(0xFF1B4D20).withValues(alpha: 0.75),
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    6,
+                    (i) => Icon(
+                      Icons.park_rounded,
+                      size: 14,
+                      color: const Color(0xFF1B4D20).withValues(alpha: 0.75),
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    6,
+                    (i) => Icon(
+                      Icons.park_rounded,
+                      size: 14,
+                      color: const Color(0xFF1B4D20).withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
               ),
@@ -1209,7 +1274,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Transform.rotate(
-            angle: _isIsometricView ? -0.62 : 0,
+            angle: _isIsometricView ? -0.785398 : 0,
             child: const Icon(
               Icons.navigation_rounded,
               size: 16,
@@ -1494,18 +1559,17 @@ class _LotMapScreenState extends State<LotMapScreen> {
 class _FieldTexturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF235325).withValues(alpha: 0.5)
+    final gridPaint = Paint()
+      ..color = const Color(0xFF388E3C).withValues(alpha: 0.28)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    const step = 14.0;
-    for (double x = 0; x < size.width * 2; x += step) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x - size.height, size.height),
-        paint,
-      );
+    const step = 20.0;
+    for (double x = 0; x <= size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = 0; y <= size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
   }
 
