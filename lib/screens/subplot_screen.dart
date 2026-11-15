@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/crop_types.dart';
@@ -8,6 +9,7 @@ import '../services/app_settings.dart';
 import '../widgets/crop_picker_sheet.dart';
 import '../widgets/new_edit_plot.dart';
 import '../widgets/new_edit_subplot.dart';
+import 'lot_map_screen.dart';
 
 class SubplotScreen extends StatefulWidget {
   final Map<String, dynamic> lot;
@@ -153,6 +155,17 @@ class _SubplotScreenState extends State<SubplotScreen> {
     );
   }
 
+  void _openLotMapScreen() {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => LotMapScreen(
+          lot: _currentLot,
+          surfaceUnit: _surfaceUnit,
+        ),
+      ),
+    ).then((_) => _loadSubplots());
+  }
+
   Future<void> _pickCropForLot(AppStrings s) async {
     final result = await showCropPickerModal(
       context,
@@ -240,6 +253,11 @@ class _SubplotScreenState extends State<SubplotScreen> {
             ),
             actions: [
               IconButton(
+                icon: const Icon(Icons.view_in_ar_rounded, color: Colors.white),
+                tooltip: 'Ver Mapa 2.5D del Lote',
+                onPressed: _openLotMapScreen,
+              ),
+              IconButton(
                 icon: const Icon(Icons.edit_outlined, color: Colors.white),
                 tooltip: s.kEditLot,
                 onPressed: _openEditLotModal,
@@ -266,7 +284,9 @@ class _SubplotScreenState extends State<SubplotScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildLotHeroCard(s),
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 16),
+                          _buildInteractiveMapBanner(s),
+                          const SizedBox(height: 20),
                           _buildSubplotsHeader(s),
                           const SizedBox(height: 14),
                           if (_subplots.isEmpty)
@@ -474,6 +494,91 @@ class _SubplotScreenState extends State<SubplotScreen> {
             _buildSoilCompositionSection(s),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildInteractiveMapBanner(AppStrings s) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F5A37),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: _openLotMapScreen,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.view_in_ar_rounded,
+                      color: Color(0xFFFFD600), // Vibrant gold accent
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Mapa 2.5D del Lote',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Vista aérea interactiva, cultivos y vecinos',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD600),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Ver Mapa',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B2E1C),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

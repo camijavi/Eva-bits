@@ -5,6 +5,7 @@ import '../constants/soil_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
+import '../services/subplot_graph_service.dart';
 import 'crop_picker_sheet.dart';
 
 /// Shows a bottom sheet modal to either create a new subplot or edit an existing subplot.
@@ -68,6 +69,12 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
   String? _selectedCrop;
   bool _isSaving = false;
 
+  // Graph Adjacencies State
+  List<Map<String, dynamic>> _candidateNeighbors = [];
+  int? _selectedNeighborId;
+  String _selectedRelationshipType = SubplotRelationshipType.neighbor;
+  bool _isLoadingNeighbors = true;
+
   @override
   void initState() {
     super.initState();
@@ -81,6 +88,42 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
     final isValid = SoilTypes.all.any((s) => s.key == initialSoil);
     _selectedSoilType = isValid ? initialSoil : 'arenoso';
     _selectedCrop = widget.subplot?['crop']?.toString();
+    _loadNeighbors();
+  }
+
+  Future<void> _loadNeighbors() async {
+    try {
+      final list = await DatabaseManager().getCandidateNeighbors(widget.lotId);
+      final currentId = widget.subplot?['id'] as int?;
+      final candidates = list.where((s) => s['id'] != currentId).toList();
+
+      int? existingNeighborId;
+      String existingRelType = SubplotRelationshipType.neighbor;
+
+      if (currentId != null) {
+        final adjacencies =
+            await DatabaseManager().getSubplotAdjacencies(currentId);
+        if (adjacencies.isNotEmpty) {
+          existingNeighborId = adjacencies.first['target_subplot_id'] as int?;
+          existingRelType =
+              adjacencies.first['relationship_type']?.toString() ??
+                  SubplotRelationshipType.neighbor;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _candidateNeighbors = candidates;
+          _selectedNeighborId = existingNeighborId;
+          _selectedRelationshipType = existingRelType;
+          _isLoadingNeighbors = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingNeighbors = false);
+      }
+    }
   }
 
   @override
@@ -132,6 +175,18 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
 
         await DatabaseManager().updateSubplot(subplotMap);
 
+        // Update Graph Adjacency
+        final currentId = widget.subplot!['id'] as int;
+        if (_selectedNeighborId != null) {
+          await DatabaseManager().setSubplotNeighbor(
+            currentId,
+            _selectedNeighborId!,
+            relationshipType: _selectedRelationshipType,
+          );
+        } else {
+          await DatabaseManager().clearSubplotNeighbors(currentId);
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -148,13 +203,22 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
           );
         }
       } else {
-        await DatabaseManager().insertSubplot({
+        final newSubplotId = await DatabaseManager().insertSubplot({
           'lot_id': widget.lotId,
           'name': nameVal,
           'surface': surfaceVal,
           'soil_type': _selectedSoilType,
           'crop': _selectedCrop,
         });
+
+        // Insert Graph Adjacency if selected
+        if (_selectedNeighborId != null && newSubplotId > 0) {
+          await DatabaseManager().addSubplotNeighbor(
+            newSubplotId,
+            _selectedNeighborId!,
+            relationshipType: _selectedRelationshipType,
+          );
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -573,6 +637,10 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               ),
               const SizedBox(height: 8),
               _buildCropSelector(s),
+              const SizedBox(height: 20),
+
+              // Graph Topology: Neighbor Subplot Selector
+              _buildNeighborSelector(s),
               const SizedBox(height: 26),
 
               // Action Buttons
@@ -746,6 +814,238 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNeighborSelector(AppStrings s) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAF8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF5EC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.hub_outlined,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  '¿Con cuál otro sublote colinda este terreno?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B2E1C),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Enlazar parcelas vecinas permite al motor analítico y a Ivy evaluar barreras biológicas, escorrentía y evitar corredores de plagas.',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_isLoadingNeighbors)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            )
+          else if (_candidateNeighbors.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'No hay otros sublotes creados todavía. Al agregar más parcelas, podrás conectarlas aquí.',
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            DropdownButtonFormField<int?>(
+              value: _selectedNeighborId,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Sublote vecino',
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(
+                  Icons.grid_view_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+              ),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text(
+                    'Ninguno (Sublote aislado / sin colindancia)',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                ..._candidateNeighbors.map((candidate) {
+                  final id = candidate['id'] as int;
+                  final name = candidate['name']?.toString() ?? 'Sublote #$id';
+                  final crop = candidate['crop']?.toString() ?? 'Sin cultivo';
+                  final lotName = candidate['lot_name']?.toString();
+                  final label = lotName != null
+                      ? '$name ($crop • $lotName)'
+                      : '$name ($crop)';
+
+                  return DropdownMenuItem<int?>(
+                    value: id,
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B2E1C),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }),
+              ],
+              onChanged: (val) {
+                setState(() {
+                  _selectedNeighborId = val;
+                });
+              },
+            ),
+            if (_selectedNeighborId != null) ...[
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedRelationshipType,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: 'Tipo de colindancia',
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(
+                    Icons.alt_route_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem<String>(
+                    value: SubplotRelationshipType.neighbor,
+                    child: Text(
+                      SubplotRelationshipType.getLabel(
+                          SubplotRelationshipType.neighbor),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: SubplotRelationshipType.downhillFlow,
+                    child: Text(
+                      SubplotRelationshipType.getLabel(
+                          SubplotRelationshipType.downhillFlow),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: SubplotRelationshipType.bufferProtected,
+                    child: Text(
+                      SubplotRelationshipType.getLabel(
+                          SubplotRelationshipType.bufferProtected),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedRelationshipType = val;
+                    });
+                  }
+                },
+              ),
+            ],
+          ],
+        ],
       ),
     );
   }
