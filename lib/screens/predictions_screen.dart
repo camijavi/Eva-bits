@@ -366,7 +366,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               ),
             ],
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: EveFloatingLauncherButton(
             tooltip: s.kAskIvyTooltip,
             farmData: _farm,

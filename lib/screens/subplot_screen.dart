@@ -7,6 +7,7 @@ import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
 import '../widgets/crop_picker_sheet.dart';
+import '../widgets/eve_animated_avatar.dart';
 import '../widgets/new_edit_plot.dart';
 import '../widgets/new_edit_subplot.dart';
 import 'lot_map_screen.dart';
@@ -299,14 +300,11 @@ class _SubplotScreenState extends State<SubplotScreen> {
                     ),
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: const Color(0xFF0F5A37),
-            foregroundColor: Colors.white,
-            elevation: 4,
-            shape: const CircleBorder(),
-            tooltip: s.kAddNewSubplot,
-            onPressed: _openAddSubplotModal,
-            child: const Icon(Icons.add_rounded, size: 28),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: EveFloatingLauncherButton(
+            tooltip: s.kAskIvyTooltip,
+            onAddPressed: _openAddSubplotModal,
+            addTooltip: s.kAddNewSubplot,
           ),
         );
       },

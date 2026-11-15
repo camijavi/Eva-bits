@@ -252,28 +252,11 @@ class _LotsScreenState extends State<LotsScreen> {
               ),
             ),
           ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                EveFloatingLauncherButton(
-                  tooltip: s.kAskIvyTooltip,
-                ),
-                FloatingActionButton(
-                  backgroundColor: const Color(0xFF0F5A37),
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shape: const CircleBorder(),
-                  tooltip: s.kAddLot,
-                  onPressed: _openAddLotModal,
-                  child: const Icon(Icons.add_rounded, size: 28),
-                ),
-              ],
-            ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: EveFloatingLauncherButton(
+            tooltip: s.kAskIvyTooltip,
+            onAddPressed: _openAddLotModal,
+            addTooltip: s.kAddLot,
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
         );

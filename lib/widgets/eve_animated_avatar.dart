@@ -1,12 +1,13 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
-import '../models/subplot_graph_model.dart';
 import '../services/agro_prediction_engine.dart';
 import '../services/app_settings.dart';
 import '../services/azure_ai_service.dart';
 import '../services/nasa_power_service.dart';
+import '../services/subplot_graph_service.dart';
 
 enum EveEmote {
   calm,       // Tranquila y de vez en cuando saluda
@@ -36,6 +37,305 @@ class EveAnimatedAvatar extends StatefulWidget {
     this.respectVisibilitySetting = false,
     this.isWalking = false,
   });
+
+  /// Evaluates the message content given to the farmer and selects the most
+  /// appropriate [EveEmote] so Eve's body language matches what she is saying.
+  static EveEmote evaluateEmoteFromContent(
+    String content, {
+    bool isLoading = false,
+  }) {
+    if (isLoading) {
+      return EveEmote.surprised;
+    }
+
+    final text = content.trim().toLowerCase();
+    if (text.isEmpty) {
+      return EveEmote.calm;
+    }
+
+    final Map<EveEmote, int> scores = {
+      for (final e in EveEmote.values) e: 0,
+    };
+
+    void addScore(EveEmote emote, int points, List<String> keywords) {
+      for (final kw in keywords) {
+        if (text.contains(kw)) {
+          scores[emote] = (scores[emote] ?? 0) + points;
+        }
+      }
+    }
+
+    // 1. Greeting / Welcome
+    addScore(EveEmote.greeting, 5, [
+      'soy eve',
+      'tu ayudante de campo',
+      'tu guía agrícola',
+      'puedes preguntarme con confianza',
+      'qué te gustaría revisar hoy',
+      'i am eve',
+      'your field helper',
+      'what would you like to check',
+    ]);
+    addScore(EveEmote.greeting, 3, [
+      'bienvenido',
+      'buenos días',
+      'buenas tardes',
+      'buenas noches',
+      'welcome',
+    ]);
+    if ((text.startsWith('hola') ||
+            text.startsWith('¡hola') ||
+            text.startsWith('hello') ||
+            text.startsWith('hi')) &&
+        text.length < 140) {
+      scores[EveEmote.greeting] = (scores[EveEmote.greeting] ?? 0) + 5;
+    }
+
+    // 2. Alert (!) -> Pests, diseases, fungi, insects, or severe weather warnings
+    addScore(EveEmote.alert, 4, [
+      'cuidado contra plagas',
+      'plagas que debes vigilar',
+      'vigila principalmente estas plagas',
+      'alerta',
+      'urgente',
+      'riesgo alto',
+      'peligro',
+      'gusano cogollero',
+      'broca del café',
+      'roya del café',
+      'mosca blanca',
+      'picudo',
+      'gorgojo',
+      'sigatoka',
+      'barrenador',
+      'tizón',
+      'fusarium',
+      'antracnosis',
+      'bacteriosis',
+      'helada',
+      'inundación',
+      'lluvias muy fuertes',
+      'golpe de calor',
+      'pest alert',
+      'main pests to watch',
+    ]);
+    addScore(EveEmote.alert, 2, [
+      'plaga',
+      'gusano',
+      'larva',
+      'pulgón',
+      'pulgones',
+      'trips',
+      'ácaro',
+      'chinche',
+      'minador',
+      'enfermedad',
+      'hongo',
+      'mildiú',
+      'pest',
+      'disease',
+      'fungus',
+      'weevil',
+      'borer',
+      'blight',
+    ]);
+
+    // 3. Sad -> Severe drought, water deficit, wilting, root rot/suffocation, or errors
+    addScore(EveEmote.sad, 5, [
+      'sequía y calor fuerte',
+      'sequía severa',
+      'sufre sed',
+      'déficit crítico',
+      'déficit severo',
+      'asfixia de la raíz',
+      'asfixia la raíz',
+      'pudrición de raíz',
+      'no pude conectarme',
+      'lo siento',
+      'severe drought',
+      'root rot',
+      'root suffocation',
+    ]);
+    addScore(EveEmote.sad, 3, [
+      'sequía',
+      'falta de agua',
+      'tierra muy seca',
+      'marchitez',
+      'marchita',
+      'pierde agua rápido',
+      'pérdida',
+      'daño severo',
+      'error',
+      'drought',
+      'wilting',
+    ]);
+
+    // 4. Thumbs Down -> Practices to avoid, nutrient leaching, low compatibility, closed window
+    addScore(EveEmote.thumbsDown, 5, [
+      'evita regar de golpe',
+      'se lava el abono',
+      'sin que la planta lo aproveche',
+      'no conviene sembrar',
+      'baja compatibilidad',
+      'ventana cerrada',
+      'no riegues',
+      'no apliques',
+      'avoid heavy flood irrigation',
+      'washes away fertilizer',
+      'low compatibility',
+    ]);
+    addScore(EveEmote.thumbsDown, 3, [
+      'evita ',
+      'desperdicio',
+      'desfavorable',
+      'no recomendable',
+      'mal drenaje',
+      'encharcamiento',
+      'avoid ',
+      'unfavorable',
+    ]);
+
+    // 5. Jumping -> Big urea/fertilizer savings, free nitrogen, exciting benefits
+    addScore(EveEmote.jumping, 5, [
+      'ahorro estimado de',
+      'ahorro de fertilizante',
+      'nitrógeno por hectárea de forma natural',
+      'nitrógeno gratis',
+      'abono gratis',
+      'gran beneficio',
+      'excelente noticia',
+      'estimated savings of',
+      'fertilizer and urea savings',
+      'free nitrogen',
+    ]);
+    addScore(EveEmote.jumping, 3, [
+      'ahorras',
+      'urea',
+      'gana cerca de',
+      'atención',
+      'muy importante',
+      'aporta +',
+    ]);
+
+    // 6. Thumbs Up -> High compatibility, optimal irrigation system, optimal window/moisture
+    addScore(EveEmote.thumbsUp, 4, [
+      'alta compatibilidad',
+      'compatibilidad del 9',
+      'compatibilidad: 9',
+      'sistema ideal',
+      'sistema más conveniente',
+      'humedad óptima',
+      'ventana óptima',
+      'te conviene sembrar',
+      'excelente opción',
+      'high compatibility',
+      'ideal system',
+      'best system for your',
+      'optimal window',
+    ]);
+    addScore(EveEmote.thumbsUp, 2, [
+      'eficiencia 9',
+      'eficiencia: 9',
+      'recomendado',
+      'recomendada',
+      'óptimo',
+      'óptima',
+      '95%',
+      '92%',
+      '90%',
+    ]);
+
+    // 7. Surprised -> Weekly changes, sudden shifts, accumulated heat/moisture changes
+    addScore(EveEmote.surprised, 5, [
+      'cambios de la última semana',
+      'en los últimos 7 días',
+      'changes over the past week',
+      'over the last 7 days',
+    ]);
+    addScore(EveEmote.surprised, 3, [
+      'pasó de ',
+      'acumularon',
+      'cambio brusco',
+      'repentino',
+      'variación',
+    ]);
+
+    // 8. Pointing -> Step-by-step plans, 3-week projections, calendar dates, soil explanation
+    addScore(EveEmote.pointing, 4, [
+      'plan de trabajo para las próximas 3 semanas',
+      'próximas 3 semanas',
+      'semana 1:',
+      'semana 2:',
+      'semana 3:',
+      'calendario y fechas de siembra',
+      'fechas recomendadas',
+      'cómo se comporta tu suelo',
+      '3-week work plan',
+      'next 3 weeks',
+      'week 1:',
+      'week 2:',
+      'week 3:',
+      'planting calendar',
+      'how your',
+    ]);
+    addScore(EveEmote.pointing, 2, [
+      'meta:',
+      'acción:',
+      'lámina recomendada',
+      '1. agua y riego',
+      '2. clima en tu zona',
+      '3. cuidado contra plagas',
+      '4. próximas 3 semanas',
+      'goal:',
+      'action:',
+    ]);
+
+    // 9. Happy -> Stable weather, balanced soil, healthy crop growth, positive summary
+    addScore(EveEmote.happy, 4, [
+      'clima estable para el cultivo',
+      'buen equilibrio',
+      'crezca sano',
+      'condiciones favorables',
+      'tierra equilibrada',
+      'stable weather for your crop',
+      'grow healthy',
+      'favorable conditions',
+    ]);
+    addScore(EveEmote.happy, 2, [
+      'resumen práctico',
+      'sano',
+      'favorable',
+      'buen drenaje',
+      'practical summary',
+    ]);
+
+    EveEmote bestEmote = EveEmote.calm;
+    int highestScore = 0;
+
+    // Priority order in case of ties
+    const priorityOrder = [
+      EveEmote.alert,
+      EveEmote.sad,
+      EveEmote.thumbsDown,
+      EveEmote.jumping,
+      EveEmote.surprised,
+      EveEmote.thumbsUp,
+      EveEmote.pointing,
+      EveEmote.greeting,
+      EveEmote.happy,
+      EveEmote.calm,
+    ];
+
+    for (final candidate in priorityOrder) {
+      final candidateScore = scores[candidate] ?? 0;
+      if (candidateScore > highestScore) {
+        highestScore = candidateScore;
+        bestEmote = candidate;
+      }
+    }
+
+    return highestScore > 0 ? bestEmote : EveEmote.calm;
+  }
 
   @override
   State<EveAnimatedAvatar> createState() => _EveAnimatedAvatarState();
@@ -739,7 +1039,7 @@ class _EveCowPainter extends CustomPainter {
 /// Interactive Banner Card showing Eve with a context-aware emote and message.
 /// Automatically hides when AppSettings.showEve is false.
 class EveReactionBanner extends StatelessWidget {
-  final EveEmote emote;
+  final EveEmote? emote;
   final String? title;
   final String message;
   final VoidCallback? onTap;
@@ -750,7 +1050,7 @@ class EveReactionBanner extends StatelessWidget {
 
   const EveReactionBanner({
     super.key,
-    required this.emote,
+    this.emote,
     this.title,
     required this.message,
     this.onTap,
@@ -771,6 +1071,8 @@ class EveReactionBanner extends StatelessWidget {
         final effectiveAccent = accentColor ?? const Color(0xFF1B5E20);
         final effectiveBg = backgroundColor ?? const Color(0xFFF1F8E9);
         final effectiveTitle = title ?? AppLanguage.strings.kIvyCopilotTitle;
+        final effectiveEmote =
+            emote ?? EveAnimatedAvatar.evaluateEmoteFromContent(message);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 14),
@@ -787,7 +1089,7 @@ class EveReactionBanner extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               EveAnimatedAvatar(
-                emote: emote,
+                emote: effectiveEmote,
                 size: 68,
                 onTap: effectiveTap,
               ),
@@ -927,11 +1229,13 @@ class EveEmotePreviewSelector extends StatelessWidget {
   }
 }
 
-/// Single reusable component to display rounded Eve on the bottom-left of any screen.
-/// Shows Eve calm and occasionally waving; tapping her opens the unified Duolingo-style chat.
+/// Single reusable component to display rounded Eve on the bottom-right of any screen.
+/// When [onAddPressed] is provided, Eve appears tucked right behind the "+" button on the right side.
 class EveFloatingLauncherButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String? tooltip;
+  final VoidCallback? onAddPressed;
+  final String? addTooltip;
   final Map<String, dynamic>? farmData;
   final Map<String, dynamic>? nasaData;
   final FarmPredictionsReport? report;
@@ -945,6 +1249,8 @@ class EveFloatingLauncherButton extends StatelessWidget {
     super.key,
     this.onPressed,
     this.tooltip,
+    this.onAddPressed,
+    this.addTooltip,
     this.farmData,
     this.nasaData,
     this.report,
@@ -1003,81 +1309,171 @@ class EveFloatingLauncherButton extends StatelessWidget {
     );
   }
 
+  Widget _buildRoundedEveCircle(BuildContext context, {bool badgeOnLeft = false}) {
+    return GestureDetector(
+      onTap: () => _handleTap(context),
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 74,
+            height: 74,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFFFFF), Color(0xFFE8F5E9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: const Color(0xFF2E7D32),
+                width: 2.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1B5E20).withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: EveAnimatedAvatar(
+                emote: EveEmote.calm,
+                size: 64,
+              ),
+            ),
+          ),
+          Positioned(
+            top: -2,
+            right: badgeOnLeft ? null : -2,
+            left: badgeOnLeft ? -2 : null,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B5E20),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.chat_bubble_rounded,
+                  size: 12,
+                  color: Color(0xFFFFD54F),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactChatButton(BuildContext context) {
+    return FloatingActionButton(
+      heroTag: null,
+      backgroundColor: const Color(0xFF1B5E20),
+      foregroundColor: Colors.white,
+      elevation: 4,
+      shape: const CircleBorder(
+        side: BorderSide(color: Colors.white, width: 1.8),
+      ),
+      tooltip: tooltip,
+      onPressed: () => _handleTap(context),
+      child: const Icon(
+        Icons.chat_bubble_rounded,
+        color: Color(0xFFFFD54F),
+        size: 22,
+      ),
+    );
+  }
+
+  Widget _buildAddButton() {
+    return FloatingActionButton(
+      heroTag: null,
+      backgroundColor: const Color(0xFF0F5A37),
+      foregroundColor: Colors.white,
+      elevation: 5,
+      shape: const CircleBorder(
+        side: BorderSide(color: Colors.white, width: 2.0),
+      ),
+      tooltip: addTooltip,
+      onPressed: onAddPressed,
+      child: const Icon(Icons.add_rounded, size: 28),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: AppSettings.showEve,
       builder: (context, showEve, _) {
         if (!showEve) {
-          return const SizedBox.shrink();
+          if (onAddPressed != null) {
+            return SizedBox(
+              width: 104,
+              height: 84,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.bottomRight,
+                children: [
+                  Positioned(
+                    right: 36,
+                    bottom: 14,
+                    child: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: _buildCompactChatButton(context),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: _buildAddButton(),
+                  ),
+                ],
+              ),
+            );
+          }
+          return _buildCompactChatButton(context);
         }
 
-        return GestureDetector(
-          onTap: () => _handleTap(context),
-          behavior: HitTestBehavior.opaque,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 74,
-                height: 74,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFFFFF), Color(0xFFE8F5E9)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(
-                    color: const Color(0xFF2E7D32),
-                    width: 2.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1B5E20).withValues(alpha: 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+        if (onAddPressed != null) {
+          return SizedBox(
+            width: 112,
+            height: 92,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.bottomRight,
+              children: [
+                // Eve positioned behind the "+" button on the right side
+                Positioned(
+                  right: 34,
+                  bottom: 14,
+                  child: _buildRoundedEveCircle(context, badgeOnLeft: true),
                 ),
-                child: const Center(
-                  child: EveAnimatedAvatar(
-                    emote: EveEmote.calm,
-                    size: 64,
-                  ),
+                // Foreground "+" action button
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: _buildAddButton(),
                 ),
-              ),
-              Positioned(
-                top: -2,
-                right: -2,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B5E20),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.chat_bubble_rounded,
-                      size: 12,
-                      color: Color(0xFFFFD54F),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
+              ],
+            ),
+          );
+        }
+
+        return _buildRoundedEveCircle(context);
       },
     );
   }
@@ -1085,7 +1481,8 @@ class EveFloatingLauncherButton extends StatelessWidget {
 
 /// Duolingo-style upper conversation stage:
 /// Eve walks from the side toward the center of the screen while growing larger,
-/// and displays her current message inside a Duolingo speech bubble above her head.
+/// and displays her current message progressively (little by little, step by step)
+/// inside a Duolingo speech bubble above her head without ever cutting off text.
 class EveDuolingoConversationStage extends StatefulWidget {
   final String title;
   final String subtitle;
@@ -1093,6 +1490,9 @@ class EveDuolingoConversationStage extends StatefulWidget {
   final bool isLoading;
   final String loadingText;
   final VoidCallback onClose;
+  final bool showEveStage;
+  final bool isNormalChatFolded;
+  final VoidCallback? onToggleFoldChat;
 
   const EveDuolingoConversationStage({
     super.key,
@@ -1102,6 +1502,9 @@ class EveDuolingoConversationStage extends StatefulWidget {
     required this.isLoading,
     required this.loadingText,
     required this.onClose,
+    this.showEveStage = true,
+    this.isNormalChatFolded = false,
+    this.onToggleFoldChat,
   });
 
   @override
@@ -1115,6 +1518,11 @@ class _EveDuolingoConversationStageState
   late final AnimationController _walkInController;
   late final Animation<double> _walkCurve;
 
+  List<String> _chunks = const [''];
+  int _currentChunkIndex = 0;
+  int _revealedCharCount = 0;
+  Timer? _typewriterTimer;
+
   @override
   void initState() {
     super.initState();
@@ -1127,30 +1535,171 @@ class _EveDuolingoConversationStageState
       curve: Curves.easeOutCubic,
     );
     _walkInController.forward();
+    _prepareChunksAndStartTypewriter(widget.speechBubbleText);
+  }
+
+  @override
+  void didUpdateWidget(covariant EveDuolingoConversationStage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.speechBubbleText != widget.speechBubbleText ||
+        (oldWidget.isLoading && !widget.isLoading)) {
+      _prepareChunksAndStartTypewriter(widget.speechBubbleText);
+    }
   }
 
   @override
   void dispose() {
+    _typewriterTimer?.cancel();
     _walkInController.dispose();
     super.dispose();
   }
 
+  List<String> _splitIntoChunks(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return const [''];
+
+    final paragraphs = trimmed
+        .split(RegExp(r'\n\s*\n'))
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+
+    final result = <String>[];
+    for (final p in paragraphs) {
+      final lines = p
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      if (lines.length <= 3 && p.length <= 240) {
+        result.add(p);
+      } else {
+        // Group header + up to 2 bullet lines per card so it never overflows or cuts off
+        String? sectionHeader;
+        final contentLines = <String>[];
+        for (int i = 0; i < lines.length; i++) {
+          if (i == 0 && !lines[i].startsWith('•') && !lines[i].startsWith('-')) {
+            sectionHeader = lines[i];
+          } else {
+            contentLines.add(lines[i]);
+          }
+        }
+        if (contentLines.isEmpty && sectionHeader != null) {
+          result.add(sectionHeader);
+        } else {
+          for (int i = 0; i < contentLines.length; i += 2) {
+            final slice = contentLines.sublist(
+              i,
+              math.min(i + 2, contentLines.length),
+            );
+            if (i == 0 && sectionHeader != null) {
+              result.add('$sectionHeader\n${slice.join('\n')}');
+            } else {
+              result.add(slice.join('\n'));
+            }
+          }
+        }
+      }
+    }
+
+    return result.isEmpty ? [trimmed] : result;
+  }
+
+  void _prepareChunksAndStartTypewriter(String text) {
+    _typewriterTimer?.cancel();
+    _chunks = _splitIntoChunks(text);
+    _currentChunkIndex = 0;
+    _startTypewriterForCurrentChunk();
+  }
+
+  void _startTypewriterForCurrentChunk() {
+    _typewriterTimer?.cancel();
+    final targetText = _chunks[_currentChunkIndex];
+    _revealedCharCount = 0;
+
+    if (targetText.isEmpty) return;
+
+    _typewriterTimer = Timer.periodic(const Duration(milliseconds: 18), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _revealedCharCount = math.min(targetText.length, _revealedCharCount + 2);
+        if (_revealedCharCount >= targetText.length) {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  void _onBubbleOrNextTap() {
+    if (widget.isLoading || _chunks.isEmpty) return;
+    final currentFullText = _chunks[_currentChunkIndex];
+    if (_revealedCharCount < currentFullText.length) {
+      // Complete current step immediately if still typing
+      _typewriterTimer?.cancel();
+      setState(() {
+        _revealedCharCount = currentFullText.length;
+      });
+    } else if (_currentChunkIndex < _chunks.length - 1) {
+      setState(() {
+        _currentChunkIndex++;
+      });
+      _startTypewriterForCurrentChunk();
+    }
+  }
+
+  void _onPrevChunkTap() {
+    if (widget.isLoading || _currentChunkIndex <= 0) return;
+    setState(() {
+      _currentChunkIndex--;
+    });
+    _startTypewriterForCurrentChunk();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isSpanish = AppLanguage.current.value == AppLanguageType.spanish;
+    final foldBtnLabel = widget.isNormalChatFolded
+        ? (isSpanish ? 'Mostrar chat' : 'Show chat')
+        : (isSpanish ? 'Ocultar chat' : 'Hide chat');
+    final nextLabel = isSpanish ? 'Siguiente' : 'Next';
+    final prevLabel = isSpanish ? 'Anterior' : 'Back';
+
+    final currentFullChunk =
+        _chunks.isNotEmpty ? _chunks[_currentChunkIndex] : '';
+    final visibleChunkText = currentFullChunk.substring(
+      0,
+      _revealedCharCount.clamp(0, currentFullChunk.length),
+    );
+    final evaluatedEmote = EveAnimatedAvatar.evaluateEmoteFromContent(
+      currentFullChunk.isNotEmpty ? currentFullChunk : widget.speechBubbleText,
+      isLoading: widget.isLoading,
+    );
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFF9FCF9), Color(0xFFF1F8E9)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        4,
+        12,
+        widget.showEveStage ? 10 : 6,
+      ),
+      decoration: BoxDecoration(
+        gradient: widget.showEveStage
+            ? const LinearGradient(
+                colors: [Color(0xFFF9FCF9), Color(0xFFF1F8E9)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              )
+            : null,
+        color: widget.showEveStage ? null : Colors.white,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Top Header Row with Title & Close Button
+          // Top Header Row with Title, Fold Chat Toggle & Close Button
           Row(
             children: [
               Container(
@@ -1188,6 +1737,54 @@ class _EveDuolingoConversationStageState
                   ],
                 ),
               ),
+              if (widget.showEveStage && widget.onToggleFoldChat != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: InkWell(
+                    onTap: widget.onToggleFoldChat,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.isNormalChatFolded
+                            ? const Color(0xFF1B5E20)
+                            : const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFA5D6A7),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            widget.isNormalChatFolded
+                                ? Icons.unfold_more_rounded
+                                : Icons.unfold_less_rounded,
+                            size: 15,
+                            color: widget.isNormalChatFolded
+                                ? Colors.white
+                                : const Color(0xFF1B5E20),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            foldBtnLabel,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: widget.isNormalChatFolded
+                                  ? Colors.white
+                                  : const Color(0xFF1B5E20),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.close_rounded, size: 22),
@@ -1195,149 +1792,287 @@ class _EveDuolingoConversationStageState
               ),
             ],
           ),
-          const SizedBox(height: 4),
 
-          // Duolingo Speech Bubble Above Centered Eve
-          AnimatedBuilder(
-            animation: _walkCurve,
-            builder: (context, child) {
-              final bubbleOpacity =
-                  ((_walkCurve.value - 0.35) / 0.65).clamp(0.0, 1.0);
-              final bubbleScale = 0.88 + (0.12 * bubbleOpacity);
-              return Opacity(
-                opacity: bubbleOpacity,
-                child: Transform.scale(
-                  scale: bubbleScale,
-                  alignment: Alignment.bottomCenter,
-                  child: child,
-                ),
-              );
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: double.infinity,
-                  constraints: const BoxConstraints(maxHeight: 92),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: const Color(0xFFE0E0E0),
-                      width: 2.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+          // Upper Duolingo Stage (Hidden completely when Eve is disabled)
+          if (widget.showEveStage) ...[
+            const SizedBox(height: 6),
+
+            // Duolingo Speech Bubble Above Centered Eve (Progressive & Uncut)
+            AnimatedBuilder(
+              animation: _walkCurve,
+              builder: (context, child) {
+                final bubbleOpacity =
+                    ((_walkCurve.value - 0.35) / 0.65).clamp(0.0, 1.0);
+                final bubbleScale = 0.88 + (0.12 * bubbleOpacity);
+                return Opacity(
+                  opacity: bubbleOpacity,
+                  child: Transform.scale(
+                    scale: bubbleScale,
+                    alignment: Alignment.bottomCenter,
+                    child: child,
                   ),
-                  child: widget.isLoading
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF2E7D32),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                widget.loadingText,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: Colors.grey.shade800,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                );
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: _onBubbleOrNextTap,
+                    behavior: HitTestBehavior.opaque,
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFFE0E0E0),
+                            width: 2.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
                           ],
-                        )
-                      : SingleChildScrollView(
-                          child: Text(
-                            widget.speechBubbleText,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              height: 1.35,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF3C3C3C),
-                            ),
-                          ),
                         ),
-                ),
-                // Downward triangular tail pointing to Eve in the center
-                CustomPaint(
-                  size: const Size(22, 11),
-                  painter: _DuolingoBubbleTailPainter(
-                    fillColor: Colors.white,
-                    borderColor: const Color(0xFFE0E0E0),
+                        child: widget.isLoading
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      widget.loadingText,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: Colors.grey.shade800,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxHeight:
+                                          widget.isNormalChatFolded ? 220 : 150,
+                                    ),
+                                    child: SingleChildScrollView(
+                                      child: Text(
+                                        visibleChunkText,
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                          height: 1.4,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF2C3E35),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (_chunks.length > 1) ...[
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // Step counter pills
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 3,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF1F8E9),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: Text(
+                                                '${_currentChunkIndex + 1} / ${_chunks.length}',
+                                                style: const TextStyle(
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF2E7D32),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        // Prev / Next controls
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (_currentChunkIndex > 0)
+                                              InkWell(
+                                                onTap: _onPrevChunkTap,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons
+                                                            .chevron_left_rounded,
+                                                        size: 16,
+                                                        color:
+                                                            Color(0xFF556B5D),
+                                                      ),
+                                                      Text(
+                                                        prevLabel,
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color:
+                                                              Color(0xFF556B5D),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            if (_currentChunkIndex <
+                                                _chunks.length - 1) ...[
+                                              const SizedBox(width: 6),
+                                              InkWell(
+                                                onTap: _onBubbleOrNextTap,
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xFF2E7D32),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            14),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        nextLabel,
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 2),
+                                                      const Icon(
+                                                        Icons
+                                                            .chevron_right_rounded,
+                                                        size: 16,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  // Downward triangular tail pointing to Eve in the center
+                  CustomPaint(
+                    size: const Size(22, 11),
+                    painter: _DuolingoBubbleTailPainter(
+                      fillColor: Colors.white,
+                      borderColor: const Color(0xFFE0E0E0),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Centered Large Eve Walking In & Growing Larger
-          ValueListenableBuilder<bool>(
-            valueListenable: AppSettings.showEve,
-            builder: (context, showEve, _) {
-              if (!showEve) return const SizedBox(height: 4);
+            // Centered Large Eve Walking In & Growing Larger
+            AnimatedBuilder(
+              animation: _walkCurve,
+              builder: (context, _) {
+                final v = _walkCurve.value;
+                final isStillWalking = v < 0.94;
+                final dx = (1.0 - v) * 115.0;
+                final dy = (1.0 - v) * 18.0;
+                final scale = 0.45 + (0.55 * v);
+                final avatarHeight = widget.isNormalChatFolded ? 124.0 : 102.0;
+                final avatarSize = widget.isNormalChatFolded ? 114.0 : 96.0;
 
-              return AnimatedBuilder(
-                animation: _walkCurve,
-                builder: (context, _) {
-                  final v = _walkCurve.value;
-                  final isStillWalking = v < 0.94;
-                  final dx = (1.0 - v) * 115.0;
-                  final dy = (1.0 - v) * 18.0;
-                  final scale = 0.45 + (0.55 * v);
-
-                  return SizedBox(
-                    height: 102,
-                    child: Center(
-                      child: Transform.translate(
-                        offset: Offset(dx, dy),
-                        child: Transform.scale(
-                          scale: scale,
-                          child: Stack(
-                            alignment: Alignment.bottomCenter,
-                            children: [
-                              // Subtle Duolingo-style floor shadow oval under Eve
-                              Container(
-                                width: 58,
-                                height: 11,
-                                margin: const EdgeInsets.only(bottom: 4),
-                                decoration: BoxDecoration(
-                                  color:
-                                      Colors.black.withValues(alpha: 0.08 * v),
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOutCubic,
+                  height: avatarHeight,
+                  child: Center(
+                    child: Transform.translate(
+                      offset: Offset(dx, dy),
+                      child: Transform.scale(
+                        scale: scale,
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            // Subtle Duolingo-style floor shadow oval under Eve
+                            Container(
+                              width: 58,
+                              height: 11,
+                              margin: const EdgeInsets.only(bottom: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.08 * v),
+                                borderRadius: BorderRadius.circular(30),
                               ),
-                              EveAnimatedAvatar(
-                                emote: widget.isLoading
-                                    ? EveEmote.surprised
-                                    : EveEmote.calm,
-                                size: 96,
-                                isWalking: isStillWalking,
-                              ),
-                            ],
-                          ),
+                            ),
+                            EveAnimatedAvatar(
+                              emote: evaluatedEmote,
+                              size: avatarSize,
+                              isWalking: isStillWalking,
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  );
-                },
-              );
-            },
-          ),
+                  ),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -1415,11 +2150,16 @@ class EveUnifiedChatSheet extends StatefulWidget {
   State<EveUnifiedChatSheet> createState() => _EveUnifiedChatSheetState();
 }
 
-class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet> {
+class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
+  bool _isNormalChatFolded = false;
+
+  late final AnimationController _foldController;
+  late final Animation<double> _foldCurve;
 
   late Map<String, dynamic> _farmData;
   late Map<String, dynamic> _nasaData;
@@ -1432,6 +2172,16 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet> {
   @override
   void initState() {
     super.initState();
+    _foldController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+      value: 1.0, // 1.0 = normal chat unfolded, 0.0 = normal chat folded
+    );
+    _foldCurve = CurvedAnimation(
+      parent: _foldController,
+      curve: Curves.easeInOutCubic,
+    );
+
     _farmData = widget.farmData ??
         {
           'name': 'Mi Finca',
@@ -1451,9 +2201,22 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet> {
 
   @override
   void dispose() {
+    _foldController.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _toggleFoldNormalChat() {
+    setState(() {
+      _isNormalChatFolded = !_isNormalChatFolded;
+      if (_isNormalChatFolded) {
+        _foldController.reverse();
+      } else {
+        _foldController.forward();
+        _scrollToBottom();
+      }
+    });
   }
 
   String _cleanText(String raw) {
@@ -1488,7 +2251,9 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet> {
             _activeSoil = widget.activeSoil ??
                 (_subplots.first['soil_type']?.toString() ?? 'Franco');
           }
-          _graph = SubplotGraph.buildAutomaticAdjacency(_subplots);
+          if (farmId != null) {
+            _graph = await SubplotGraphService.getGraphForFarm(farmId);
+          }
         }
       } catch (_) {}
 
@@ -1587,195 +2352,262 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet> {
     final s = AppLanguage.strings;
     final mediaQuery = MediaQuery.of(context);
     final bottomInset = mediaQuery.viewInsets.bottom;
-    final availableHeight =
+    final maxModalHeight =
         (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
             .clamp(320.0, mediaQuery.size.height * 0.92);
 
-    return Container(
-      height: availableHeight,
-      margin: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 10, bottom: 4),
-            width: 48,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          EveDuolingoConversationStage(
-            title: s.kIvyCopilotTitle,
-            subtitle: '$_activeCrop • ${s.kSoilPrefix} $_activeSoil',
-            speechBubbleText: _getLatestEveSpeechText(s),
-            isLoading: _isLoading,
-            loadingText: s.kIvyAnalyzingScenario,
-            onClose: () => Navigator.pop(context),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: _messages.length + (_isLoading ? 1 : 0),
-              itemBuilder: (ctx, index) {
-                if (index == _messages.length && _isLoading) {
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F8E9),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFDCEDC8)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFF2E7D32),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Text(
-                              s.kIvyAnalyzingScenario,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade800,
-                                fontStyle: FontStyle.italic,
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppSettings.showEve,
+      builder: (context, showEve, _) {
+        final effectiveFolded = showEve && _isNormalChatFolded;
+
+        return AnimatedBuilder(
+          animation: _foldCurve,
+          builder: (context, _) {
+            final foldFactor = showEve ? _foldCurve.value : 1.0;
+
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: maxModalHeight,
+              ),
+              margin: EdgeInsets.only(bottom: bottomInset),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(
+                mainAxisSize:
+                    foldFactor < 0.99 ? MainAxisSize.min : MainAxisSize.max,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 10, bottom: 4),
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  EveDuolingoConversationStage(
+                    title: s.kIvyCopilotTitle,
+                    subtitle: '$_activeCrop • ${s.kSoilPrefix} $_activeSoil',
+                    speechBubbleText: _getLatestEveSpeechText(s),
+                    isLoading: _isLoading,
+                    loadingText: s.kIvyAnalyzingScenario,
+                    onClose: () => Navigator.pop(context),
+                    showEveStage: showEve,
+                    isNormalChatFolded: effectiveFolded,
+                    onToggleFoldChat: showEve ? _toggleFoldNormalChat : null,
+                  ),
+                  const Divider(height: 1),
+
+                  // Foldable "Normal" Chat Section (3D paper fold animation)
+                  if (foldFactor > 0.01)
+                    Flexible(
+                      fit: foldFactor < 0.99 ? FlexFit.loose : FlexFit.tight,
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: foldFactor,
+                          child: Opacity(
+                            opacity: foldFactor.clamp(0.0, 1.0),
+                            child: Transform(
+                              alignment: Alignment.topCenter,
+                              transform: Matrix4.identity()
+                                ..setEntry(3, 2, 0.0018)
+                                ..rotateX((1.0 - foldFactor) * 1.15),
+                              child: SizedBox(
+                                height: maxModalHeight * 0.42,
+                                child: ListView.builder(
+                                  controller: _scrollController,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  itemCount:
+                                      _messages.length + (_isLoading ? 1 : 0),
+                                  itemBuilder: (ctx, index) {
+                                    if (index == _messages.length &&
+                                        _isLoading) {
+                                      return Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Container(
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 12),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF1F8E9),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            border: Border.all(
+                                                color:
+                                                    const Color(0xFFDCEDC8)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Color(0xFF2E7D32),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Flexible(
+                                                child: Text(
+                                                  s.kIvyAnalyzingScenario,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color:
+                                                        Colors.grey.shade800,
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    final msg = _messages[index];
+                                    final isUser = msg['role'] == 'user';
+                                    final cleanMsgText =
+                                        _cleanText(msg['text'] ?? '');
+
+                                    return Align(
+                                      alignment: isUser
+                                          ? Alignment.centerRight
+                                          : Alignment.centerLeft,
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            vertical: 6),
+                                        constraints: BoxConstraints(
+                                          maxWidth: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.82,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: isUser
+                                              ? const Color(0xFF1B5E20)
+                                              : const Color(0xFFF7FAF7),
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: const Radius.circular(18),
+                                            topRight: const Radius.circular(18),
+                                            bottomLeft: isUser
+                                                ? const Radius.circular(18)
+                                                : const Radius.circular(4),
+                                            bottomRight: isUser
+                                                ? const Radius.circular(4)
+                                                : const Radius.circular(18),
+                                          ),
+                                          border: isUser
+                                              ? null
+                                              : Border.all(
+                                                  color:
+                                                      const Color(0xFFE0E0E0)),
+                                        ),
+                                        child: Text(
+                                          cleanMsgText,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            height: 1.4,
+                                            color: isUser
+                                                ? Colors.white
+                                                : const Color(0xFF1E2D24),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  );
-                }
 
-                final msg = _messages[index];
-                final isUser = msg['role'] == 'user';
-                final cleanMsgText = _cleanText(msg['text'] ?? '');
-
-                return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.82,
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 38,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children: [
+                        _buildQuickChip(
+                            Icons.pest_control_rounded, s.kQuickPromptPests),
+                        _buildQuickChip(Icons.thunderstorm_rounded,
+                            s.kQuickPromptPhenomena),
+                        _buildQuickChip(
+                            Icons.date_range_rounded, s.kQuickPrompt3Weeks),
+                        _buildQuickChip(Icons.water_drop_rounded,
+                            s.kQuickPromptIrrigation),
+                      ],
                     ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
                     decoration: BoxDecoration(
-                      color: isUser
-                          ? const Color(0xFF1B5E20)
-                          : const Color(0xFFF7FAF7),
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(18),
-                        topRight: const Radius.circular(18),
-                        bottomLeft: isUser
-                            ? const Radius.circular(18)
-                            : const Radius.circular(4),
-                        bottomRight: isUser
-                            ? const Radius.circular(4)
-                            : const Radius.circular(18),
-                      ),
-                      border: isUser
-                          ? null
-                          : Border.all(color: const Color(0xFFE0E0E0)),
+                      color: Colors.white,
+                      border:
+                          Border(top: BorderSide(color: Colors.grey.shade200)),
                     ),
-                    child: Text(
-                      cleanMsgText,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: isUser ? Colors.white : const Color(0xFF1E2D24),
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            textInputAction: TextInputAction.send,
+                            decoration: InputDecoration(
+                              hintText: s.kIvyInputHint,
+                              hintStyle: TextStyle(
+                                  fontSize: 13, color: Colors.grey.shade500),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              filled: true,
+                              fillColor: const Color(0xFFF1F6F2),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            onSubmitted: (t) {
+                              final q = t.trim();
+                              if (q.isNotEmpty && !_isLoading) {
+                                _controller.clear();
+                                _askEve(q);
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton(
+                          icon: const Icon(Icons.send_rounded,
+                              color: Color(0xFF1B5E20)),
+                          onPressed: () {
+                            final q = _controller.text.trim();
+                            if (q.isNotEmpty && !_isLoading) {
+                              _controller.clear();
+                              _askEve(q);
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-          SizedBox(
-            height: 38,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildQuickChip(Icons.pest_control_rounded, s.kQuickPromptPests),
-                _buildQuickChip(
-                    Icons.thunderstorm_rounded, s.kQuickPromptPhenomena),
-                _buildQuickChip(Icons.date_range_rounded, s.kQuickPrompt3Weeks),
-                _buildQuickChip(
-                    Icons.water_drop_rounded, s.kQuickPromptIrrigation),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    textInputAction: TextInputAction.send,
-                    decoration: InputDecoration(
-                      hintText: s.kIvyInputHint,
-                      hintStyle:
-                          TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      filled: true,
-                      fillColor: const Color(0xFFF1F6F2),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onSubmitted: (t) {
-                      final q = t.trim();
-                      if (q.isNotEmpty && !_isLoading) {
-                        _controller.clear();
-                        _askEve(q);
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 6),
-                IconButton(
-                  icon: const Icon(Icons.send_rounded,
-                      color: Color(0xFF1B5E20)),
-                  onPressed: () {
-                    final q = _controller.text.trim();
-                    if (q.isNotEmpty && !_isLoading) {
-                      _controller.clear();
-                      _askEve(q);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

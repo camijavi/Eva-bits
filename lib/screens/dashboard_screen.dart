@@ -265,7 +265,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         floatingActionButton: EveFloatingLauncherButton(
           tooltip: s.kAskIvyTooltip,
           farmData: _dbFarm ??
