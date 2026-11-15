@@ -102,91 +102,75 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Pure light theme forced on WelcomeScreen
-    final lightTheme = ThemeData(
-      brightness: Brightness.light,
-      primaryColor: const Color(0xFF1E6F38),
-      scaffoldBackgroundColor: Colors.white,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF1E6F38),
-        brightness: Brightness.light,
-        surface: Colors.white,
-      ),
-      useMaterial3: true,
-    );
+    final isDark = AppColors.isDark(context);
 
     if (_isCheckingExisting) {
-      return Theme(
-        data: lightTheme,
-        child: const Scaffold(
-          backgroundColor: Colors.white,
-          body: Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primary,
-            ),
+      return Scaffold(
+        backgroundColor: AppColors.getBackground(context),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
           ),
         ),
       );
     }
 
-    return Theme(
-      data: lightTheme,
-      child: ValueListenableBuilder<AppLanguageType>(
-        valueListenable: AppLanguage.current,
-        builder: (context, _, child) {
-          final isSpanish = AppLanguage.isSpanish;
+    return ValueListenableBuilder<AppLanguageType>(
+      valueListenable: AppLanguage.current,
+      builder: (context, _, child) {
+        final isSpanish = AppLanguage.isSpanish;
 
-          final headline = isSpanish
-              ? '¡Te damos la bienvenida\na Eva Bits!'
-              : 'Welcome\nto Eva Bits!';
+        final headline = isSpanish
+            ? '¡Te damos la bienvenida\na Eva Bits!'
+            : 'Welcome\nto Eva Bits!';
 
-          final subtitle = isSpanish
-              ? 'Tu asistente agroecológico. Te guiaré paso a paso para cuidar tu suelo, planificar cultivos y tomar decisiones inteligentes con datos satelitales.'
-              : 'Your agroecological assistant. I will guide you step by step to care for your soil, plan crops, and make smart decisions with satellite data.';
+        final subtitle = isSpanish
+            ? 'Tu asistente agroecológico. Te guiaré paso a paso para cuidar tu suelo, planificar cultivos y tomar decisiones inteligentes con datos satelitales.'
+            : 'Your agroecological assistant. I will guide you step by step to care for your soil, plan crops, and make smart decisions with satellite data.';
 
-          final buttonText = isSpanish ? 'Comenzar' : 'Get Started';
+        final buttonText = isSpanish ? 'Comenzar' : 'Get Started';
 
-          final featureItems = [
-            _WelcomeFeature(
-              icon: Icons.satellite_alt_rounded,
-              iconColor: const Color(0xFF1976D2),
-              iconBgColor: const Color(0xFFE3F2FD),
-              title: isSpanish
-                  ? 'Observaciones Satelitales'
-                  : 'Satellite Observations',
-              description: isSpanish
-                  ? 'Monitoreo en tiempo real de radiación, lluvia y humedad de la NASA'
-                  : 'Real-time monitoring of radiation, rainfall, and moisture from NASA',
-            ),
-            _WelcomeFeature(
-              icon: Icons.eco_rounded,
-              iconColor: const Color(0xFF2E7D32),
-              iconBgColor: const Color(0xFFE8F5E9),
-              title: isSpanish
-                  ? 'Manejo Agroecológico'
-                  : 'Agroecological Management',
-              description: isSpanish
-                  ? 'Rotación de cultivos, fijación de nitrógeno y salud del suelo'
-                  : 'Crop rotation, biological nitrogen fixation, and soil health',
-            ),
-            _WelcomeFeature(
-              icon: Icons.smart_toy_rounded,
-              iconColor: const Color(0xFFE65100),
-              iconBgColor: const Color(0xFFFFF3E0),
-              title: isSpanish
-                  ? 'Asistencia con Eve'
-                  : 'Smart AI Guidance with Eve',
-              description: isSpanish
-                  ? 'Recomendaciones personalizadas y respuestas de Eve en tiempo real'
-                  : 'Tailored recommendations and continuous field advice from Eve',
-            ),
-          ];
+        final featureItems = [
+          _WelcomeFeature(
+            icon: Icons.satellite_alt_rounded,
+            iconColor: isDark ? const Color(0xFF64B5F6) : const Color(0xFF1976D2),
+            iconBgColor: isDark ? const Color(0xFF10283A) : const Color(0xFFE3F2FD),
+            title: isSpanish
+                ? 'Observaciones Satelitales'
+                : 'Satellite Observations',
+            description: isSpanish
+                ? 'Monitoreo en tiempo real de radiación, lluvia y humedad de la NASA'
+                : 'Real-time monitoring of radiation, rainfall, and moisture from NASA',
+          ),
+          _WelcomeFeature(
+            icon: Icons.eco_rounded,
+            iconColor: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
+            iconBgColor: isDark ? const Color(0xFF1B3322) : const Color(0xFFE8F5E9),
+            title: isSpanish
+                ? 'Manejo Agroecológico'
+                : 'Agroecological Management',
+            description: isSpanish
+                ? 'Rotación de cultivos, fijación de nitrógeno y salud del suelo'
+                : 'Crop rotation, biological nitrogen fixation, and soil health',
+          ),
+          _WelcomeFeature(
+            icon: Icons.smart_toy_rounded,
+            iconColor: isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100),
+            iconBgColor: isDark ? const Color(0xFF332010) : const Color(0xFFFFF3E0),
+            title: isSpanish
+                ? 'Asistencia con Eve'
+                : 'Smart AI Guidance with Eve',
+            description: isSpanish
+                ? 'Recomendaciones personalizadas y respuestas de Eve en tiempo real'
+                : 'Tailored recommendations and continuous field advice from Eve',
+          ),
+        ];
 
           return MediaQuery.withClampedTextScaling(
             minScaleFactor: 0.9,
             maxScaleFactor: 1.2,
             child: Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.getBackground(context),
               body: SafeArea(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -224,10 +208,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                         vertical: isNarrow ? 5 : 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFF1F8E9),
+                                        color: isDark ? const Color(0xFF1E3024) : const Color(0xFFF1F8E9),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: const Color(0xFFC8E6C9),
+                                          color: isDark ? const Color(0xFF2E4E39) : const Color(0xFFC8E6C9),
                                           width: 1,
                                         ),
                                       ),
@@ -237,7 +221,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                           Icon(
                                             Icons.eco_rounded,
                                             size: isNarrow ? 14 : 15,
-                                            color: const Color(0xFF2E7D32),
+                                            color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                                           ),
                                           const SizedBox(width: 5),
                                           Text(
@@ -245,7 +229,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                             style: TextStyle(
                                               fontSize: isNarrow ? 11.5 : 12.5,
                                               fontWeight: FontWeight.bold,
-                                              color: const Color(0xFF1B5E20),
+                                              color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                                             ),
                                           ),
                                         ],
@@ -260,17 +244,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                           vertical: isNarrow ? 5 : 6,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: AppColors.getCardBg(context),
                                           borderRadius:
                                               BorderRadius.circular(20),
                                           border: Border.all(
-                                            color: const Color(0xFFE2E8F0),
+                                            color: AppColors.getBorder(context),
                                             width: 1,
                                           ),
                                           boxShadow: [
                                             BoxShadow(
                                               color: Colors.black
-                                                  .withValues(alpha: 0.03),
+                                                  .withValues(alpha: isDark ? 0.2 : 0.03),
                                               blurRadius: 4,
                                               offset: const Offset(0, 2),
                                             ),
@@ -282,7 +266,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                             Icon(
                                               Icons.language_rounded,
                                               size: isNarrow ? 15 : 16,
-                                              color: const Color(0xFF2E7D32),
+                                              color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                                             ),
                                             const SizedBox(width: 5),
                                             Text(
@@ -290,7 +274,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                               style: TextStyle(
                                                 fontSize: isNarrow ? 12 : 13,
                                                 fontWeight: FontWeight.w600,
-                                                color: const Color(0xFF374151),
+                                                color: AppColors.getTextPrimary(context),
                                               ),
                                             ),
                                           ],
@@ -316,7 +300,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   style: TextStyle(
                                     fontSize: isShort || isNarrow ? 23 : 26,
                                     fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF111827),
+                                    color: AppColors.getTextPrimary(context),
                                     height: 1.2,
                                     letterSpacing: -0.4,
                                   ),
@@ -332,7 +316,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: isShort || isNarrow ? 13 : 14,
-                                      color: const Color(0xFF374151),
+                                      color: AppColors.getTextSecondary(context),
                                       height: 1.45,
                                       letterSpacing: -0.1,
                                     ),
@@ -361,17 +345,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                           vertical: 10,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: AppColors.getCardBg(context),
                                           borderRadius:
                                               BorderRadius.circular(20),
                                           border: Border.all(
-                                            color: const Color(0xFFF1F5F9),
+                                            color: AppColors.getBorder(context),
                                             width: 1.5,
                                           ),
                                           boxShadow: [
                                             BoxShadow(
                                               color: Colors.black
-                                                  .withValues(alpha: 0.04),
+                                                  .withValues(alpha: isDark ? 0.2 : 0.04),
                                               blurRadius: 14,
                                               offset: const Offset(0, 4),
                                             ),
@@ -385,7 +369,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                               decoration: BoxDecoration(
                                                 color: item.iconBgColor,
                                                 borderRadius:
-                                                    BorderRadius.circular(14),
+                                                  BorderRadius.circular(14),
                                               ),
                                               child: Center(
                                                 child: Icon(
@@ -405,11 +389,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                                 children: [
                                                   Text(
                                                     item.title,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 14,
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      color: Color(0xFF111827),
+                                                      color: AppColors.getTextPrimary(context),
                                                     ),
                                                     maxLines: 1,
                                                     overflow:
@@ -418,9 +402,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                                   const SizedBox(height: 3),
                                                   Text(
                                                     item.description,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 12,
-                                                      color: Color(0xFF4B5563),
+                                                      color: AppColors.getTextSecondary(context),
                                                       height: 1.25,
                                                     ),
                                                     maxLines: 2,
@@ -454,8 +438,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                         height: isActive ? 8 : 6,
                                         decoration: BoxDecoration(
                                           color: isActive
-                                              ? const Color(0xFF1E6F38)
-                                              : const Color(0xFFD6DCD6),
+                                              ? AppColors.primary
+                                              : (isDark ? const Color(0xFF2E4235) : const Color(0xFFD6DCD6)),
                                           shape: BoxShape.circle,
                                         ),
                                       );
@@ -470,10 +454,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   height: 50,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1E6F38),
+                                      backgroundColor: AppColors.primary,
                                       foregroundColor: Colors.white,
                                       elevation: 2.5,
-                                      shadowColor: const Color(0xFF1E6F38)
+                                      shadowColor: AppColors.primary
                                           .withValues(alpha: 0.35),
                                       shape: RoundedRectangleBorder(
                                         borderRadius:
@@ -515,14 +499,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
           );
         },
-      ),
-    );
+      );
   }
 
   Widget _buildEveDecoratedStage({
     required double availableWidth,
     required bool isShort,
   }) {
+    final isDark = AppColors.isDark(context);
     final maxStageW = isShort ? 230.0 : 280.0;
     final stageWidth = (availableWidth * 0.74).clamp(190.0, maxStageW);
     final stageHeight = stageWidth * (260.0 / 280.0);
@@ -542,7 +526,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               height: 250 * scale,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE8F5E9).withValues(alpha: 0.35),
+                color: (isDark ? const Color(0xFF1E3024) : const Color(0xFFE8F5E9)).withValues(alpha: 0.35),
               ),
             ),
 
@@ -557,18 +541,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   bottomLeft: Radius.circular(110 * scale),
                   bottomRight: Radius.circular(130 * scale),
                 ),
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFE0F2E9),
-                    Color(0xFFFFF9C4),
-                    Color(0xFFE8F5E9),
-                  ],
+                  colors: isDark
+                      ? const [
+                          Color(0xFF1E2E23),
+                          Color(0xFF263D2E),
+                          Color(0xFF1A291F),
+                        ]
+                      : const [
+                          Color(0xFFE0F2E9),
+                          Color(0xFFFFF9C4),
+                          Color(0xFFE8F5E9),
+                        ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFC8E6C9).withValues(alpha: 0.45),
+                    color: (isDark ? const Color(0xFF101913) : const Color(0xFFC8E6C9)).withValues(alpha: 0.45),
                     blurRadius: 20 * scale,
                     spreadRadius: 3 * scale,
                   ),
@@ -650,21 +640,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     required Color borderColor,
     required double size,
   }) {
+    final isDark = AppColors.isDark(context);
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: bgColor,
+        color: isDark ? const Color(0xFF1A261F) : bgColor,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2.2),
+        border: Border.all(color: isDark ? const Color(0xFF2E4235) : Colors.white, width: 2.2),
         boxShadow: [
           BoxShadow(
-            color: borderColor.withValues(alpha: 0.6),
+            color: (isDark ? const Color(0xFF101913) : borderColor).withValues(alpha: 0.6),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 3,
             offset: const Offset(0, 1),
           ),

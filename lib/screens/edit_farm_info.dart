@@ -282,9 +282,11 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
         final s = AppLanguage.strings;
         final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
+        final isDark = AppColors.isDark(context);
+
         return Container(
           decoration: BoxDecoration(
-            color: AppColors.getCardBg(context),
+            color: AppColors.getModalBg(context),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: EdgeInsets.only(
@@ -306,7 +308,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                       width: 44,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: isDark ? AppColors.borderDark : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
@@ -323,12 +325,14 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.12),
+                                color: isDark
+                                    ? AppColors.primaryLight.withValues(alpha: 0.15)
+                                    : AppColors.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.edit_note_rounded,
-                                color: AppColors.primary,
+                                color: isDark ? AppColors.primaryLight : AppColors.primary,
                                 size: 24,
                               ),
                             ),
@@ -338,10 +342,10 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                 s.kEditFarmInfo,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1B2E1C),
+                                  color: AppColors.getTextPrimary(context),
                                 ),
                               ),
                             ),
@@ -351,46 +355,50 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                       IconButton(
                         icon: const Icon(Icons.close_rounded),
                         onPressed: () => Navigator.of(context).pop(),
-                        color: Colors.grey.shade700,
+                        color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: isDark ? AppColors.borderDark : const Color(0xFFE5E7EB),
+                  ),
 
                   // Farm Name
                   Text(
                     s.kFarmNameLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E4034),
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
+                    style: TextStyle(color: AppColors.getTextPrimary(context)),
                     decoration: InputDecoration(
                       hintText: s.kFarmNameHint,
                       prefixIcon: const Icon(Icons.agriculture_rounded),
                       filled: true,
-                      fillColor: const Color(0xFFF9FAF8),
+                      fillColor: AppColors.getInputBg(context),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 14,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: AppColors.getBorder(context)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: AppColors.getBorder(context)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
+                        borderSide: BorderSide(
+                          color: isDark ? AppColors.primaryLight : AppColors.primary,
                           width: 2,
                         ),
                       ),
@@ -407,37 +415,38 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                   // Country
                   Text(
                     s.kCountryLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E4034),
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedLocationId,
                     isExpanded: true,
+                    dropdownColor: AppColors.getCardBg(context),
                     decoration: InputDecoration(
                       hintText: s.kCountryHint,
                       prefixIcon: const Icon(Icons.public_rounded),
                       filled: true,
-                      fillColor: const Color(0xFFF9FAF8),
+                      fillColor: AppColors.getInputBg(context),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 14,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: AppColors.getBorder(context)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: AppColors.getBorder(context)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
+                        borderSide: BorderSide(
+                          color: isDark ? AppColors.primaryLight : AppColors.primary,
                           width: 2,
                         ),
                       ),
@@ -449,11 +458,14 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                           child: Text(
                             loc.displayName,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.getTextPrimary(context),
+                            ),
                           ),
                         );
                       }),
-                      const DropdownMenuItem<String>(
+                      DropdownMenuItem<String>(
                         value: AgriculturalLocation.customId,
                         child: Text(
                           'Otra región / Coordenadas mundiales',
@@ -461,6 +473,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ),
@@ -488,27 +501,28 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                     TextFormField(
                       controller: _countryController,
                       textCapitalization: TextCapitalization.words,
+                      style: TextStyle(color: AppColors.getTextPrimary(context)),
                       decoration: InputDecoration(
                         hintText: 'Ej. USA, Iowa / España, Sevilla / Brasil',
                         prefixIcon: const Icon(Icons.edit_location_alt_rounded),
                         filled: true,
-                        fillColor: const Color(0xFFF9FAF8),
+                        fillColor: AppColors.getInputBg(context),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: AppColors.getBorder(context)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: AppColors.getBorder(context)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.primary,
+                          borderSide: BorderSide(
+                            color: isDark ? AppColors.primaryLight : AppColors.primary,
                             width: 2,
                           ),
                         ),
@@ -534,15 +548,16 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                           children: [
                             Text(
                               s.kTotalSurfaceLabel,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF2E4034),
+                                color: AppColors.getTextPrimary(context),
                               ),
                             ),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _surfaceController,
+                              style: TextStyle(color: AppColors.getTextPrimary(context)),
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                 decimal: true,
@@ -552,25 +567,23 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                 prefixIcon:
                                     const Icon(Icons.square_foot_rounded),
                                 filled: true,
-                                fillColor: const Color(0xFFF9FAF8),
+                                fillColor: AppColors.getInputBg(context),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 14,
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(color: AppColors.getBorder(context)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(color: AppColors.getBorder(context)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.primary,
+                                  borderSide: BorderSide(
+                                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                                     width: 2,
                                   ),
                                 ),
@@ -597,15 +610,16 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                           children: [
                             Text(
                               s.kSurfaceUnitLabel,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF2E4034),
+                                color: AppColors.getTextPrimary(context),
                               ),
                             ),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
                               isExpanded: true,
+                              dropdownColor: AppColors.getCardBg(context),
                               initialValue:
                                   ['ha', 'acres', 'm2', 'tareas'].contains(
                                 _selectedUnit.toLowerCase(),
@@ -614,25 +628,23 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                       : 'ha',
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: const Color(0xFFF9FAF8),
+                                fillColor: AppColors.getInputBg(context),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 14,
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(color: AppColors.getBorder(context)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(color: AppColors.getBorder(context)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.primary,
+                                  borderSide: BorderSide(
+                                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                                     width: 2,
                                   ),
                                 ),
@@ -642,6 +654,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                   value: 'ha',
                                   child: Text(
                                     _getUnitDisplay('ha', s),
+                                    style: TextStyle(color: AppColors.getTextPrimary(context)),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -649,6 +662,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                   value: 'acres',
                                   child: Text(
                                     _getUnitDisplay('acres', s),
+                                    style: TextStyle(color: AppColors.getTextPrimary(context)),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -656,6 +670,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                   value: 'm2',
                                   child: Text(
                                     _getUnitDisplay('m2', s),
+                                    style: TextStyle(color: AppColors.getTextPrimary(context)),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -663,6 +678,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                   value: 'tareas',
                                   child: Text(
                                     _getUnitDisplay('tareas', s),
+                                    style: TextStyle(color: AppColors.getTextPrimary(context)),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -683,25 +699,27 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                   // GPS Location Section
                   Text(
                     s.kFarmLocationLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E4034),
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4F8F4),
+                      color: isDark ? const Color(0xFF16251B) : const Color(0xFFF4F8F4),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFD6E4D8)),
+                      border: Border.all(
+                        color: isDark ? AppColors.borderDark : const Color(0xFFD6E4D8),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.gps_fixed_rounded,
-                          color: AppColors.primary,
+                          color: isDark ? AppColors.primaryLight : AppColors.primary,
                           size: 24,
                         ),
                         const SizedBox(width: 12),
@@ -713,7 +731,7 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                 s.kGpsCoordinates,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey.shade700,
+                                  color: AppColors.getTextMuted(context),
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -721,16 +739,20 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                                 (_latitude != null && _longitude != null)
                                     ? '${_latitude!.toStringAsFixed(4)}°, ${_longitude!.toStringAsFixed(4)}°'
                                     : s.kLocationNotCapturedYet,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1B2E1C),
+                                  color: AppColors.getTextPrimary(context),
                                 ),
                               ),
                             ],
                           ),
                         ),
                         IconButton.filledTonal(
+                          style: IconButton.styleFrom(
+                            backgroundColor: isDark ? const Color(0xFF1A3323) : null,
+                            foregroundColor: isDark ? AppColors.primaryLight : null,
+                          ),
                           onPressed: _isGettingLocation
                               ? null
                               : () => _refreshGpsLocation(s),

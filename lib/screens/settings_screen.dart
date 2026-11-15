@@ -133,6 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Color textColor,
     Color subtextColor,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ValueListenableBuilder<bool>(
       valueListenable: AppSettings.showEve,
       builder: (context, isEveVisible, _) {
@@ -172,9 +173,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F8E9),
+                              color: isDark ? const Color(0xFF1E2F23) : const Color(0xFFF1F8E9),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFC8E6C9)),
+                              border: Border.all(color: isDark ? const Color(0xFF2E4E39) : const Color(0xFFC8E6C9)),
                             ),
                             child: EveAnimatedAvatar(
                               emote: _previewEmote,
@@ -273,15 +274,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildHeader(AppStrings s, Color textColor, Color subtextColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           s.kSettingsTitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F5A37),
+            color: isDark ? const Color(0xFF81C784) : const Color(0xFF0F5A37),
             letterSpacing: -0.5,
           ),
         ),
@@ -305,6 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required Color textColor,
     required Color subtextColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -312,11 +315,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF5EC),
+            color: isDark ? const Color(0xFF1E3024) : const Color(0xFFEAF5EC),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
-            child: Icon(icon, color: const Color(0xFF0F5A37), size: 20),
+            child: Icon(icon, color: isDark ? const Color(0xFF81C784) : const Color(0xFF0F5A37), size: 20),
           ),
         ),
         const SizedBox(width: 12),
@@ -437,6 +440,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required VoidCallback onTap,
     required Color textColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: onTap,
@@ -444,10 +448,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEAF5EC) : Colors.transparent,
+          color: isSelected
+              ? (isDark ? const Color(0xFF1E3827) : const Color(0xFFEAF5EC))
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F5A37) : Colors.transparent,
+            color: isSelected
+                ? (isDark ? const Color(0xFF4CAF50) : const Color(0xFF0F5A37))
+                : (isDark ? const Color(0xFF2C3E33) : Colors.transparent),
             width: 1.5,
           ),
         ),
@@ -455,7 +463,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? const Color(0xFF0F5A37) : Colors.grey.shade500,
+              color: isSelected
+                  ? (isDark ? const Color(0xFF81C784) : const Color(0xFF0F5A37))
+                  : (isDark ? Colors.grey.shade400 : Colors.grey.shade500),
               size: 26,
             ),
             const SizedBox(height: 6),
@@ -468,7 +478,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  color: isSelected ? const Color(0xFF0F5A37) : textColor,
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF81C784) : const Color(0xFF0F5A37))
+                      : textColor,
                 ),
               ),
             ),
@@ -499,6 +511,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ValueListenableBuilder<AppSurfaceUnit>(
             valueListenable: AppSettings.surfaceUnit,
             builder: (context, currentUnit, _) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               final activeUnitShort = AppSettings.getSurfaceUnitShort(currentUnit);
 
               return Column(
@@ -510,7 +523,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Expanded(
                         child: Row(
                           children: [
-                            const Icon(Icons.square_foot_rounded, color: Color(0xFF0F5A37), size: 20),
+                            Icon(Icons.square_foot_rounded, color: isDark ? const Color(0xFF81C784) : const Color(0xFF0F5A37), size: 20),
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(
@@ -532,16 +545,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEAF5EC),
+                          color: isDark ? const Color(0xFF1E3024) : const Color(0xFFEAF5EC),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFC8E6C9)),
+                          border: Border.all(color: isDark ? const Color(0xFF2E4E39) : const Color(0xFFC8E6C9)),
                         ),
                         child: Text(
                           activeUnitShort,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F5A37),
+                            color: isDark ? const Color(0xFF81C784) : const Color(0xFF0F5A37),
                           ),
                         ),
                       ),
@@ -604,7 +617,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Temperature Unit
           Row(
             children: [
-              const Icon(Icons.thermostat_rounded, color: Color(0xFF0F5A37), size: 20),
+              Icon(Icons.thermostat_rounded, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF81C784) : const Color(0xFF0F5A37), size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -655,6 +668,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       borderRadius: BorderRadius.circular(24),
       onTap: onTap,
@@ -662,16 +676,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFF1F5F2),
+          color: isSelected
+              ? (isDark ? const Color(0xFF2E7D32) : const Color(0xFF0F5A37))
+              : (isDark ? const Color(0xFF1E2822) : const Color(0xFFF1F5F2)),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? (isDark ? const Color(0xFF4CAF50) : const Color(0xFF0F5A37))
+                : (isDark ? const Color(0xFF2C3E33) : const Color(0xFFE2E8F0)),
             width: 1.2,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
+                    color: (isDark ? const Color(0xFF2E7D32) : const Color(0xFF0F5A37)).withValues(alpha: 0.25),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -686,7 +704,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-              color: isSelected ? Colors.white : const Color(0xFF4A5568),
+              color: isSelected ? Colors.white : (isDark ? Colors.grey.shade300 : const Color(0xFF4A5568)),
             ),
           ),
         ),
@@ -701,6 +719,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required VoidCallback onTap,
     required Color textColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -726,7 +745,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade500,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
                       ),
                     ),
                   ],
@@ -736,8 +755,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   width: 24,
                   height: 24,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0F5A37),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF2E7D32) : const Color(0xFF0F5A37),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -752,7 +771,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   height: 24,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey.shade400, width: 1.5),
+                    border: Border.all(color: isDark ? Colors.grey.shade600 : Colors.grey.shade400, width: 1.5),
                   ),
                 ),
             ],

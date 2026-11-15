@@ -390,9 +390,11 @@ class _LotMapScreenState extends State<LotMapScreen> {
 
   void _showEveDiagnosisDialog(EveSubplotInsight insight, String subplotName) {
     final isSpanish = AppLanguage.current.value == AppLanguageType.spanish;
+    final isDark = AppColors.isDark(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.getCardBg(ctx),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -404,7 +406,11 @@ class _LotMapScreenState extends State<LotMapScreen> {
             Expanded(
               child: Text(
                 isSpanish ? 'Diagnóstico de Eve' : 'Eve Diagnosis',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.getTextPrimary(ctx),
+                ),
               ),
             ),
           ],
@@ -440,38 +446,44 @@ class _LotMapScreenState extends State<LotMapScreen> {
             const SizedBox(height: 12),
             Text(
               '${isSpanish ? 'Sublote' : 'Subplot'}: $subplotName',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.getTextPrimary(ctx),
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               insight.summary,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+              style: TextStyle(fontSize: 13, color: AppColors.getTextPrimary(ctx)),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F8F3),
+                color: isDark ? const Color(0xFF1A261F) : const Color(0xFFF1F8F3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFC8E6C9)),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : const Color(0xFFC8E6C9),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     isSpanish ? 'Recomendación de Eve:' : 'Eve Recommendation:',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E7D32),
+                      color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     insight.recommendation,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF1B2E1C),
+                      color: AppColors.getTextPrimary(ctx),
                       height: 1.3,
                     ),
                   ),
@@ -497,7 +509,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
     final lotName = _currentLot?['name']?.toString() ?? s.kLot;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2EFE9),
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F5A37),
         foregroundColor: Colors.white,
@@ -731,15 +743,40 @@ class _LotMapScreenState extends State<LotMapScreen> {
           )
         : null;
 
-    final Color bannerBg = hasIssues
-        ? (criticalCount > 0 ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1))
-        : const Color(0xFFE8F5E9);
-    final Color bannerBorder = hasIssues
-        ? (criticalCount > 0 ? const Color(0xFFEF9A9A) : const Color(0xFFFFE082))
-        : const Color(0xFFA5D6A7);
-    final Color bannerTextColor = hasIssues
-        ? (criticalCount > 0 ? const Color(0xFFC62828) : const Color(0xFFE65100))
-        : const Color(0xFF2E7D32);
+    final isDark = AppColors.isDark(context);
+    final Color bannerBg = isDark
+        ? (hasIssues
+            ? (criticalCount > 0
+                ? const Color(0xFF3B1A1E)
+                : const Color(0xFF3D2E14))
+            : const Color(0xFF1B2F22))
+        : (hasIssues
+            ? (criticalCount > 0
+                ? const Color(0xFFFFEBEE)
+                : const Color(0xFFFFF8E1))
+            : const Color(0xFFE8F5E9));
+    final Color bannerBorder = isDark
+        ? (hasIssues
+            ? (criticalCount > 0
+                ? const Color(0xFF6B2A30)
+                : const Color(0xFF6E5220))
+            : const Color(0xFF2E4E36))
+        : (hasIssues
+            ? (criticalCount > 0
+                ? const Color(0xFFEF9A9A)
+                : const Color(0xFFFFE082))
+            : const Color(0xFFA5D6A7));
+    final Color bannerTextColor = isDark
+        ? (hasIssues
+            ? (criticalCount > 0
+                ? const Color(0xFFEF5350)
+                : const Color(0xFFFFB74D))
+            : const Color(0xFF81C784))
+        : (hasIssues
+            ? (criticalCount > 0
+                ? const Color(0xFFC62828)
+                : const Color(0xFFE65100))
+            : const Color(0xFF2E7D32));
 
     final String bannerText;
     if (criticalCount > 0) {
@@ -898,6 +935,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
     );
 
     if (_isIsometricView) {
+      final isDark = AppColors.isDark(context);
       return Stack(
         alignment: Alignment.center,
         children: [
@@ -911,10 +949,10 @@ class _LotMapScreenState extends State<LotMapScreen> {
               width: 356,
               height: 356,
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F4F1),
+                color: isDark ? const Color(0xFF16221A) : const Color(0xFFF0F4F1),
                 borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                  color: const Color(0xFFCFDCD2),
+                  color: isDark ? const Color(0xFF2C3E33) : const Color(0xFFCFDCD2),
                   width: 2.5,
                 ),
                 boxShadow: [
@@ -1194,12 +1232,17 @@ class _LotMapScreenState extends State<LotMapScreen> {
   }
 
   Widget _buildEmptyLotPrompt() {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       width: 280,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : Colors.transparent,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -1214,8 +1257,8 @@ class _LotMapScreenState extends State<LotMapScreen> {
           Container(
             width: 60,
             height: 60,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEAF5EC),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A3323) : const Color(0xFFEAF5EC),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -1225,18 +1268,21 @@ class _LotMapScreenState extends State<LotMapScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Lote sin sublotes',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1B2E1C),
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Divide este lote en sublotes para visualizar su mapa 2.5D, cultivos y vecinos.',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.getTextMuted(context),
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),
@@ -1258,11 +1304,18 @@ class _LotMapScreenState extends State<LotMapScreen> {
   }
 
   Widget _buildCompassAndLegendBadge() {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: isDark
+            ? const Color(0xFF1E2B22).withValues(alpha: 0.92)
+            : Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : Colors.white.withValues(alpha: 0.2),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -1282,12 +1335,12 @@ class _LotMapScreenState extends State<LotMapScreen> {
             ),
           ),
           const SizedBox(width: 6),
-          const Text(
+          Text(
             'Norte',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2E4034),
+              color: AppColors.getTextPrimary(context),
             ),
           ),
         ],
@@ -1296,14 +1349,18 @@ class _LotMapScreenState extends State<LotMapScreen> {
   }
 
   Widget _buildBottomInspectorCard(AppStrings s, bool isSpanish) {
+    final isDark = AppColors.isDark(context);
     final subplot = _selectedSubplot;
 
     if (subplot == null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.getCardBg(context),
           borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : Colors.transparent,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -1321,7 +1378,10 @@ class _LotMapScreenState extends State<LotMapScreen> {
                 isSpanish
                     ? 'Toca cualquier sublote en el mapa para ver sus detalles y recomendaciones de Eve.'
                     : 'Tap any subplot on the map to view details and Eve recommendations.',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.getTextMuted(context),
+                ),
               ),
             ),
           ],
@@ -1345,7 +1405,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
     return Card(
       elevation: 6,
       shadowColor: Colors.black.withValues(alpha: 0.15),
-      color: Colors.white,
+      color: AppColors.getCardBg(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
         side: BorderSide(
@@ -1365,7 +1425,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: cropDef?.color ?? const Color(0xFFE8F5E9),
+                    color: cropDef?.color ?? (isDark ? const Color(0xFF1B3523) : const Color(0xFFE8F5E9)),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -1388,10 +1448,10 @@ class _LotMapScreenState extends State<LotMapScreen> {
                           Flexible(
                             child: Text(
                               name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1B2E1C),
+                                color: AppColors.getTextPrimary(context),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1405,7 +1465,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
                             decoration: BoxDecoration(
                               color: insight.hasRisk
                                   ? insight.color.withValues(alpha: 0.15)
-                                  : const Color(0xFFFFF9C4),
+                                  : (isDark ? const Color(0xFF383015) : const Color(0xFFFFF9C4)),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -1415,7 +1475,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
                                 fontWeight: FontWeight.bold,
                                 color: insight.hasRisk
                                     ? insight.color
-                                    : const Color(0xFFF57F17),
+                                    : (isDark ? const Color(0xFFFFD54F) : const Color(0xFFF57F17)),
                               ),
                             ),
                           ),
@@ -1428,7 +1488,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
                             : (isSpanish ? 'Sin cultivo asignado' : 'No crop assigned'),
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade700,
+                          color: AppColors.getTextMuted(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1437,8 +1497,8 @@ class _LotMapScreenState extends State<LotMapScreen> {
                 ),
                 IconButton.filledTonal(
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFEAF5EC),
-                    foregroundColor: AppColors.primary,
+                    backgroundColor: isDark ? const Color(0xFF1A3323) : const Color(0xFFEAF5EC),
+                    foregroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
                   ),
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   tooltip: 'Editar Sublote',
@@ -1454,20 +1514,20 @@ class _LotMapScreenState extends State<LotMapScreen> {
                 _buildInfoChip(
                   icon: Icons.square_foot_rounded,
                   label: '${surface.toStringAsFixed(2)} $_surfaceUnit',
-                  bgColor: const Color(0xFFF1F6F2),
-                  textColor: const Color(0xFF2E4034),
+                  bgColor: isDark ? AppColors.chipBgDark : const Color(0xFFF1F6F2),
+                  textColor: isDark ? AppColors.textPrimaryDark : const Color(0xFF2E4034),
                 ),
                 _buildInfoChip(
                   icon: Icons.terrain_rounded,
                   label: soilDef.label(s),
-                  bgColor: soilDef.bgColor,
-                  textColor: soilDef.textColor,
+                  bgColor: isDark ? AppColors.chipBgDark : soilDef.bgColor,
+                  textColor: isDark ? AppColors.textPrimaryDark : soilDef.textColor,
                 ),
                 _buildInfoChip(
                   icon: Icons.water_drop_rounded,
                   label: 'SMAP: ${(_soilMoistureIndex * 100).toInt()}%',
-                  bgColor: const Color(0xFFE8F5E9),
-                  textColor: const Color(0xFF2E7D32),
+                  bgColor: isDark ? const Color(0xFF1B3523) : const Color(0xFFE8F5E9),
+                  textColor: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                 ),
               ],
             ),
@@ -1479,9 +1539,11 @@ class _LotMapScreenState extends State<LotMapScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: insight.color.withValues(alpha: 0.10),
+                  color: insight.color.withValues(alpha: isDark ? 0.18 : 0.10),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: insight.color.withValues(alpha: 0.35)),
+                  border: Border.all(
+                    color: insight.color.withValues(alpha: isDark ? 0.45 : 0.35),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1504,7 +1566,7 @@ class _LotMapScreenState extends State<LotMapScreen> {
                             insight.recommendation,
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey.shade800,
+                              color: AppColors.getTextPrimary(context),
                               height: 1.25,
                             ),
                             maxLines: 2,

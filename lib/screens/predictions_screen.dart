@@ -556,7 +556,6 @@ class _PredictionsScreenState extends State<PredictionsScreen>
         ],
       ),
     );
-    );
   }
 
   // ===========================================================================
@@ -2525,6 +2524,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        final isDark = AppColors.isDark(ctx);
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             return SafeArea(
@@ -2534,10 +2534,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(22),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: AppColors.getModalBg(ctx),
                     borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(24)),
+                        const BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -2548,7 +2548,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           _buildIconBadge(
                             icon: Icons.tune_rounded,
                             color: const Color(0xFF1B5E20),
-                            bgColor: const Color(0xFFE8F5E9),
+                            bgColor: isDark ? const Color(0xFF1E3024) : const Color(0xFFE8F5E9),
                             size: 20,
                             containerSize: 36,
                           ),
@@ -2556,14 +2556,17 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           Expanded(
                             child: Text(
                               s.kSimulatorTitle,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.getTextPrimary(ctx)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close_rounded),
+                            icon: Icon(Icons.close_rounded,
+                                color: AppColors.getTextPrimary(ctx)),
                             onPressed: () => Navigator.pop(ctx),
                           ),
                         ],
@@ -2571,19 +2574,26 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       const SizedBox(height: 14),
                       Text(
                         s.kSimulatorCropQuestion,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.getTextPrimary(ctx)),
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
                         initialValue: tempCrop,
+                        dropdownColor: AppColors.getCardBg(ctx),
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: const Color(0xFFF1F6F2),
+                          fillColor: AppColors.getInputBg(ctx),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
+                            borderSide: BorderSide(color: AppColors.getBorder(ctx)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.getBorder(ctx)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 10),
@@ -2600,6 +2610,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                                 Flexible(
                                   child: Text(
                                     c,
+                                    style: TextStyle(
+                                        color: AppColors.getTextPrimary(ctx)),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -2616,12 +2628,15 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       const SizedBox(height: 14),
                       Text(
                         s.kSimulatorSoilQuestion,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.getTextPrimary(ctx)),
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
+                        dropdownColor: AppColors.getCardBg(ctx),
                         initialValue: soilOptionsLocalized.firstWhere(
                           (item) => item['key']!
                               .toLowerCase()
@@ -2630,10 +2645,14 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                         )['key'],
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: const Color(0xFFF1F6F2),
+                          fillColor: AppColors.getInputBg(ctx),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
+                            borderSide: BorderSide(color: AppColors.getBorder(ctx)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.getBorder(ctx)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 10),
@@ -2643,7 +2662,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                             value: item['key'],
                             child: Text(
                               item['desc']!,
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.getTextPrimary(ctx)),
                               overflow: TextOverflow.ellipsis,
                             ),
                           );
@@ -2717,13 +2738,16 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        final isDark = AppColors.isDark(ctx);
+
         return SafeArea(
           child: SingleChildScrollView(
             child: Container(
               padding: const EdgeInsets.all(22),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: AppColors.getModalBg(ctx),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -2734,7 +2758,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       _buildIconBadge(
                         icon: Icons.notifications_active_rounded,
                         color: const Color(0xFFE65100),
-                        bgColor: const Color(0xFFFFF3E0),
+                        bgColor: isDark ? const Color(0xFF382315) : const Color(0xFFFFF3E0),
                         size: 20,
                         containerSize: 36,
                       ),
@@ -2745,10 +2769,10 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           children: [
                             Text(
                               s.kWeeklyDeltaDialogTitle,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E2D24),
+                                color: AppColors.getTextPrimary(ctx),
                               ),
                             ),
                             Text(
@@ -2756,14 +2780,15 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade600,
+                                color: AppColors.getTextMuted(ctx),
                               ),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded),
+                        icon: Icon(Icons.close_rounded,
+                            color: AppColors.getTextPrimary(ctx)),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -2773,7 +2798,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     projection3w.weeklyCheckpointSummary,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade800,
+                      color: AppColors.getTextPrimary(ctx),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2783,9 +2808,11 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F8E9),
+                        color: isDark ? const Color(0xFF1E2B22) : const Color(0xFFF1F8E9),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFC8E6C9)),
+                        border: Border.all(
+                          color: isDark ? AppColors.borderDark : const Color(0xFFC8E6C9),
+                        ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2796,9 +2823,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                           Expanded(
                             child: Text(
                               change,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11.5,
-                                color: Color(0xFF1E2D24),
+                                color: AppColors.getTextPrimary(ctx),
                                 height: 1.35,
                               ),
                             ),

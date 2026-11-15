@@ -257,7 +257,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       valueListenable: AppLanguage.current,
       builder: (context, _, child) {
         final s = AppLanguage.strings;
-        final isDark = AppColors.isDark(context);
         final textColor = AppColors.getTextPrimary(context);
         final scaffoldBg = AppColors.getBackground(context);
 

@@ -6,6 +6,7 @@ class AppColors {
   static const Color primaryLight = Color(0xFF4CAF50);
   static const Color primaryDark = Color(0xFF1B5E20);
   static const Color accent = Color(0xFF558B2F);
+  static const Color accentDark = Color(0xFF81C784);
   static const Color secondary = Color(0xFF8D6E63); // Earth / Soil Brown
   static const Color warning = Color(0xFFE65100);
   static const Color error = Color(0xFFD32F2F);
