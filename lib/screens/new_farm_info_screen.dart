@@ -901,12 +901,29 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedLocationId,
                     isExpanded: true,
+                    menuMaxHeight: 280,
+                    borderRadius: BorderRadius.circular(16),
+                    elevation: 4,
+                    dropdownColor: Colors.white,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
                     decoration: InputDecoration(
                       labelText: s.kCountryLabel,
                       hintText: s.kCountryHint,
                       prefixIcon: const Icon(Icons.public, color: AppColors.primary),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
                       ),
                     ),
                     items: [
@@ -1115,12 +1132,29 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<SurfaceUnit>(
                     initialValue: _selectedUnit,
+                    menuMaxHeight: 220,
+                    borderRadius: BorderRadius.circular(16),
+                    elevation: 4,
+                    dropdownColor: Colors.white,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
                     decoration: InputDecoration(
                       labelText: s.kSurfaceUnitLabel,
                       hintText: s.kSurfaceUnitHint,
                       prefixIcon: const Icon(Icons.straighten),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
                       ),
                     ),
                     items: SurfaceUnit.values.map((unit) {
