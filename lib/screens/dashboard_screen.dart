@@ -197,7 +197,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(height: 16),
                           EveReactionBanner(
-                            emote: EveEmote.greeting,
+                            emote: EveEmote.calm,
                             title: s.kEveGuideBannerTitle,
                             message: s.kEveGuideStep1,
                             actionLabel: s.kAskIvyButton,
@@ -273,15 +273,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF1B5E20),
-          foregroundColor: Colors.white,
-          elevation: 3,
-          icon: const Icon(Icons.auto_awesome_rounded, size: 20),
-          label: Text(
-            s.kAskIvyButton,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
+        floatingActionButton: EveFloatingLauncherButton(
+          tooltip: s.kAskIvyTooltip,
           onPressed: () => _showIvyConsultationSheet(context),
         ),
         bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
@@ -1068,6 +1061,15 @@ class _IvyChatModalState extends State<_IvyChatModal> {
     });
   }
 
+  String _getLatestEveSpeechText(AppStrings s) {
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i]['role'] == 'assistant') {
+        return _messages[i]['text'] ?? '';
+      }
+    }
+    return s.kIvyAnalyzingScenario;
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppLanguage.strings;
@@ -1075,7 +1077,7 @@ class _IvyChatModalState extends State<_IvyChatModal> {
     final bottomInset = mediaQuery.viewInsets.bottom;
     final availableHeight =
         (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
-            .clamp(280.0, mediaQuery.size.height * 0.90);
+            .clamp(320.0, mediaQuery.size.height * 0.92);
 
     return Container(
       height: availableHeight,
@@ -1087,7 +1089,7 @@ class _IvyChatModalState extends State<_IvyChatModal> {
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            margin: const EdgeInsets.only(top: 10, bottom: 4),
             width: 48,
             height: 5,
             decoration: BoxDecoration(
@@ -1095,80 +1097,13 @@ class _IvyChatModalState extends State<_IvyChatModal> {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
-            child: Row(
-              children: [
-                ValueListenableBuilder<bool>(
-                  valueListenable: AppSettings.showEve,
-                  builder: (ctx, showEve, _) {
-                    if (!showEve) {
-                      return Container(
-                        width: 44,
-                        height: 44,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF1B5E20),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.auto_awesome_rounded,
-                              color: Colors.white, size: 24),
-                        ),
-                      );
-                    }
-                    return EveAnimatedAvatar(
-                      emote: _isLoading ? EveEmote.surprised : EveEmote.greeting,
-                      size: 46,
-                    );
-                  },
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.kIvyCopilotTitle,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E2D24),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2E7D32),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Flexible(
-                            child: Text(
-                              'gpt-5-mini • NASA & Biotech Grounding',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade700,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
+          EveDuolingoConversationStage(
+            title: s.kIvyCopilotTitle,
+            subtitle: 'gpt-5-mini • NASA & Biotech Grounding',
+            speechBubbleText: _getLatestEveSpeechText(s),
+            isLoading: _isLoading,
+            loadingText: s.kIvyAnalyzingScenario,
+            onClose: () => Navigator.pop(context),
           ),
           const Divider(height: 1),
 

@@ -4,6 +4,7 @@ import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
 
 enum EveEmote {
+  calm,       // Tranquila y de vez en cuando saluda
   greeting,   // Saludo
   alert,      // Alerta !
   sad,        // Triste
@@ -12,6 +13,7 @@ enum EveEmote {
   thumbsUp,   // Pulgar arriba
   thumbsDown, // Pulgar abajo
   pointing,   // Señalando algo
+  jumping,    // Saltando con brazos abiertos para llamar la atención
 }
 
 class EveAnimatedAvatar extends StatefulWidget {
@@ -19,13 +21,15 @@ class EveAnimatedAvatar extends StatefulWidget {
   final double size;
   final VoidCallback? onTap;
   final bool respectVisibilitySetting;
+  final bool isWalking;
 
   const EveAnimatedAvatar({
     super.key,
-    this.emote = EveEmote.greeting,
+    this.emote = EveEmote.calm,
     this.size = 76,
     this.onTap,
     this.respectVisibilitySetting = false,
+    this.isWalking = false,
   });
 
   @override
@@ -35,6 +39,8 @@ class EveAnimatedAvatar extends StatefulWidget {
 class _EveAnimatedAvatarState extends State<EveAnimatedAvatar>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  int _cycleCount = 0;
+  double _lastValue = 0.0;
 
   @override
   void initState() {
@@ -42,7 +48,15 @@ class _EveAnimatedAvatarState extends State<EveAnimatedAvatar>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
-    )..repeat();
+    )
+      ..addListener(() {
+        final v = _controller.value;
+        if (v < _lastValue) {
+          _cycleCount = (_cycleCount + 1) % 1000;
+        }
+        _lastValue = v;
+      })
+      ..repeat();
   }
 
   @override
@@ -114,6 +128,8 @@ class _EveAnimatedAvatarState extends State<EveAnimatedAvatar>
                   painter: _EveCowPainter(
                     emote: widget.emote,
                     progress: t,
+                    cycleCount: _cycleCount,
+                    isWalking: widget.isWalking,
                   ),
                 ),
                 if (badgeIcon != null)
@@ -160,10 +176,14 @@ class _EveAnimatedAvatarState extends State<EveAnimatedAvatar>
 class _EveCowPainter extends CustomPainter {
   final EveEmote emote;
   final double progress;
+  final int cycleCount;
+  final bool isWalking;
 
   _EveCowPainter({
     required this.emote,
     required this.progress,
+    this.cycleCount = 0,
+    this.isWalking = false,
   });
 
   @override
@@ -175,52 +195,74 @@ class _EveCowPainter extends CustomPainter {
     final sinVal = math.sin(progress * 2 * math.pi);
     final cosVal = math.cos(progress * 2 * math.pi);
     final fastSin = math.sin(progress * 4 * math.pi);
+    // Smooth 0.0 -> 1.0 (jump up + open arms) -> 0.0 (land + close arms)
+    final jumpPhase = sinVal.abs();
+    // For EveEmote.calm: calm 75% of the time, waves hello every 4th cycle
+    final bool isCalmWavingNow = (emote == EveEmote.calm) && (cycleCount % 4 == 2);
+    final double calmWaveLift =
+        isCalmWavingNow ? math.sin(progress * math.pi).clamp(0.0, 1.0) : 0.0;
 
     // Compute vertical bounce & head tilt based on emote
     double bounceY = 0.0;
     double headTilt = 0.0;
     double earAngleOffset = 0.0;
 
-    switch (emote) {
-      case EveEmote.greeting:
-        bounceY = sinVal.abs() * -h * 0.025;
-        headTilt = sinVal * 0.06;
-        earAngleOffset = sinVal * 0.08;
-        break;
-      case EveEmote.alert:
-        bounceY = fastSin.abs() * -h * 0.03;
-        headTilt = fastSin * 0.03;
-        earAngleOffset = 0.18; // Perked up
-        break;
-      case EveEmote.sad:
-        bounceY = h * 0.025 + (sinVal * h * 0.008);
-        headTilt = -0.08;
-        earAngleOffset = -0.42; // Drooping ears
-        break;
-      case EveEmote.surprised:
-        bounceY = -sinVal.abs() * h * 0.055;
-        earAngleOffset = 0.22;
-        break;
-      case EveEmote.happy:
-        bounceY = -sinVal.abs() * h * 0.045;
-        headTilt = sinVal * 0.09;
-        earAngleOffset = sinVal.abs() * 0.15;
-        break;
-      case EveEmote.thumbsUp:
-        bounceY = -sinVal.abs() * h * 0.03;
-        headTilt = 0.07;
-        earAngleOffset = 0.12;
-        break;
-      case EveEmote.thumbsDown:
-        bounceY = h * 0.01;
-        headTilt = sinVal * 0.11; // Shaking head
-        earAngleOffset = -0.20;
-        break;
-      case EveEmote.pointing:
-        bounceY = sinVal * h * 0.015;
-        headTilt = 0.05;
-        earAngleOffset = 0.10;
-        break;
+    if (isWalking) {
+      bounceY = -fastSin.abs() * h * 0.035;
+      headTilt = sinVal * 0.05;
+      earAngleOffset = fastSin.abs() * 0.12;
+    } else {
+      switch (emote) {
+        case EveEmote.calm:
+          bounceY = sinVal * -h * 0.012;
+          headTilt = isCalmWavingNow ? (sinVal * 0.055) : (sinVal * 0.018);
+          earAngleOffset = isCalmWavingNow ? (sinVal * 0.07) : (sinVal * 0.025);
+          break;
+        case EveEmote.greeting:
+          bounceY = sinVal.abs() * -h * 0.025;
+          headTilt = sinVal * 0.06;
+          earAngleOffset = sinVal * 0.08;
+          break;
+        case EveEmote.alert:
+          bounceY = fastSin.abs() * -h * 0.03;
+          headTilt = fastSin * 0.03;
+          earAngleOffset = 0.18; // Perked up
+          break;
+        case EveEmote.sad:
+          bounceY = h * 0.025 + (sinVal * h * 0.008);
+          headTilt = -0.08;
+          earAngleOffset = -0.42; // Drooping ears
+          break;
+        case EveEmote.surprised:
+          bounceY = -sinVal.abs() * h * 0.055;
+          earAngleOffset = 0.22;
+          break;
+        case EveEmote.happy:
+          bounceY = -sinVal.abs() * h * 0.045;
+          headTilt = sinVal * 0.09;
+          earAngleOffset = sinVal.abs() * 0.15;
+          break;
+        case EveEmote.thumbsUp:
+          bounceY = -sinVal.abs() * h * 0.03;
+          headTilt = 0.07;
+          earAngleOffset = 0.12;
+          break;
+        case EveEmote.thumbsDown:
+          bounceY = h * 0.01;
+          headTilt = sinVal * 0.11; // Shaking head
+          earAngleOffset = -0.20;
+          break;
+        case EveEmote.pointing:
+          bounceY = sinVal * h * 0.015;
+          headTilt = 0.05;
+          earAngleOffset = 0.10;
+          break;
+        case EveEmote.jumping:
+          bounceY = -jumpPhase * h * 0.11;
+          headTilt = sinVal * 0.04;
+          earAngleOffset = jumpPhase * 0.28;
+          break;
+      }
     }
 
     final whiteFill = Paint()
@@ -245,14 +287,36 @@ class _EveCowPainter extends CustomPainter {
     // -------------------------------------------------------------------------
     // 1. LEGS & RECTANGULAR HOOVES (Matches designer's drawing)
     // -------------------------------------------------------------------------
-    final legTop = h * 0.60 + bounceY * 0.5;
-    final legBottom = h * 0.86;
+    if (emote == EveEmote.jumping) {
+      // Dynamic ground shadow that shrinks as Eve jumps up and expands on landing
+      final shadowPaint = Paint()
+        ..color = Colors.black.withValues(alpha: 0.14 * (1.0 - jumpPhase * 0.45))
+        ..style = PaintingStyle.fill;
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(cx, h * 0.915),
+          width: w * (0.46 - jumpPhase * 0.18),
+          height: h * 0.045,
+        ),
+        shadowPaint,
+      );
+    }
+
+    final legLift = emote == EveEmote.jumping ? bounceY : 0.0;
+    final leftWalkStep = isWalking ? (sinVal.clamp(-1.0, 0.0) * h * 0.055) : 0.0;
+    final rightWalkStep =
+        isWalking ? ((-sinVal).clamp(-1.0, 0.0) * h * 0.055) : 0.0;
+
+    final legTop =
+        h * 0.60 + (emote == EveEmote.jumping ? bounceY : bounceY * 0.5);
+    final leftLegBottom = h * 0.86 + legLift + leftWalkStep;
+    final rightLegBottom = h * 0.86 + legLift + rightWalkStep;
     final legWidth = w * 0.075;
 
     final leftLegRect =
-        Rect.fromLTWH(cx - w * 0.145, legTop, legWidth, legBottom - legTop);
+        Rect.fromLTWH(cx - w * 0.145, legTop, legWidth, leftLegBottom - legTop);
     final rightLegRect =
-        Rect.fromLTWH(cx + w * 0.07, legTop, legWidth, legBottom - legTop);
+        Rect.fromLTWH(cx + w * 0.07, legTop, legWidth, rightLegBottom - legTop);
 
     canvas.drawRect(leftLegRect, whiteFill);
     canvas.drawRect(leftLegRect, outlinePaint);
@@ -263,9 +327,9 @@ class _EveCowPainter extends CustomPainter {
     final hoofHeight = h * 0.055;
     final hoofWidth = w * 0.14;
     final leftHoofRect = Rect.fromLTWH(
-        cx - w * 0.21, legBottom - 1, hoofWidth, hoofHeight);
+        cx - w * 0.21, leftLegBottom - 1, hoofWidth, hoofHeight);
     final rightHoofRect = Rect.fromLTWH(
-        cx + w * 0.07, legBottom - 1, hoofWidth, hoofHeight);
+        cx + w * 0.07, rightLegBottom - 1, hoofWidth, hoofHeight);
 
     canvas.drawRect(leftHoofRect, blackFill);
     canvas.drawRect(rightHoofRect, blackFill);
@@ -283,7 +347,19 @@ class _EveCowPainter extends CustomPainter {
     Offset rightControl;
 
     // Left arm pose
-    if (emote == EveEmote.surprised) {
+    if (isWalking) {
+      leftHand = Offset(
+          cx - w * 0.34 - sinVal * w * 0.04, h * 0.56 + bounceY + sinVal * 4);
+      leftControl = Offset(cx - w * 0.33, h * 0.46 + bounceY);
+    } else if (emote == EveEmote.jumping) {
+      // Opens wide & upward while jumping up (jumpPhase -> 1), closes on landing (jumpPhase -> 0)
+      final closedLeftHand = Offset(cx - w * 0.27, h * 0.61);
+      final openLeftHand = Offset(cx - w * 0.45, h * 0.20 + bounceY);
+      final closedLeftCtrl = Offset(cx - w * 0.28, h * 0.51);
+      final openLeftCtrl = Offset(cx - w * 0.36, h * 0.31 + bounceY);
+      leftHand = Offset.lerp(closedLeftHand, openLeftHand, jumpPhase)!;
+      leftControl = Offset.lerp(closedLeftCtrl, openLeftCtrl, jumpPhase)!;
+    } else if (emote == EveEmote.surprised) {
       leftHand = Offset(cx - w * 0.40, h * 0.34 + bounceY - sinVal.abs() * 4);
       leftControl = Offset(cx - w * 0.34, h * 0.36 + bounceY);
     } else if (emote == EveEmote.happy) {
@@ -293,46 +369,75 @@ class _EveCowPainter extends CustomPainter {
       leftHand = Offset(cx - w * 0.29, h * 0.65 + bounceY);
       leftControl = Offset(cx - w * 0.30, h * 0.54 + bounceY);
     } else {
-      leftHand = Offset(cx - w * 0.34, h * 0.60 + bounceY + cosVal * 2);
+      leftHand = Offset(cx - w * 0.34, h * 0.60 + bounceY + cosVal * 1.5);
       leftControl = Offset(cx - w * 0.33, h * 0.46 + bounceY);
     }
 
-    // Right arm pose (Main expressive arm for greeting, pointing, thumbsUp/Down)
-    switch (emote) {
-      case EveEmote.greeting:
-        final waveX = sinVal * w * 0.06;
-        rightHand = Offset(cx + w * 0.37 + waveX, h * 0.24 + bounceY);
-        rightControl = Offset(cx + w * 0.35, h * 0.36 + bounceY);
-        break;
-      case EveEmote.pointing:
-        final reachX = sinVal.abs() * w * 0.04;
-        rightHand = Offset(cx + w * 0.43 + reachX, h * 0.38 + bounceY);
-        rightControl = Offset(cx + w * 0.33, h * 0.39 + bounceY);
-        break;
-      case EveEmote.thumbsUp:
-        rightHand = Offset(cx + w * 0.36, h * 0.28 + bounceY + sinVal * 2);
-        rightControl = Offset(cx + w * 0.34, h * 0.38 + bounceY);
-        break;
-      case EveEmote.thumbsDown:
-        rightHand = Offset(cx + w * 0.36, h * 0.56 + bounceY);
-        rightControl = Offset(cx + w * 0.34, h * 0.47 + bounceY);
-        break;
-      case EveEmote.surprised:
-        rightHand = Offset(cx + w * 0.40, h * 0.34 + bounceY - sinVal.abs() * 4);
-        rightControl = Offset(cx + w * 0.34, h * 0.36 + bounceY);
-        break;
-      case EveEmote.happy:
-        rightHand = Offset(cx + w * 0.36, h * 0.48 + bounceY - sinVal * 4);
-        rightControl = Offset(cx + w * 0.34, h * 0.42 + bounceY);
-        break;
-      case EveEmote.alert:
-        rightHand = Offset(cx + w * 0.36, h * 0.34 + bounceY + fastSin * 3);
-        rightControl = Offset(cx + w * 0.34, h * 0.40 + bounceY);
-        break;
-      case EveEmote.sad:
-        rightHand = Offset(cx + w * 0.29, h * 0.65 + bounceY);
-        rightControl = Offset(cx + w * 0.30, h * 0.54 + bounceY);
-        break;
+    // Right arm pose (Main expressive arm for calm, greeting, pointing, thumbsUp/Down, jumping)
+    if (isWalking) {
+      rightHand = Offset(
+          cx + w * 0.34 + sinVal * w * 0.04, h * 0.56 + bounceY - sinVal * 4);
+      rightControl = Offset(cx + w * 0.33, h * 0.46 + bounceY);
+    } else {
+      switch (emote) {
+        case EveEmote.calm:
+          // Calm resting arm at side, occasionally lifting smoothly to wave hello
+          final restingRightHand =
+              Offset(cx + w * 0.34, h * 0.60 + bounceY - cosVal * 1.5);
+          final restingRightCtrl = Offset(cx + w * 0.33, h * 0.46 + bounceY);
+          final waveX = fastSin * w * 0.055;
+          final wavingRightHand =
+              Offset(cx + w * 0.37 + waveX, h * 0.25 + bounceY);
+          final wavingRightCtrl = Offset(cx + w * 0.35, h * 0.36 + bounceY);
+          rightHand =
+              Offset.lerp(restingRightHand, wavingRightHand, calmWaveLift)!;
+          rightControl =
+              Offset.lerp(restingRightCtrl, wavingRightCtrl, calmWaveLift)!;
+          break;
+        case EveEmote.jumping:
+          final closedRightHand = Offset(cx + w * 0.27, h * 0.61);
+          final openRightHand = Offset(cx + w * 0.45, h * 0.20 + bounceY);
+          final closedRightCtrl = Offset(cx + w * 0.28, h * 0.51);
+          final openRightCtrl = Offset(cx + w * 0.36, h * 0.31 + bounceY);
+          rightHand = Offset.lerp(closedRightHand, openRightHand, jumpPhase)!;
+          rightControl = Offset.lerp(closedRightCtrl, openRightCtrl, jumpPhase)!;
+          break;
+        case EveEmote.greeting:
+          final waveX = sinVal * w * 0.06;
+          rightHand = Offset(cx + w * 0.37 + waveX, h * 0.24 + bounceY);
+          rightControl = Offset(cx + w * 0.35, h * 0.36 + bounceY);
+          break;
+        case EveEmote.pointing:
+          final reachX = sinVal.abs() * w * 0.04;
+          rightHand = Offset(cx + w * 0.43 + reachX, h * 0.38 + bounceY);
+          rightControl = Offset(cx + w * 0.33, h * 0.39 + bounceY);
+          break;
+        case EveEmote.thumbsUp:
+          rightHand = Offset(cx + w * 0.36, h * 0.28 + bounceY + sinVal * 2);
+          rightControl = Offset(cx + w * 0.34, h * 0.38 + bounceY);
+          break;
+        case EveEmote.thumbsDown:
+          rightHand = Offset(cx + w * 0.36, h * 0.56 + bounceY);
+          rightControl = Offset(cx + w * 0.34, h * 0.47 + bounceY);
+          break;
+        case EveEmote.surprised:
+          rightHand =
+              Offset(cx + w * 0.40, h * 0.34 + bounceY - sinVal.abs() * 4);
+          rightControl = Offset(cx + w * 0.34, h * 0.36 + bounceY);
+          break;
+        case EveEmote.happy:
+          rightHand = Offset(cx + w * 0.36, h * 0.48 + bounceY - sinVal * 4);
+          rightControl = Offset(cx + w * 0.34, h * 0.42 + bounceY);
+          break;
+        case EveEmote.alert:
+          rightHand = Offset(cx + w * 0.36, h * 0.34 + bounceY + fastSin * 3);
+          rightControl = Offset(cx + w * 0.34, h * 0.40 + bounceY);
+          break;
+        case EveEmote.sad:
+          rightHand = Offset(cx + w * 0.29, h * 0.65 + bounceY);
+          rightControl = Offset(cx + w * 0.30, h * 0.54 + bounceY);
+          break;
+      }
     }
 
     _drawCurvedArm(canvas, leftShoulder, leftControl, leftHand, w * 0.055,
@@ -544,6 +649,25 @@ class _EveCowPainter extends CustomPainter {
           Offset(cx - w * 0.19, topY - h * 0.03), rayPaint);
       canvas.drawLine(Offset(cx + w * 0.14, topY + h * 0.02),
           Offset(cx + w * 0.19, topY - h * 0.03), rayPaint);
+    } else if (emote == EveEmote.jumping && jumpPhase > 0.45) {
+      // Attention-calling motion arcs above hands when Eve is airborne with open arms
+      final attentionOpacity = ((jumpPhase - 0.45) / 0.55).clamp(0.0, 1.0);
+      final motionPaint = Paint()
+        ..color = const Color(0xFF2E7D32).withValues(alpha: attentionOpacity * 0.85)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(
+        Offset(leftHand.dx - w * 0.02, leftHand.dy - h * 0.06),
+        Offset(leftHand.dx - w * 0.05, leftHand.dy - h * 0.11),
+        motionPaint,
+      );
+      canvas.drawLine(
+        Offset(rightHand.dx + w * 0.02, rightHand.dy - h * 0.06),
+        Offset(rightHand.dx + w * 0.05, rightHand.dy - h * 0.11),
+        motionPaint,
+      );
     }
   }
 
@@ -600,7 +724,10 @@ class _EveCowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _EveCowPainter oldDelegate) {
-    return oldDelegate.emote != emote || oldDelegate.progress != progress;
+    return oldDelegate.emote != emote ||
+        oldDelegate.progress != progress ||
+        oldDelegate.cycleCount != cycleCount ||
+        oldDelegate.isWalking != isWalking;
   }
 }
 
@@ -734,6 +861,8 @@ class EveEmotePreviewSelector extends StatelessWidget {
 
   String _getLabel(EveEmote e) {
     switch (e) {
+      case EveEmote.calm:
+        return s.kEmoteCalm;
       case EveEmote.greeting:
         return s.kEmoteGreeting;
       case EveEmote.alert:
@@ -750,6 +879,8 @@ class EveEmotePreviewSelector extends StatelessWidget {
         return s.kEmoteThumbsDown;
       case EveEmote.pointing:
         return s.kEmotePointing;
+      case EveEmote.jumping:
+        return s.kEmoteJumping;
     }
   }
 
@@ -788,5 +919,413 @@ class EveEmotePreviewSelector extends StatelessWidget {
         );
       }).toList(),
     );
+  }
+}
+
+/// Floating animated Eve button that replaces the static "Preguntar a Eve" button.
+/// Shows Eve calm and occasionally waving; tapping her opens the Duolingo-style chat.
+class EveFloatingLauncherButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final String? tooltip;
+
+  const EveFloatingLauncherButton({
+    super.key,
+    required this.onPressed,
+    this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppSettings.showEve,
+      builder: (context, showEve, _) {
+        if (!showEve) {
+          return FloatingActionButton(
+            backgroundColor: const Color(0xFF1B5E20),
+            foregroundColor: Colors.white,
+            elevation: 4,
+            tooltip: tooltip,
+            onPressed: onPressed,
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Color(0xFFFFD54F),
+              size: 24,
+            ),
+          );
+        }
+
+        return GestureDetector(
+          onTap: onPressed,
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 74,
+                height: 74,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFFFFF), Color(0xFFE8F5E9)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(
+                    color: const Color(0xFF2E7D32),
+                    width: 2.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1B5E20).withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: EveAnimatedAvatar(
+                    emote: EveEmote.calm,
+                    size: 64,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B5E20),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.chat_bubble_rounded,
+                      size: 12,
+                      color: Color(0xFFFFD54F),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Duolingo-style upper conversation stage:
+/// Eve walks from the side toward the center of the screen while growing larger,
+/// and displays her current message inside a Duolingo speech bubble above her head.
+class EveDuolingoConversationStage extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final String speechBubbleText;
+  final bool isLoading;
+  final String loadingText;
+  final VoidCallback onClose;
+
+  const EveDuolingoConversationStage({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.speechBubbleText,
+    required this.isLoading,
+    required this.loadingText,
+    required this.onClose,
+  });
+
+  @override
+  State<EveDuolingoConversationStage> createState() =>
+      _EveDuolingoConversationStageState();
+}
+
+class _EveDuolingoConversationStageState
+    extends State<EveDuolingoConversationStage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _walkInController;
+  late final Animation<double> _walkCurve;
+
+  @override
+  void initState() {
+    super.initState();
+    _walkInController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 950),
+    );
+    _walkCurve = CurvedAnimation(
+      parent: _walkInController,
+      curve: Curves.easeOutCubic,
+    );
+    _walkInController.forward();
+  }
+
+  @override
+  void dispose() {
+    _walkInController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFF9FCF9), Color(0xFFF1F8E9)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top Header Row with Title & Close Button
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2E7D32),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E2D24),
+                      ),
+                    ),
+                    Text(
+                      widget.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.close_rounded, size: 22),
+                onPressed: widget.onClose,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+
+          // Duolingo Speech Bubble Above Centered Eve
+          AnimatedBuilder(
+            animation: _walkCurve,
+            builder: (context, child) {
+              final bubbleOpacity =
+                  ((_walkCurve.value - 0.35) / 0.65).clamp(0.0, 1.0);
+              final bubbleScale = 0.88 + (0.12 * bubbleOpacity);
+              return Opacity(
+                opacity: bubbleOpacity,
+                child: Transform.scale(
+                  scale: bubbleScale,
+                  alignment: Alignment.bottomCenter,
+                  child: child,
+                ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxHeight: 92),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: const Color(0xFFE0E0E0),
+                      width: 2.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: widget.isLoading
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF2E7D32),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                widget.loadingText,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Colors.grey.shade800,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : SingleChildScrollView(
+                          child: Text(
+                            widget.speechBubbleText,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.35,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF3C3C3C),
+                            ),
+                          ),
+                        ),
+                ),
+                // Downward triangular tail pointing to Eve in the center
+                CustomPaint(
+                  size: const Size(22, 11),
+                  painter: _DuolingoBubbleTailPainter(
+                    fillColor: Colors.white,
+                    borderColor: const Color(0xFFE0E0E0),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Centered Large Eve Walking In & Growing Larger
+          ValueListenableBuilder<bool>(
+            valueListenable: AppSettings.showEve,
+            builder: (context, showEve, _) {
+              if (!showEve) return const SizedBox(height: 4);
+
+              return AnimatedBuilder(
+                animation: _walkCurve,
+                builder: (context, _) {
+                  final v = _walkCurve.value;
+                  final isStillWalking = v < 0.94;
+                  final dx = (1.0 - v) * 115.0;
+                  final dy = (1.0 - v) * 18.0;
+                  final scale = 0.45 + (0.55 * v);
+
+                  return SizedBox(
+                    height: 102,
+                    child: Center(
+                      child: Transform.translate(
+                        offset: Offset(dx, dy),
+                        child: Transform.scale(
+                          scale: scale,
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              // Subtle Duolingo-style floor shadow oval under Eve
+                              Container(
+                                width: 58,
+                                height: 11,
+                                margin: const EdgeInsets.only(bottom: 4),
+                                decoration: BoxDecoration(
+                                  color:
+                                      Colors.black.withValues(alpha: 0.08 * v),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              EveAnimatedAvatar(
+                                emote: widget.isLoading
+                                    ? EveEmote.surprised
+                                    : EveEmote.calm,
+                                size: 96,
+                                isWalking: isStillWalking,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DuolingoBubbleTailPainter extends CustomPainter {
+  final Color fillColor;
+  final Color borderColor;
+
+  _DuolingoBubbleTailPainter({
+    required this.fillColor,
+    required this.borderColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPath = Path()
+      ..moveTo(0, -1.5)
+      ..lineTo(size.width * 0.5, size.height)
+      ..lineTo(size.width, -1.5)
+      ..close();
+
+    final borderPath = Path()
+      ..moveTo(0, -0.5)
+      ..lineTo(size.width * 0.5, size.height)
+      ..lineTo(size.width, -0.5);
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(borderPath, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DuolingoBubbleTailPainter oldDelegate) {
+    return oldDelegate.fillColor != fillColor ||
+        oldDelegate.borderColor != borderColor;
   }
 }

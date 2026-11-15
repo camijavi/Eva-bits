@@ -420,6 +420,8 @@ abstract class AppStrings {
   String get kEmoteThumbsUp;
   String get kEmoteThumbsDown;
   String get kEmotePointing;
+  String get kEmoteJumping;
+  String get kEmoteCalm;
   String get kEveGuideBannerTitle;
   String get kEveGuideStep1;
   String get kEveGuideStep2;
@@ -1210,6 +1212,10 @@ class EngStrings implements AppStrings {
   String get kEmoteThumbsDown => eng.kEmoteThumbsDown;
   @override
   String get kEmotePointing => eng.kEmotePointing;
+  @override
+  String get kEmoteJumping => eng.kEmoteJumping;
+  @override
+  String get kEmoteCalm => eng.kEmoteCalm;
   @override
   String get kEveGuideBannerTitle => eng.kEveGuideBannerTitle;
   @override
@@ -2011,6 +2017,10 @@ class SpaStrings implements AppStrings {
   String get kEmoteThumbsDown => spa.kEmoteThumbsDown;
   @override
   String get kEmotePointing => spa.kEmotePointing;
+  @override
+  String get kEmoteJumping => spa.kEmoteJumping;
+  @override
+  String get kEmoteCalm => spa.kEmoteCalm;
   @override
   String get kEveGuideBannerTitle => spa.kEveGuideBannerTitle;
   @override

@@ -318,11 +318,40 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               ],
             ),
             actions: [
-              IconButton(
-                tooltip: s.kAskIvyTooltip,
-                icon: const Icon(Icons.auto_awesome_rounded,
-                    color: Color(0xFFFFD54F)),
-                onPressed: () => _openIvySheet(report, s),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: AppSettings.showEve,
+                  builder: (ctx, showEve, _) {
+                    if (!showEve) {
+                      return IconButton(
+                        tooltip: s.kAskIvyTooltip,
+                        icon: const Icon(Icons.auto_awesome_rounded,
+                            color: Color(0xFFFFD54F)),
+                        onPressed: () => _openIvySheet(report, s),
+                      );
+                    }
+                    return GestureDetector(
+                      onTap: () => _openIvySheet(report, s),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: const Color(0xFFFFD54F), width: 1.5),
+                        ),
+                        child: const Center(
+                          child: EveAnimatedAvatar(
+                            emote: EveEmote.calm,
+                            size: 34,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
             bottom: TabBar(
@@ -377,17 +406,8 @@ class _PredictionsScreenState extends State<PredictionsScreen>
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: const Color(0xFF1B5E20),
-            foregroundColor: Colors.white,
-            elevation: 4,
-            icon: const Icon(Icons.auto_awesome_rounded,
-                color: Color(0xFFFFD54F), size: 20),
-            label: Text(
-              s.kAskIvyButton,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 13),
-            ),
+          floatingActionButton: EveFloatingLauncherButton(
+            tooltip: s.kAskIvyTooltip,
             onPressed: () => _openIvySheet(report, s),
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
@@ -543,7 +563,7 @@ class _PredictionsScreenState extends State<PredictionsScreen>
       s.kEveGuideStep3,
     ];
     final emotes = [
-      EveEmote.greeting,
+      EveEmote.jumping,
       EveEmote.pointing,
       EveEmote.happy,
     ];
@@ -2814,23 +2834,9 @@ class _PredictionsScreenState extends State<PredictionsScreen>
                     );
                   }),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B5E20),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: const Icon(Icons.auto_awesome_rounded,
-                          color: Color(0xFFFFD54F)),
-                      label: Text(
-                        s.kAskIvyButton,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                  Center(
+                    child: EveFloatingLauncherButton(
+                      tooltip: s.kAskIvyTooltip,
                       onPressed: () {
                         Navigator.pop(ctx);
                         _openIvySheet(report, s);
@@ -2970,13 +2976,22 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
     });
   }
 
+  String _getLatestEveSpeechText() {
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i]['role'] == 'assistant') {
+        return _messages[i]['text'] ?? '';
+      }
+    }
+    return widget.s.kIvyAnalyzingScenario;
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final bottomInset = mediaQuery.viewInsets.bottom;
     final availableHeight =
         (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
-            .clamp(280.0, mediaQuery.size.height * 0.90);
+            .clamp(320.0, mediaQuery.size.height * 0.92);
 
     return Container(
       height: availableHeight,
@@ -2988,7 +3003,7 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            margin: const EdgeInsets.only(top: 10, bottom: 4),
             width: 48,
             height: 5,
             decoration: BoxDecoration(
@@ -2996,57 +3011,14 @@ class _PredictionsIvyChatSheetState extends State<_PredictionsIvyChatSheet> {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
-            child: Row(
-              children: [
-                ValueListenableBuilder<bool>(
-                  valueListenable: AppSettings.showEve,
-                  builder: (ctx, showEve, _) {
-                    if (!showEve) {
-                      return Container(
-                        width: 42,
-                        height: 42,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF1B5E20),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.auto_awesome_rounded,
-                              color: Color(0xFFFFD54F), size: 22),
-                        ),
-                      );
-                    }
-                    return EveAnimatedAvatar(
-                      emote: _isLoading ? EveEmote.surprised : EveEmote.greeting,
-                      size: 46,
-                    );
-                  },
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.s.kIvyCopilotTitle,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${widget.activeCrop} • ${widget.s.kSoilPrefix} ${widget.activeSoil} • gpt-5-mini',
-                        style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
+          EveDuolingoConversationStage(
+            title: widget.s.kIvyCopilotTitle,
+            subtitle:
+                '${widget.activeCrop} • ${widget.s.kSoilPrefix} ${widget.activeSoil} • gpt-5-mini',
+            speechBubbleText: _getLatestEveSpeechText(),
+            isLoading: _isLoading,
+            loadingText: widget.s.kIvyAnalyzingScenario,
+            onClose: () => Navigator.pop(context),
           ),
           const Divider(height: 1),
           Expanded(
