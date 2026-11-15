@@ -4,8 +4,19 @@ import '../services/app_settings.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'dashboard_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.syncFromDatabase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +70,7 @@ class SettingsScreen extends StatelessWidget {
                       _buildThemeSelector(s, currentThemeMode, cardBg, borderColor, textColor),
                       const SizedBox(height: 24),
 
-                      // 3. Measurement Units (Surface & Temperature)
+                      // 3. Measurement Units (Same units shown on new_edit_plot.dart & temperature)
                       _buildSectionTitle(
                         icon: Icons.straighten_rounded,
                         title: s.kUnitsSectionTitle,
@@ -347,48 +358,98 @@ class SettingsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Surface Area Unit
-          Row(
-            children: [
-              const Icon(Icons.square_foot_rounded, color: Color(0xFF0F5A37), size: 20),
-              const SizedBox(width: 8),
-              Text(
-                s.kSurfaceUnitsTitle,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          // Surface Area Unit (matching unit of measurement shown on new_edit_plot.dart)
           ValueListenableBuilder<AppSurfaceUnit>(
             valueListenable: AppSettings.surfaceUnit,
             builder: (context, currentUnit, _) {
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildPillOption(
-                      label: s.kUnitHectares,
-                      isSelected: currentUnit == AppSurfaceUnit.hectares,
-                      onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.hectares),
+              final activeUnitShort = AppSettings.getSurfaceUnitShort(currentUnit);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.square_foot_rounded, color: Color(0xFF0F5A37), size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            s.kSurfaceUnitsTitle,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Current unit badge as shown on new_edit_plot.dart
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAF5EC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFC8E6C9)),
+                        ),
+                        child: Text(
+                          activeUnitShort,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F5A37),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${s.kLotSurfaceLabel} ($activeUnitShort)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: subtextColor,
                     ),
-                    const SizedBox(width: 8),
-                    _buildPillOption(
-                      label: s.kUnitAcres,
-                      isSelected: currentUnit == AppSurfaceUnit.acres,
-                      onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.acres),
+                  ),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildPillOption(
+                          label: s.kUnitHectares,
+                          isSelected: currentUnit == AppSurfaceUnit.hectares,
+                          onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.hectares),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPillOption(
+                          label: s.kUnitAcres,
+                          isSelected: currentUnit == AppSurfaceUnit.acres,
+                          onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.acres),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPillOption(
+                          label: s.kUnitManzanas,
+                          isSelected: currentUnit == AppSurfaceUnit.manzanas,
+                          onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.manzanas),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPillOption(
+                          label: s.kUnitSquareMeters,
+                          isSelected: currentUnit == AppSurfaceUnit.squareMeters,
+                          onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.squareMeters),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPillOption(
+                          label: s.kUnitTareas,
+                          isSelected: currentUnit == AppSurfaceUnit.tareas,
+                          onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.tareas),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    _buildPillOption(
-                      label: s.kUnitManzanas,
-                      isSelected: currentUnit == AppSurfaceUnit.manzanas,
-                      onTap: () => AppSettings.setSurfaceUnit(AppSurfaceUnit.manzanas),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               );
             },
           ),

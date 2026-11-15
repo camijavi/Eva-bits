@@ -5,6 +5,7 @@ import 'package:flutter_eva_bits/screens/farm_info.dart';
 import 'package:flutter_eva_bits/screens/settings_screen.dart';
 import 'package:flutter_eva_bits/services/app_settings.dart';
 import 'package:flutter_eva_bits/languages/app_strings.dart';
+import 'package:flutter_eva_bits/widgets/new_edit_plot.dart';
 
 void main() {
   setUp(() {
@@ -43,9 +44,12 @@ void main() {
     // 4. Units section
     expect(find.text(s.kUnitsSectionTitle), findsOneWidget);
     expect(find.text(s.kSurfaceUnitsTitle), findsOneWidget);
+    expect(find.text('${s.kLotSurfaceLabel} (ha)'), findsOneWidget);
     expect(find.text(s.kUnitHectares), findsOneWidget);
     expect(find.text(s.kUnitAcres), findsOneWidget);
     expect(find.text(s.kUnitManzanas), findsOneWidget);
+    expect(find.text(s.kUnitSquareMeters), findsOneWidget);
+    expect(find.text(s.kUnitTareas), findsOneWidget);
 
     expect(find.text(s.kTemperatureUnitsTitle), findsOneWidget);
     expect(find.text(s.kUnitCelsius), findsOneWidget);
@@ -215,5 +219,58 @@ void main() {
     // Verify language switcher button ('ES' / 'EN') is NOT in FarmInfoDetailScreen
     expect(find.text('ES'), findsNothing);
     expect(find.text('EN'), findsNothing);
+  });
+
+  testWidgets('SettingsScreen and NewEditPlotSheet show the same unit of measurement',
+      (WidgetTester tester) async {
+    final s = AppLanguage.strings;
+
+    // 1. Render NewEditPlotSheet with default settings
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NewEditPlotSheet(
+            onSaved: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify unit shown on NewEditPlotSheet
+    expect(find.text('${s.kLotSurfaceLabel} (ha)'), findsOneWidget);
+
+    // 2. Render SettingsScreen
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SettingsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify SettingsScreen shows the exact same unit of measurement
+    expect(find.text('${s.kLotSurfaceLabel} (ha)'), findsOneWidget);
+
+    // 3. Switch unit to Acres in SettingsScreen
+    await tester.ensureVisible(find.text(s.kUnitAcres));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(s.kUnitAcres));
+    await tester.pumpAndSettle();
+
+    // Verify SettingsScreen now shows (ac)
+    expect(find.text('${s.kLotSurfaceLabel} (ac)'), findsOneWidget);
+
+    // 4. Open NewEditPlotSheet and verify it reflects the same updated unit (ac)
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NewEditPlotSheet(
+            onSaved: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('${s.kLotSurfaceLabel} (ac)'), findsOneWidget);
   });
 }
