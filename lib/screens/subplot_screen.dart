@@ -216,23 +216,14 @@ class _SubplotScreenState extends State<SubplotScreen> {
                     ),
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
+          floatingActionButton: FloatingActionButton(
             backgroundColor: const Color(0xFF0F5A37),
             foregroundColor: Colors.white,
             elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-            icon: const Icon(Icons.add_rounded, size: 24),
-            label: Text(
-              s.kAddNewSubplot,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.2,
-              ),
-            ),
+            shape: const CircleBorder(),
+            tooltip: s.kAddNewSubplot,
             onPressed: _openAddSubplotModal,
+            child: const Icon(Icons.add_rounded, size: 28),
           ),
         );
       },

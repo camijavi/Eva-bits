@@ -4,6 +4,7 @@ import 'package:flutter_eva_bits/screens/lots_screen.dart';
 import 'package:flutter_eva_bits/screens/subplot_screen.dart';
 import 'package:flutter_eva_bits/widgets/new_edit_subplot.dart';
 import 'package:flutter_eva_bits/languages/app_strings.dart';
+import 'package:flutter_eva_bits/constants/soil_types.dart';
 
 void main() {
   final sampleLot = {
@@ -75,10 +76,12 @@ void main() {
     expect(find.textContaining(s.kSoilLoam), findsWidgets);
     expect(find.textContaining(s.kSoilClay), findsWidgets);
 
-    // 3. Subplots Header
+    // 3. Subplots Header and Floating Action Button with plus icon
     expect(find.text(s.kSubplotsTitle), findsOneWidget);
     expect(find.text('2'), findsWidgets); // 2 subplots count
-    expect(find.text(s.kAddNewSubplot), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+    expect(find.byTooltip(s.kAddNewSubplot), findsOneWidget);
 
     // 4. Subplot Cards
     expect(find.text('Subparcela A - Maíz blanco'), findsOneWidget);
@@ -113,7 +116,7 @@ void main() {
     // Verify empty state is displayed
     expect(find.text(s.kNoSubplotsYet), findsOneWidget);
     expect(find.text(s.kNoSubplotsSubtitle), findsOneWidget);
-    expect(find.text(s.kAddNewSubplot), findsWidgets);
+    expect(find.text(s.kAddNewSubplot), findsOneWidget);
   });
 
   testWidgets('NewEditSubplotSheet renders form inputs in create mode',
@@ -188,5 +191,17 @@ void main() {
     expect(find.text(s.kSave), findsOneWidget);
     expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
     expect(savedCalled, isFalse);
+  });
+
+  testWidgets('SoilTypes is reduced to exactly Arenosos, Arcillosos, Limosos, Francos',
+      (WidgetTester tester) async {
+    final s = AppLanguage.strings;
+    expect(SoilTypes.all.length, 4);
+
+    final keys = SoilTypes.all.map((t) => t.key).toList();
+    expect(keys, containsAll(['arenoso', 'arcilloso', 'limoso', 'franco']));
+
+    final labels = SoilTypes.all.map((t) => t.label(s)).toList();
+    expect(labels, containsAll([s.kSoilSandy, s.kSoilClay, s.kSoilSilt, s.kSoilLoam]));
   });
 }

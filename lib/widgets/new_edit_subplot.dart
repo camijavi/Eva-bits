@@ -74,7 +74,9 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
     _surfaceController = TextEditingController(
       text: widget.subplot?['surface']?.toString() ?? '',
     );
-    _selectedSoilType = widget.subplot?['soil_type']?.toString() ?? 'franco';
+    final initialSoil = widget.subplot?['soil_type']?.toString();
+    final isValid = SoilTypes.all.any((s) => s.key == initialSoil);
+    _selectedSoilType = isValid ? initialSoil : 'arenoso';
   }
 
   @override
@@ -494,7 +496,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedSoilType,
+                initialValue: _selectedSoilType,
                 decoration: InputDecoration(
                   hintText: s.kSoilTypeHint,
                   filled: true,

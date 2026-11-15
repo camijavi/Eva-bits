@@ -351,7 +351,7 @@ class DatabaseManager {
         'lot_id': lot1Id,
         'name': 'Subparcela B - Frijol rojo',
         'surface': 1.0,
-        'soil_type': 'franco_arcilloso',
+        'soil_type': 'arenoso',
       });
 
       final lot2Id = await txn.insert('lots', {

@@ -248,23 +248,14 @@ class _LotsScreenState extends State<LotsScreen> {
               ),
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
+          floatingActionButton: FloatingActionButton(
             backgroundColor: const Color(0xFF0F5A37),
             foregroundColor: Colors.white,
             elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-            icon: const Icon(Icons.add_rounded, size: 24),
-            label: Text(
-              s.kAddLot,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.2,
-              ),
-            ),
+            shape: const CircleBorder(),
+            tooltip: s.kAddLot,
             onPressed: _openAddLotModal,
+            child: const Icon(Icons.add_rounded, size: 28),
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
         );

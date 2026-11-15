@@ -529,23 +529,14 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             ],
           ),
           floatingActionButton: _currentStep == 1
-              ? FloatingActionButton.extended(
+              ? FloatingActionButton(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  icon: const Icon(Icons.add_rounded, size: 24),
-                  label: Text(
-                    s.kAddLot,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
+                  shape: const CircleBorder(),
+                  tooltip: s.kAddLot,
                   onPressed: () => _addLot(s),
+                  child: const Icon(Icons.add_rounded, size: 28),
                 )
               : null,
           bottomNavigationBar: _buildBottomNavigationBar(s),
