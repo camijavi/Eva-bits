@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import '../constants/agricultural_locations.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
@@ -47,6 +48,8 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
   double? _longitude;
   bool _isSaving = false;
   bool _isGettingLocation = false;
+  String? _selectedLocationId;
+  bool _isCustomLocation = false;
 
   @override
   void initState() {
@@ -54,9 +57,21 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
     _nameController = TextEditingController(
       text: widget.farm['name']?.toString() ?? '',
     );
-    _countryController = TextEditingController(
-      text: widget.farm['country']?.toString() ?? '',
-    );
+    final initialCountry = widget.farm['country']?.toString() ?? '';
+    _countryController = TextEditingController(text: initialCountry);
+    final match = AgriculturalLocation.findByText(initialCountry);
+    if (match != null) {
+      _selectedLocationId = match.id;
+      _isCustomLocation = false;
+    } else if (initialCountry.isNotEmpty) {
+      _selectedLocationId = AgriculturalLocation.customId;
+      _isCustomLocation = true;
+    } else {
+      _selectedLocationId = 'nic_esteli';
+      _isCustomLocation = false;
+      _countryController.text = AgriculturalLocation.presets.first.displayName;
+    }
+
     _surfaceController = TextEditingController(
       text: widget.farm['total_surface']?.toString() ?? '',
     );
@@ -68,6 +83,10 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
     _longitude = (widget.farm['longitude'] is num)
         ? (widget.farm['longitude'] as num).toDouble()
         : null;
+    if (_latitude == null && match != null) {
+      _latitude = match.latitude;
+      _longitude = match.longitude;
+    }
   }
 
   @override
@@ -389,9 +408,9 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _countryController,
-                    textCapitalization: TextCapitalization.words,
+                  DropdownButtonFormField<String>(
+                    value: _selectedLocationId,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       hintText: s.kCountryHint,
                       prefixIcon: const Icon(Icons.public_rounded),
@@ -417,13 +436,85 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                         ),
                       ),
                     ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return s.kFieldRequired;
-                      }
-                      return null;
+                    items: [
+                      ...AgriculturalLocation.presets.map((loc) {
+                        return DropdownMenuItem<String>(
+                          value: loc.id,
+                          child: Text(
+                            loc.displayName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        );
+                      }),
+                      const DropdownMenuItem<String>(
+                        value: AgriculturalLocation.customId,
+                        child: Text(
+                          '🌐 Otra región / Coordenadas mundiales',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val == null) return;
+                      setState(() {
+                        _selectedLocationId = val;
+                        if (val == AgriculturalLocation.customId) {
+                          _isCustomLocation = true;
+                          _countryController.clear();
+                        } else {
+                          _isCustomLocation = false;
+                          final loc = AgriculturalLocation.presets
+                              .firstWhere((p) => p.id == val);
+                          _countryController.text = loc.displayName;
+                          _latitude = loc.latitude;
+                          _longitude = loc.longitude;
+                        }
+                      });
                     },
                   ),
+                  if (_isCustomLocation) ...[
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _countryController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        hintText: 'Ej. USA, Iowa / España, Sevilla / Brasil',
+                        prefixIcon: const Icon(Icons.edit_location_alt_rounded),
+                        filled: true,
+                        fillColor: const Color(0xFFF9FAF8),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return s.kFieldRequired;
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 16),
 
                   // Surface and Surface Unit
