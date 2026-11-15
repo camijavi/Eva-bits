@@ -227,4 +227,19 @@ const String kNoSubplotsYet = 'No subplots in this lot yet.';
 const String kNoSubplotsSubtitle = 'Divide this lot into subplots to manage specific crops, rotations, and soil practices.';
 const String kExceededLotSurfaceWarning = 'Total subplot area exceeds the lot surface area!';
 
+// Soil Classification
+const String kSoilTypeLabel = 'Soil Type';
+const String kSoilTypeHint = 'Select soil type';
+const String kSoilComposition = 'Soil Composition';
+const String kSoilLoam = 'Loam (Franco)';
+const String kSoilClay = 'Clay (Arcilloso)';
+const String kSoilSandy = 'Sandy (Arenoso)';
+const String kSoilClayLoam = 'Clay Loam (Franco-arcilloso)';
+const String kSoilSandyLoam = 'Sandy Loam (Franco-arenoso)';
+const String kSoilSilt = 'Silt (Limoso)';
+const String kSoilOrganic = 'Organic-rich (Humífero)';
+const String kSoilRocky = 'Rocky (Pedregoso)';
+const String kSoilUnknown = 'Unspecified';
+
+
 

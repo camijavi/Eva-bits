@@ -137,8 +137,9 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text(s.kSearchLotsHint), findsOneWidget);
 
-    // 3. Plus icon to add new lots
-    expect(find.byIcon(Icons.add_circle_rounded), findsOneWidget);
+    // 3. Floating action button to add new lots
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
     expect(find.text(s.kAddLot), findsOneWidget);
 
     // 4. Priority filter chips

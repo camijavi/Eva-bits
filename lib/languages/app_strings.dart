@@ -225,6 +225,20 @@ abstract class AppStrings {
   String get kNoSubplotsYet;
   String get kNoSubplotsSubtitle;
   String get kExceededLotSurfaceWarning;
+
+  // Soil Classification
+  String get kSoilTypeLabel;
+  String get kSoilTypeHint;
+  String get kSoilComposition;
+  String get kSoilLoam;
+  String get kSoilClay;
+  String get kSoilSandy;
+  String get kSoilClayLoam;
+  String get kSoilSandyLoam;
+  String get kSoilSilt;
+  String get kSoilOrganic;
+  String get kSoilRocky;
+  String get kSoilUnknown;
 }
 
 class EngStrings implements AppStrings {
@@ -627,6 +641,32 @@ class EngStrings implements AppStrings {
   String get kNoSubplotsSubtitle => eng.kNoSubplotsSubtitle;
   @override
   String get kExceededLotSurfaceWarning => eng.kExceededLotSurfaceWarning;
+
+  // Soil Classification
+  @override
+  String get kSoilTypeLabel => eng.kSoilTypeLabel;
+  @override
+  String get kSoilTypeHint => eng.kSoilTypeHint;
+  @override
+  String get kSoilComposition => eng.kSoilComposition;
+  @override
+  String get kSoilLoam => eng.kSoilLoam;
+  @override
+  String get kSoilClay => eng.kSoilClay;
+  @override
+  String get kSoilSandy => eng.kSoilSandy;
+  @override
+  String get kSoilClayLoam => eng.kSoilClayLoam;
+  @override
+  String get kSoilSandyLoam => eng.kSoilSandyLoam;
+  @override
+  String get kSoilSilt => eng.kSoilSilt;
+  @override
+  String get kSoilOrganic => eng.kSoilOrganic;
+  @override
+  String get kSoilRocky => eng.kSoilRocky;
+  @override
+  String get kSoilUnknown => eng.kSoilUnknown;
 }
 
 class SpaStrings implements AppStrings {
@@ -1029,6 +1069,32 @@ class SpaStrings implements AppStrings {
   String get kNoSubplotsSubtitle => spa.kNoSubplotsSubtitle;
   @override
   String get kExceededLotSurfaceWarning => spa.kExceededLotSurfaceWarning;
+
+  // Soil Classification
+  @override
+  String get kSoilTypeLabel => spa.kSoilTypeLabel;
+  @override
+  String get kSoilTypeHint => spa.kSoilTypeHint;
+  @override
+  String get kSoilComposition => spa.kSoilComposition;
+  @override
+  String get kSoilLoam => spa.kSoilLoam;
+  @override
+  String get kSoilClay => spa.kSoilClay;
+  @override
+  String get kSoilSandy => spa.kSoilSandy;
+  @override
+  String get kSoilClayLoam => spa.kSoilClayLoam;
+  @override
+  String get kSoilSandyLoam => spa.kSoilSandyLoam;
+  @override
+  String get kSoilSilt => spa.kSoilSilt;
+  @override
+  String get kSoilOrganic => spa.kSoilOrganic;
+  @override
+  String get kSoilRocky => spa.kSoilRocky;
+  @override
+  String get kSoilUnknown => spa.kSoilUnknown;
 }
 
 class AppLanguage {

@@ -27,7 +27,20 @@ class DatabaseManager {
       },
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
+      onOpen: (db) async {
+        await _ensureSubplotColumns(db);
+      },
     );
+  }
+
+  Future<void> _ensureSubplotColumns(Database db) async {
+    try {
+      final info = await db.rawQuery('PRAGMA table_info(subplots)');
+      final hasSoilType = info.any((col) => col['name'] == 'soil_type');
+      if (!hasSoilType) {
+        await db.execute('ALTER TABLE subplots ADD COLUMN soil_type TEXT');
+      }
+    } catch (_) {}
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -74,6 +87,7 @@ class DatabaseManager {
         lot_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         surface REAL NOT NULL,
+        soil_type TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (lot_id) REFERENCES lots (id) ON DELETE CASCADE
       )
@@ -331,11 +345,13 @@ class DatabaseManager {
         'lot_id': lot1Id,
         'name': 'Subparcela A - Maíz blanco',
         'surface': 1.5,
+        'soil_type': 'franco',
       });
       await txn.insert('subplots', {
         'lot_id': lot1Id,
         'name': 'Subparcela B - Frijol rojo',
         'surface': 1.0,
+        'soil_type': 'franco_arcilloso',
       });
 
       final lot2Id = await txn.insert('lots', {
@@ -347,6 +363,7 @@ class DatabaseManager {
         'lot_id': lot2Id,
         'name': 'Subparcela Principal',
         'surface': 1.8,
+        'soil_type': 'arcilloso',
       });
 
       await txn.insert('lots', {

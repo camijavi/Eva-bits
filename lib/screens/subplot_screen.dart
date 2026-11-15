@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/soil_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
@@ -64,6 +65,16 @@ class _SubplotScreenState extends State<SubplotScreen> {
     if (_lotSurface <= 0) return 0.0;
     final ratio = _totalAllocatedSurface / _lotSurface;
     return ratio.clamp(0.0, 1.0);
+  }
+
+  Map<String, double> get _soilDistribution {
+    final dist = <String, double>{};
+    for (final s in _subplots) {
+      final soilKey = s['soil_type']?.toString() ?? 'franco';
+      final surface = (s['surface'] as num?)?.toDouble() ?? 0.0;
+      dist[soilKey] = (dist[soilKey] ?? 0.0) + surface;
+    }
+    return dist;
   }
 
   Future<void> _loadSubplots() async {
@@ -199,11 +210,29 @@ class _SubplotScreenState extends State<SubplotScreen> {
                             _buildEmptyState(s)
                           else
                             ..._subplots.map((sub) => _buildSubplotCard(s, sub)),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 80),
                         ],
                       ),
                     ),
             ),
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            backgroundColor: const Color(0xFF0F5A37),
+            foregroundColor: Colors.white,
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 24),
+            label: Text(
+              s.kAddNewSubplot,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+            onPressed: _openAddSubplotModal,
           ),
         );
       },
@@ -384,8 +413,106 @@ class _SubplotScreenState extends State<SubplotScreen> {
               ),
             ],
           ),
+          if (_subplots.isNotEmpty && totalAllocated > 0) ...[
+            const Divider(height: 28, color: Color(0xFFE5E7EB)),
+            _buildSoilCompositionSection(s),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildSoilCompositionSection(AppStrings s) {
+    final dist = _soilDistribution;
+    final totalAllocated = _totalAllocatedSurface;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.terrain_rounded,
+              size: 18,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              s.kSoilComposition,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1B2E1C),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // Multi-segmented colored soil bar
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            height: 12,
+            child: Row(
+              children: dist.entries.map((entry) {
+                final soilDef = SoilTypes.getByKey(entry.key);
+                final flex = (entry.value * 1000).toInt();
+                return Expanded(
+                  flex: flex > 0 ? flex : 1,
+                  child: Container(
+                    color: soilDef.barColor,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Legend chips wrap
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: dist.entries.map((entry) {
+            final soilDef = SoilTypes.getByKey(entry.key);
+            final surface = entry.value;
+            final pct =
+                totalAllocated > 0 ? (surface / totalAllocated) * 100 : 0.0;
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: soilDef.bgColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: soilDef.borderColor, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: soilDef.barColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${soilDef.label(s)}: ${surface.toStringAsFixed(1)} $_surfaceUnit (${pct.toStringAsFixed(0)}%)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: soilDef.textColor,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -421,40 +548,6 @@ class _SubplotScreenState extends State<SubplotScreen> {
             ),
           ],
         ),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: _openAddSubplotModal,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF5EC),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFC8E6C9)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.add_circle_rounded,
-                    color: Color(0xFF0F5A37),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    s.kAddNewSubplot,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F5A37),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -463,6 +556,8 @@ class _SubplotScreenState extends State<SubplotScreen> {
     final name = subplot['name']?.toString() ?? s.kSubplot;
     final surface = (subplot['surface'] as num?)?.toDouble() ?? 0.0;
     final percentage = _lotSurface > 0 ? (surface / _lotSurface) * 100 : 0.0;
+    final soilKey = subplot['soil_type']?.toString();
+    final soilDef = SoilTypes.getByKey(soilKey);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -487,38 +582,82 @@ class _SubplotScreenState extends State<SubplotScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                // Soft green circular icon badge
+                // Circular icon badge tinted by soil type
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF1F8F2),
+                  decoration: BoxDecoration(
+                    color: soilDef.bgColor,
                     shape: BoxShape.circle,
+                    border: Border.all(color: soilDef.borderColor, width: 1.2),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
-                      Icons.grid_view_rounded,
-                      color: Color(0xFF2E7D32),
+                      soilDef.icon,
+                      color: soilDef.barColor,
                       size: 22,
                     ),
                   ),
                 ),
                 const SizedBox(width: 14),
 
-                // Subplot Name & Surface info
+                // Subplot Name, Soil Badge & Surface info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E2D24),
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E2D24),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: soilDef.bgColor,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: soilDef.borderColor,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: soilDef.barColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  soilDef.label(s),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: soilDef.textColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 4),
                       Text(
                         '${surface.toStringAsFixed(2)} $_surfaceUnit • ${percentage.toStringAsFixed(0)}% ${s.kTotalLotSurface.toLowerCase()}',
                         style: TextStyle(

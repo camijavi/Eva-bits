@@ -228,8 +228,6 @@ class _LotsScreenState extends State<LotsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTopBar(context, s),
-                    const SizedBox(height: 12),
                     _buildTitleAndSubtitle(s),
                     const SizedBox(height: 16),
                     _buildSearchField(s),
@@ -244,55 +242,33 @@ class _LotsScreenState extends State<LotsScreen> {
                       _buildEmptyState(s)
                     else
                       ...filteredLots.map((lot) => _buildLotCard(s, lot)),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
             ),
           ),
+          floatingActionButton: FloatingActionButton.extended(
+            backgroundColor: const Color(0xFF0F5A37),
+            foregroundColor: Colors.white,
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 24),
+            label: Text(
+              s.kAddLot,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+            onPressed: _openAddLotModal,
+          ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
         );
       },
-    );
-  }
-
-  Widget _buildTopBar(BuildContext context, AppStrings s) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: _openAddLotModal,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF5EC),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFC8E6C9)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.add_circle_rounded,
-                  color: Color(0xFF0F5A37),
-                  size: 22,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  s.kAddLot,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F5A37),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

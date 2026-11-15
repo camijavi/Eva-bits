@@ -230,4 +230,19 @@ const String kNoSubplotsYet = 'Aún no hay subparcelas en este lote.';
 const String kNoSubplotsSubtitle = 'Divide este lote en subparcelas para gestionar cultivos específicos, rotaciones y prácticas de suelo.';
 const String kExceededLotSurfaceWarning = '¡La superficie total de las subparcelas supera la superficie del lote!';
 
+// Soil Classification
+const String kSoilTypeLabel = 'Tipo de Suelo';
+const String kSoilTypeHint = 'Selecciona el tipo de suelo';
+const String kSoilComposition = 'Composición del Suelo';
+const String kSoilLoam = 'Franco';
+const String kSoilClay = 'Arcilloso';
+const String kSoilSandy = 'Arenoso';
+const String kSoilClayLoam = 'Franco-arcilloso';
+const String kSoilSandyLoam = 'Franco-arenoso';
+const String kSoilSilt = 'Limoso';
+const String kSoilOrganic = 'Humífero / Orgánico';
+const String kSoilRocky = 'Pedregoso';
+const String kSoilUnknown = 'Sin especificar';
+
+
 

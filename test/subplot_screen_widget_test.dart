@@ -45,8 +45,8 @@ void main() {
   testWidgets('SubplotScreen renders lot hero card, allocation bar, and subplots',
       (WidgetTester tester) async {
     final subplotsList = [
-      {'id': 101, 'lot_id': 1, 'name': 'Subparcela A - Maíz blanco', 'surface': 1.5},
-      {'id': 102, 'lot_id': 1, 'name': 'Subparcela B - Frijol rojo', 'surface': 0.8},
+      {'id': 101, 'lot_id': 1, 'name': 'Subparcela A - Maíz blanco', 'surface': 1.5, 'soil_type': 'franco'},
+      {'id': 102, 'lot_id': 1, 'name': 'Subparcela B - Frijol rojo', 'surface': 0.8, 'soil_type': 'arcilloso'},
     ];
 
     await tester.pumpWidget(
@@ -70,12 +70,17 @@ void main() {
     expect(find.text('2.30 ha'), findsOneWidget); // 1.5 + 0.8 = 2.30 ha allocated
     expect(find.text('0.20 ha'), findsOneWidget); // 2.5 - 2.3 = 0.20 ha unallocated
 
-    // 2. Subplots Header
+    // 2. Soil Composition Section
+    expect(find.text(s.kSoilComposition), findsOneWidget);
+    expect(find.textContaining(s.kSoilLoam), findsWidgets);
+    expect(find.textContaining(s.kSoilClay), findsWidgets);
+
+    // 3. Subplots Header
     expect(find.text(s.kSubplotsTitle), findsOneWidget);
     expect(find.text('2'), findsWidgets); // 2 subplots count
     expect(find.text(s.kAddNewSubplot), findsOneWidget);
 
-    // 3. Subplot Cards
+    // 4. Subplot Cards
     expect(find.text('Subparcela A - Maíz blanco'), findsOneWidget);
     expect(find.text('Subparcela B - Frijol rojo'), findsOneWidget);
     expect(find.byIcon(Icons.edit_outlined), findsWidgets);
@@ -138,6 +143,7 @@ void main() {
     expect(find.text(s.kAddNewSubplot), findsOneWidget);
     expect(find.text(s.kSubplotNameLabel), findsOneWidget);
     expect(find.text('${s.kSubplotSurfaceLabel} (ha)'), findsOneWidget);
+    expect(find.text(s.kSoilTypeLabel), findsOneWidget);
     expect(find.text(s.kSaveSubplot), findsOneWidget);
     expect(find.text(s.kCancel), findsOneWidget);
     expect(savedCalled, isFalse);
@@ -150,6 +156,7 @@ void main() {
       'lot_id': 1,
       'name': 'Subparcela Experimental',
       'surface': 0.75,
+      'soil_type': 'arcilloso',
     };
 
     bool savedCalled = false;

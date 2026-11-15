@@ -526,9 +526,29 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   ],
                 ),
               ),
-              _buildBottomNavigationBar(s),
             ],
           ),
+          floatingActionButton: _currentStep == 1
+              ? FloatingActionButton.extended(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 24),
+                  label: Text(
+                    s.kAddLot,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  onPressed: () => _addLot(s),
+                )
+              : null,
+          bottomNavigationBar: _buildBottomNavigationBar(s),
         );
       },
     );
@@ -964,18 +984,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
-            ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () => _addLot(s),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(s.kAddLot),
             ),
           ],
         ),

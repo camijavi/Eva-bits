@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/soil_types.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/app_settings.dart';
@@ -61,6 +62,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
 
   late TextEditingController _nameController;
   late TextEditingController _surfaceController;
+  String? _selectedSoilType;
   bool _isSaving = false;
 
   @override
@@ -72,6 +74,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
     _surfaceController = TextEditingController(
       text: widget.subplot?['surface']?.toString() ?? '',
     );
+    _selectedSoilType = widget.subplot?['soil_type']?.toString() ?? 'franco';
   }
 
   @override
@@ -118,6 +121,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
         subplotMap['lot_id'] = widget.lotId;
         subplotMap['name'] = nameVal;
         subplotMap['surface'] = surfaceVal;
+        subplotMap['soil_type'] = _selectedSoilType;
 
         await DatabaseManager().updateSubplot(subplotMap);
 
@@ -141,6 +145,7 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
           'lot_id': widget.lotId,
           'name': nameVal,
           'surface': surfaceVal,
+          'soil_type': _selectedSoilType,
         });
 
         if (mounted) {
@@ -474,6 +479,77 @@ class _NewEditSubplotSheetState extends State<NewEditSubplotSheet> {
                     return s.kInvalidNumber;
                   }
                   return null;
+                },
+              ),
+              const SizedBox(height: 18),
+
+              // Soil Type Selector
+              Text(
+                s.kSoilTypeLabel,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B2E1C),
+                ),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedSoilType,
+                decoration: InputDecoration(
+                  hintText: s.kSoilTypeHint,
+                  filled: true,
+                  fillColor: const Color(0xFFF9FBF8),
+                  prefixIcon: const Icon(
+                    Icons.terrain_rounded,
+                    color: AppColors.primary,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                items: SoilTypes.all.map((soil) {
+                  return DropdownMenuItem<String>(
+                    value: soil.key,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: soil.barColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          soil.label(s),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1B2E1C),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedSoilType = val;
+                  });
                 },
               ),
               const SizedBox(height: 26),
