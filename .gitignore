@@ -86,7 +86,6 @@ coverage/
 # IDEs & Editors
 # --------------------------------------------------
 # IntelliJ / Android Studio
-*.iml
 *.ipr
 *.iws
 .idea/

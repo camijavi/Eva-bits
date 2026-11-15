@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../constants/app_colors.dart';
+import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
+import 'dashboard_screen.dart';
 
 enum SurfaceUnit {
   hectares,
@@ -49,7 +51,12 @@ class LotItem {
 }
 
 class FarmInfoScreen extends StatefulWidget {
-  const FarmInfoScreen({super.key});
+  final bool checkExisting;
+
+  const FarmInfoScreen({
+    super.key,
+    this.checkExisting = true,
+  });
 
   @override
   State<FarmInfoScreen> createState() => _FarmInfoScreenState();
@@ -70,6 +77,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   double? _latitude;
   double? _longitude;
   bool _isGettingLocation = false;
+  bool _isSaving = false;
+  bool _isCheckingExistingFarm = true;
 
   SurfaceUnit _selectedUnit = SurfaceUnit.hectares;
   final List<LotItem> _lots = [];
@@ -82,9 +91,48 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     _totalSurfaceController = TextEditingController();
     _lotsCountController = TextEditingController(text: '0');
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (widget.checkExisting) {
+      _checkExistingFarm();
+    } else {
+      _isCheckingExistingFarm = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _getCurrentLocation(AppLanguage.strings);
+      });
+    }
+  }
+
+  Future<void> _checkExistingFarm() async {
+    try {
+      final existingFarm = await DatabaseManager().getLatestFarm();
+      if (existingFarm != null && mounted) {
+        final farmName = existingFarm['name']?.toString();
+        final country = existingFarm['country']?.toString();
+        final surface = existingFarm['total_surface']?.toString();
+        final unit = existingFarm['surface_unit']?.toString() ?? 'ha';
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => DashboardScreen(
+                  farmName: farmName,
+                  location: country,
+                  surface: surface != null ? '$surface $unit' : null,
+                ),
+              ),
+            );
+          }
+        });
+        return;
+      }
+    } catch (_) {
+      // If error occurs or database is empty, proceed to setup wizard
+    }
+
+    if (mounted) {
+      setState(() => _isCheckingExistingFarm = false);
       _getCurrentLocation(AppLanguage.strings);
-    });
+    }
   }
 
   @override
@@ -130,6 +178,83 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     } finally {
       if (mounted) {
         setState(() => _isGettingLocation = false);
+      }
+    }
+  }
+
+  Future<void> _saveFarmDataToDatabase(AppStrings s) async {
+    if (_isSaving) return;
+
+    setState(() => _isSaving = true);
+
+    final unitShort = _getUnitShortName(_selectedUnit, s);
+    final farmData = <String, dynamic>{
+      'name': _farmNameController.text.trim(),
+      'country': _countryController.text.trim(),
+      'surface_unit': unitShort,
+      'total_surface':
+          double.tryParse(_totalSurfaceController.text.trim()) ?? 0.0,
+      'latitude': _latitude,
+      'longitude': _longitude,
+    };
+
+    final lotsData = _lots.map((lot) {
+      return <String, dynamic>{
+        'name': lot.nameController.text.trim(),
+        'surface': double.tryParse(lot.surfaceController.text.trim()) ?? 0.0,
+        'subplots': lot.subplots.map((sub) {
+          return <String, dynamic>{
+            'name': sub.nameController.text.trim(),
+            'surface':
+                double.tryParse(sub.surfaceController.text.trim()) ?? 0.0,
+          };
+        }).toList(),
+      };
+    }).toList();
+
+    try {
+      await DatabaseManager().insertFarm(
+        farm: farmData,
+        lots: lotsData,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.primary,
+            content: Text(s.kFormSavedSuccessfully),
+          ),
+        );
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => DashboardScreen(
+              farmName: _farmNameController.text.isNotEmpty
+                  ? _farmNameController.text
+                  : null,
+              location: _countryController.text.isNotEmpty
+                  ? _countryController.text
+                  : null,
+              surface: _totalSurfaceController.text.isNotEmpty
+                  ? '${_totalSurfaceController.text} $unitShort'
+                  : null,
+            ),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red.shade800,
+            content: Text(s.kErrorSavingData),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -343,6 +468,17 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingExistingFarm) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+
     return ValueListenableBuilder<AppLanguageType>(
       valueListenable: AppLanguage.current,
       builder: (context, currentLang, _) {
@@ -1285,17 +1421,21 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 } else if (_currentStep == 1) {
                   setState(() => _currentStep = 2);
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: AppColors.primary,
-                      content: Text(s.kFormSavedSuccessfully),
-                    ),
-                  );
+                  _saveFarmDataToDatabase(s);
                 }
               },
-              icon: Icon(
-                _currentStep == 2 ? Icons.save : Icons.arrow_forward,
-              ),
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(
+                      _currentStep == 2 ? Icons.save : Icons.arrow_forward,
+                    ),
               label: Text(
                 _currentStep == 2 ? s.kSave : s.kNextStep,
                 style: const TextStyle(fontWeight: FontWeight.bold),

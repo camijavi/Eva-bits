@@ -95,6 +95,8 @@ const String kSubplotsSurfaceExceededWarning =
 const String kFormSavedSuccessfully =
     '¡Información de la finca guardada con éxito!';
 const String kConfirmSave = 'Confirmar y Guardar';
+const String kErrorSavingData =
+    'Error al guardar los datos de la finca. Por favor intente nuevamente.';
 
 // Wizard & Quick Start
 const String kStep1Title = 'Finca';
@@ -114,8 +116,97 @@ const String kLotsDistribution = 'Distribución de Lotes';
 const String kNasaDataDescription =
     'Datos satelitales NASA POWER y SMAP (radiación, lluvia y humedad) sincronizados con tus coordenadas.';
 
+// Dashboard Mockup
+const String kDashboardGreeting = '¡Hola, María!';
+const String kDashboardSubtitle =
+    'Aquí tienes un resumen de tu finca y las recomendaciones para hoy.';
+const String kDashboardWeatherSummary = 'Mayormente soleado';
+const String kDashboardYourFarm = 'Tu finca';
+const String kDashboardFarmSize = 'Tamaño';
+const String kDashboardCurrentCrops = 'Cultivos actuales: Maíz, Frijol';
+const String kDashboardViewDetails = 'Ver detalles';
+const String kDashboardWhatToDo = '¿Qué quieres hacer hoy?';
+const String kDashboardAction1 = 'Comparar rotaciones de cultivos';
+const String kDashboardAction2 =
+    'Explorar datos del entorno (clima y suelo)';
+const String kDashboardAction3 = 'Ver recomendaciones personalizadas';
+const String kNavHome = 'Inicio';
+const String kNavLots = 'Lotes';
+const String kNavRotations = 'Rotaciones';
+const String kNavCommunity = 'Comunidad';
+const String kNavMore = 'Más';
+
+// Lots Screen
+const String kLotsScreenTitle = 'Lotes de la Finca';
+const String kLotsScreenSubtitle = 'Consulta y gestiona todos los lotes registrados en tu finca.';
+const String kSearchLotsHint = 'Buscar lote por nombre...';
+const String kFilterAll = 'Todos';
+const String kFilterLargest = 'Mayor superficie';
+const String kFilterSmallest = 'Menor superficie';
+const String kFilterWithSubplots = 'Con subparcelas';
+const String kFilterPriorityTitle = 'Mi prioridad es:';
+const String kRegisteredLotsTitle = 'Lotes registrados';
+const String kAddNewLot = 'Agregar nuevo lote';
+const String kEditLot = 'Editar Lote';
+const String kDeleteLot = 'Eliminar Lote';
+const String kDeleteLotConfirm = '¿Estás seguro de que deseas eliminar este lote?';
+const String kDeleteLotWarning = 'Esta acción no se puede deshacer. También se eliminarán las subparcelas asociadas.';
+const String kLotNamePrompt = 'Nombre del lote';
+const String kLotSurfacePrompt = 'Superficie';
+const String kLotUpdatedSuccessfully = '¡Lote actualizado con éxito!';
+const String kLotCreatedSuccessfully = '¡Lote registrado con éxito!';
+const String kLotDeletedSuccessfully = '¡Lote eliminado con éxito!';
+const String kNoLotsFound = 'No se encontraron lotes que coincidan con la búsqueda.';
+const String kNoLotsYetSubtitle = 'Agrega tu primer lote para organizar los cultivos y suelo de tu finca.';
+const String kSubplotsCount = 'subparcelas';
+const String kSubplotSingular = 'subparcela';
+const String kSaveLot = 'Guardar Lote';
+
+// Farm Details & Edit
+const String kFarmDetailsTitle = 'Detalles de la Finca';
+const String kEditFarm = 'Editar Finca';
+const String kEditFarmInfo = 'Editar Información de la Finca';
+const String kFarmOverview = 'Resumen de la Finca';
+const String kLotsAndSubplots = 'Lotes y Subparcelas';
+const String kEnvironmentalContext = 'Datos Ambientales y Clima';
+const String kSaveChanges = 'Guardar Cambios';
+const String kFarmUpdatedSuccessfully = '¡Finca actualizada con éxito!';
+const String kTotalLots = 'Total de Lotes';
+const String kTotalSubplots = 'Total de Subparcelas';
+const String kNoLotsRegistered = 'Aún no hay lotes registrados.';
+const String kLandAllocation = 'Distribución del Terreno';
+const String kSoilMoisture = 'Humedad del Suelo';
+const String kSolarRadiation = 'Radiación Solar';
+const String kPrecipitation = 'Precipitación';
+const String kTemperature = 'Temperatura';
+const String kUnallocatedSurface = 'Sin asignar';
+const String kGpsSynchronized = 'GPS Sincronizado';
+const String kNoFarmsFound = 'No se encontró información de la finca. Por favor completa el registro inicial.';
+
 // Language
 const String kLanguage = 'Idioma';
 const String kEnglish = 'Inglés';
 const String kSpanish = 'Español';
+
+// Settings Screen
+const String kSettingsTitle = 'Configuración';
+const String kSettingsSubtitle = 'Personaliza idioma, tema y unidades de medida';
+const String kLanguageSectionTitle = 'Idioma';
+const String kLanguageSectionSubtitle = 'Selecciona el idioma de la aplicación';
+const String kThemeSectionTitle = 'Tema';
+const String kThemeSectionSubtitle = 'Elige apariencia clara, oscura o del sistema';
+const String kThemeLight = 'Claro';
+const String kThemeDark = 'Oscuro';
+const String kThemeSystem = 'Sistema';
+const String kUnitsSectionTitle = 'Unidades de Medida';
+const String kUnitsSectionSubtitle = 'Configura las unidades de superficie y temperatura';
+const String kSurfaceUnitsTitle = 'Unidad de Superficie';
+const String kTemperatureUnitsTitle = 'Unidad de Temperatura';
+const String kUnitManzanas = 'Manzanas (mz)';
+const String kUnitManzanasShort = 'mz';
+const String kUnitCelsius = 'Celsius (°C)';
+const String kUnitFahrenheit = 'Fahrenheit (°F)';
+const String kUnitCelsiusShort = '°C';
+const String kUnitFahrenheitShort = '°F';
+const String kSettingsSaved = 'Configuración actualizada';
 

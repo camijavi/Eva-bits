@@ -93,6 +93,7 @@ const String kSubplotsSurfaceExceededWarning =
     'Warning: Total subplot surface exceeds lot surface!';
 const String kFormSavedSuccessfully = 'Farm information saved successfully!';
 const String kConfirmSave = 'Confirm and Save';
+const String kErrorSavingData = 'Error saving farm data. Please try again.';
 
 // Wizard & Quick Start
 const String kStep1Title = 'Farm';
@@ -112,8 +113,97 @@ const String kLotsDistribution = 'Lots Distribution';
 const String kNasaDataDescription =
     'NASA POWER and SMAP satellite data (solar radiation, rainfall, and soil moisture) synchronized for your coordinates.';
 
+// Dashboard Mockup
+const String kDashboardGreeting = 'Hello, María!';
+const String kDashboardSubtitle =
+    'Here is a summary of your farm and recommendations for today.';
+const String kDashboardWeatherSummary = 'Mostly sunny';
+const String kDashboardYourFarm = 'Your Farm';
+const String kDashboardFarmSize = 'Size';
+const String kDashboardCurrentCrops = 'Current crops: Corn, Beans';
+const String kDashboardViewDetails = 'View details';
+const String kDashboardWhatToDo = 'What would you like to do today?';
+const String kDashboardAction1 = 'Compare crop rotations';
+const String kDashboardAction2 =
+    'Explore environmental data (climate and soil)';
+const String kDashboardAction3 = 'View personalized recommendations';
+const String kNavHome = 'Home';
+const String kNavLots = 'Lots';
+const String kNavRotations = 'Rotations';
+const String kNavCommunity = 'Community';
+const String kNavMore = 'More';
+
+// Lots Screen
+const String kLotsScreenTitle = 'Farm Lots';
+const String kLotsScreenSubtitle = 'Manage and view all registered lots on your farm.';
+const String kSearchLotsHint = 'Search lot by name...';
+const String kFilterAll = 'All';
+const String kFilterLargest = 'Largest area';
+const String kFilterSmallest = 'Smallest area';
+const String kFilterWithSubplots = 'With subplots';
+const String kFilterPriorityTitle = 'My priority is:';
+const String kRegisteredLotsTitle = 'Registered lots';
+const String kAddNewLot = 'Add new lot';
+const String kEditLot = 'Edit Lot';
+const String kDeleteLot = 'Delete Lot';
+const String kDeleteLotConfirm = 'Are you sure you want to delete this lot?';
+const String kDeleteLotWarning = 'This action cannot be undone. Any associated subplots will also be removed.';
+const String kLotNamePrompt = 'Lot Name';
+const String kLotSurfacePrompt = 'Surface Area';
+const String kLotUpdatedSuccessfully = 'Lot updated successfully!';
+const String kLotCreatedSuccessfully = 'Lot registered successfully!';
+const String kLotDeletedSuccessfully = 'Lot deleted successfully!';
+const String kNoLotsFound = 'No lots found matching your search.';
+const String kNoLotsYetSubtitle = 'Add your first lot to organize your farm crops and soil.';
+const String kSubplotsCount = 'subplots';
+const String kSubplotSingular = 'subplot';
+const String kSaveLot = 'Save Lot';
+
+// Farm Details & Edit
+const String kFarmDetailsTitle = 'Farm Details';
+const String kEditFarm = 'Edit Farm';
+const String kEditFarmInfo = 'Edit Farm Information';
+const String kFarmOverview = 'Farm Overview';
+const String kLotsAndSubplots = 'Lots & Subplots';
+const String kEnvironmentalContext = 'Environmental & Climate Data';
+const String kSaveChanges = 'Save Changes';
+const String kFarmUpdatedSuccessfully = 'Farm updated successfully!';
+const String kTotalLots = 'Total Lots';
+const String kTotalSubplots = 'Total Subplots';
+const String kNoLotsRegistered = 'No lots registered yet.';
+const String kLandAllocation = 'Land Allocation';
+const String kSoilMoisture = 'Soil Moisture';
+const String kSolarRadiation = 'Solar Radiation';
+const String kPrecipitation = 'Precipitation';
+const String kTemperature = 'Temperature';
+const String kUnallocatedSurface = 'Unallocated';
+const String kGpsSynchronized = 'GPS Synchronized';
+const String kNoFarmsFound = 'No farm data found. Please complete the initial registration.';
+
 // Language
 const String kLanguage = 'Language';
 const String kEnglish = 'English';
 const String kSpanish = 'Spanish';
+
+// Settings Screen
+const String kSettingsTitle = 'Settings';
+const String kSettingsSubtitle = 'Customize language, theme, and measurement units';
+const String kLanguageSectionTitle = 'Language';
+const String kLanguageSectionSubtitle = 'Select the application language';
+const String kThemeSectionTitle = 'Theme';
+const String kThemeSectionSubtitle = 'Choose light, dark, or system appearance';
+const String kThemeLight = 'Light';
+const String kThemeDark = 'Dark';
+const String kThemeSystem = 'System';
+const String kUnitsSectionTitle = 'Measurement Units';
+const String kUnitsSectionSubtitle = 'Configure surface area and temperature units';
+const String kSurfaceUnitsTitle = 'Surface Area Unit';
+const String kTemperatureUnitsTitle = 'Temperature Unit';
+const String kUnitManzanas = 'Manzanas (mz)';
+const String kUnitManzanasShort = 'mz';
+const String kUnitCelsius = 'Celsius (°C)';
+const String kUnitFahrenheit = 'Fahrenheit (°F)';
+const String kUnitCelsiusShort = '°C';
+const String kUnitFahrenheitShort = '°F';
+const String kSettingsSaved = 'Settings updated';
 
