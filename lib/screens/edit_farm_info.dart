@@ -317,30 +317,36 @@ class _EditFarmInfoSheetState extends State<EditFarmInfoSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.edit_note_rounded,
+                                color: AppColors.primary,
+                                size: 24,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.edit_note_rounded,
-                              color: AppColors.primary,
-                              size: 24,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                s.kEditFarmInfo,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B2E1C),
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            s.kEditFarmInfo,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B2E1C),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close_rounded),

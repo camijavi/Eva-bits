@@ -275,107 +275,109 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(context, s, displayFarmName, displayLocation),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 6),
-                        _buildHeroWeatherCard(context, s),
-                        const SizedBox(height: 18),
-                        _buildNasaClimateSection(context, s),
-                        const SizedBox(height: 22),
-                        Center(
-                          child: Container(
-                            width: 44,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF2C3E33)
-                                  : const Color(0xFFDCDFD8),
-                              borderRadius: BorderRadius.circular(2),
+                  Transform.translate(
+                    offset: const Offset(0, -28),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeroWeatherCard(context, s),
+                          const SizedBox(height: 12),
+                          _buildNasaClimateSection(context, s),
+                          const SizedBox(height: 14),
+                          Center(
+                            child: Container(
+                              width: 38,
+                              height: 3.5,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF2C3E33)
+                                    : const Color(0xFFDCDFD8),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          s.kDashboardWhatToDo == '¿Qué quieres hacer hoy?'
-                              ? 'Gestiona tu campo'
-                              : 'Manage your fields',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                            letterSpacing: -0.2,
+                          const SizedBox(height: 12),
+                          Text(
+                            s.kDashboardWhatToDo == '¿Qué quieres hacer hoy?'
+                                ? 'Gestiona tu campo'
+                                : 'Manage your fields',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                              letterSpacing: -0.2,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 14),
-                        _buildFieldsGrid(context, s, displaySurface),
-                        const SizedBox(height: 24),
-                        _buildPredictionsSection(context, s, report),
-                        const SizedBox(height: 26),
-                        Text(
-                          s.kDashboardWhatToDo,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                            letterSpacing: -0.2,
+                          const SizedBox(height: 10),
+                          _buildFieldsGrid(context, s, displaySurface),
+                          const SizedBox(height: 14),
+                          _buildPredictionsSection(context, s, report),
+                          const SizedBox(height: 14),
+                          Text(
+                            s.kDashboardWhatToDo,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                              letterSpacing: -0.2,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildActionCard(
-                          context: context,
-                          backgroundColor: const Color(0xFFEAF5EC),
-                          iconBoxColor: const Color(0xFF2E7D32),
-                          icon: Icons.eco_rounded,
-                          iconColor: Colors.white,
-                          title: s.kDashboardAction1,
-                          chevronColor: const Color(0xFF4A7C59),
-                          onTap: () {
-                            Navigator.of(context).pushReplacement(
-                              createBottomNavPageRoute(
-                                const PredictionsScreen(initialTab: 1),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        _buildActionCard(
-                          context: context,
-                          backgroundColor: const Color(0xFFEBF3FB),
-                          iconBoxColor: const Color(0xFFD4E7F7),
-                          icon: Icons.cloud_outlined,
-                          iconColor: const Color(0xFF1976D2),
-                          title: s.kDashboardAction2,
-                          chevronColor: const Color(0xFF5B8FB9),
-                          onTap: () {
-                            Navigator.of(context).pushReplacement(
-                              createBottomNavPageRoute(
-                                const PredictionsScreen(initialTab: 0),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        _buildActionCard(
-                          context: context,
-                          backgroundColor: const Color(0xFFFEF8E7),
-                          iconBoxColor: const Color(0xFFFEEBC2),
-                          icon: Icons.lightbulb_outline_rounded,
-                          iconColor: const Color(0xFFF57F17),
-                          title: s.kDashboardAction3,
-                          chevronColor: const Color(0xFFBCA05A),
-                          onTap: () {
-                            Navigator.of(context).pushReplacement(
-                              createBottomNavPageRoute(
-                                const PredictionsScreen(initialTab: 5),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 32),
-                      ],
+                          const SizedBox(height: 8),
+                          _buildActionCard(
+                            context: context,
+                            backgroundColor: const Color(0xFFEAF5EC),
+                            iconBoxColor: const Color(0xFF2E7D32),
+                            icon: Icons.eco_rounded,
+                            iconColor: Colors.white,
+                            title: s.kDashboardAction1,
+                            chevronColor: const Color(0xFF4A7C59),
+                            onTap: () {
+                              Navigator.of(context).pushReplacement(
+                                createBottomNavPageRoute(
+                                  const PredictionsScreen(initialTab: 1),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          _buildActionCard(
+                            context: context,
+                            backgroundColor: const Color(0xFFEBF3FB),
+                            iconBoxColor: const Color(0xFFD4E7F7),
+                            icon: Icons.cloud_outlined,
+                            iconColor: const Color(0xFF1976D2),
+                            title: s.kDashboardAction2,
+                            chevronColor: const Color(0xFF5B8FB9),
+                            onTap: () {
+                              Navigator.of(context).pushReplacement(
+                                createBottomNavPageRoute(
+                                  const PredictionsScreen(initialTab: 0),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          _buildActionCard(
+                            context: context,
+                            backgroundColor: const Color(0xFFFEF8E7),
+                            iconBoxColor: const Color(0xFFFEEBC2),
+                            icon: Icons.lightbulb_outline_rounded,
+                            iconColor: const Color(0xFFF57F17),
+                            title: s.kDashboardAction3,
+                            chevronColor: const Color(0xFFBCA05A),
+                            onTap: () {
+                              Navigator.of(context).pushReplacement(
+                                createBottomNavPageRoute(
+                                  const PredictionsScreen(initialTab: 5),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -409,130 +411,143 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String farmNameText,
     String locationText,
   ) {
-    final isDark = AppColors.isDark(context);
-    final textColor = AppColors.getTextPrimary(context);
-    final subtextColor = AppColors.getTextMuted(context);
+    final cleanLocation = locationText
+        .replaceAll(RegExp(r'[\u{10000}-\u{10FFFF}]', unicode: true), '')
+        .trim();
+    final headerBg = AppColors.getHeaderBg(context);
 
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: 18,
-          right: 18,
-          top: 10,
-          bottom: 12,
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: headerBg,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF2C1E20)
-                    : const Color(0xFFFFEBEE),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF5C2B2F)
-                      : const Color(0xFFFFCDD2),
-                  width: 1.5,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: 18,
+            right: 18,
+            top: 12,
+            bottom: 46,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.location_on_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
-              child: const Center(
-                child: Icon(
-                  Icons.location_on_rounded,
-                  color: Color(0xFFE53935),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      farmNameText,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: -0.3,
+                        height: 1.18,
+                      ),
+                      maxLines: 2,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.place_outlined,
+                          size: 14,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            cleanLocation,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              IconButton(
+                icon: const Icon(
+                  Icons.settings_outlined,
+                  color: Colors.white,
                   size: 24,
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    farmNameText,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                      letterSpacing: -0.3,
-                      height: 1.18,
-                    ),
-                    maxLines: 2,
-                    softWrap: true,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    locationText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: subtextColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              icon: Icon(
-                Icons.settings_outlined,
-                color: textColor,
-                size: 24,
-              ),
-              tooltip: s.kSettingsTitle,
-              onPressed: () {
-                Navigator.of(context).push(
-                  CupertinoPageRoute(
-                    builder: (_) => const SettingsScreen(),
-                  ),
-                );
-              },
-            ),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1E2822)
-                    : const Color(0xFFE8F5E9),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF2E4D38)
-                      : const Color(0xFFC8E6C9),
-                  width: 1.2,
-                ),
-              ),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                tooltip: s.kDashboardYourFarm,
-                icon: Icon(
-                  Icons.cottage_rounded,
-                  color: isDark
-                      ? AppColors.primaryLight
-                      : const Color(0xFF2E7D32),
-                  size: 22,
-                ),
-                onPressed: () async {
-                  await Navigator.of(context).push(
+                tooltip: s.kSettingsTitle,
+                onPressed: () {
+                  Navigator.of(context).push(
                     CupertinoPageRoute(
-                      builder: (_) => const FarmInfoDetailScreen(),
+                      builder: (_) => const SettingsScreen(),
                     ),
                   );
-                  _loadLatestFarm();
                 },
               ),
-            ),
-          ],
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.20),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.40),
+                    width: 1.2,
+                  ),
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  tooltip: s.kDashboardYourFarm,
+                  icon: const Icon(
+                    Icons.cottage_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (_) => const FarmInfoDetailScreen(),
+                      ),
+                    );
+                    _loadLatestFarm();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -973,16 +988,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildEnvironmentalStatusBanner(context, s),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.35,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1.38,
           children: [
             _buildTelemetryCard(
               context: context,
@@ -1265,7 +1280,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildPredictionCard(
           context: context,
           badgeText: report.irrigation.status == 'critical'
@@ -1297,7 +1312,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildPredictionCard(
           context: context,
           badgeText: '${report.rotation.score}% Compatibilidad',
@@ -1320,7 +1335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildPredictionCard(
           context: context,
           badgeText: report.calendar.windowStatus,
@@ -1346,7 +1361,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildPredictionCard(
           context: context,
           badgeText: '${report.nutrition.soilHealthScore}/100 Salud',
@@ -1553,9 +1568,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 14,
-      mainAxisSpacing: 14,
-      childAspectRatio: 1.15,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 1.25,
       children: [
         _buildGridCard(
           context: context,

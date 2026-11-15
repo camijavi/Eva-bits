@@ -57,34 +57,40 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
       builder: (context, _, child) {
         final s = AppLanguage.strings;
 
-        return Scaffold(
-          backgroundColor: AppColors.getBackground(context),
-          appBar: AppBar(
-            backgroundColor: AppColors.getHeaderBg(context),
-            foregroundColor: Colors.white,
-            elevation: 0,
-            title: Text(
-              s.kFarmDetailsTitle,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 19,
-                color: Colors.white,
+        return MediaQuery.withClampedTextScaling(
+          minScaleFactor: 0.9,
+          maxScaleFactor: 1.2,
+          child: Scaffold(
+            backgroundColor: AppColors.getBackground(context),
+            appBar: AppBar(
+              backgroundColor: AppColors.getHeaderBg(context),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              title: Text(
+                s.kFarmDetailsTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 19,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          body: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
+            body: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  )
+                : RefreshIndicator(
                     color: AppColors.primary,
+                    onRefresh: _loadFarmData,
+                    child: _farm == null
+                        ? _buildEmptyState(s)
+                        : _buildFarmDetails(s),
                   ),
-                )
-              : RefreshIndicator(
-                  color: AppColors.primary,
-                  onRefresh: _loadFarmData,
-                  child: _farm == null
-                      ? _buildEmptyState(s)
-                      : _buildFarmDetails(s),
-                ),
+          ),
         );
       },
     );
@@ -158,41 +164,46 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. Hero Overview Card
-          _buildHeroCard(
-            s: s,
-            name: name,
-            country: country,
-            surface: surface,
-            surfaceUnit: surfaceUnit,
-            latitude: latitude,
-            longitude: longitude,
-          ),
-          const SizedBox(height: 16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Hero Overview Card
+              _buildHeroCard(
+                s: s,
+                name: name,
+                country: country,
+                surface: surface,
+                surfaceUnit: surfaceUnit,
+                latitude: latitude,
+                longitude: longitude,
+              ),
+              const SizedBox(height: 16),
 
-          // 2. Land Allocation Card
-          _buildLandAllocationCard(
-            s: s,
-            totalSurface: surface,
-            surfaceUnit: surfaceUnit,
-            allocatedSurface: totalAllocatedLotSurface,
-            allocationRatio: allocationRatio,
-            totalLots: lots.length,
-            totalSubplots: totalSubplotsCount,
-          ),
-          const SizedBox(height: 16),
+              // 2. Land Allocation Card
+              _buildLandAllocationCard(
+                s: s,
+                totalSurface: surface,
+                surfaceUnit: surfaceUnit,
+                allocatedSurface: totalAllocatedLotSurface,
+                allocationRatio: allocationRatio,
+                totalLots: lots.length,
+                totalSubplots: totalSubplotsCount,
+              ),
+              const SizedBox(height: 16),
 
-          // 4. Agro-Climatic Intelligence Card
-          _buildEnvironmentalCard(
-            s: s,
-            latitude: latitude,
-            longitude: longitude,
+              // 4. Agro-Climatic Intelligence Card
+              _buildEnvironmentalCard(
+                s: s,
+                latitude: latitude,
+                longitude: longitude,
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
-          const SizedBox(height: 24),
-        ],
+        ),
       ),
     );
   }
@@ -252,6 +263,8 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                     children: [
                       Text(
                         name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -268,12 +281,16 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                             color: Color(0xFF2E7D32),
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            country,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF4A6572),
+                          Expanded(
+                            child: Text(
+                              country,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF4A6572),
+                              ),
                             ),
                           ),
                         ],
@@ -322,17 +339,22 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
-                            Text(
-                              surface.toStringAsFixed(2),
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F5A37),
+                            Flexible(
+                              child: Text(
+                                surface.toStringAsFixed(2),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F5A37),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               surfaceUnit,
+                              maxLines: 1,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -371,6 +393,8 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                       children: [
                         Text(
                           s.kGpsCoordinates,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -381,6 +405,8 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                           (latitude != null && longitude != null)
                               ? '${latitude.toStringAsFixed(4)}°, ${longitude.toStringAsFixed(4)}°'
                               : s.kLocationNotCapturedYet,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -390,6 +416,7 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -411,6 +438,8 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                         const SizedBox(width: 5),
                         Text(
                           s.kGpsSynchronized,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -483,22 +512,31 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
             const SizedBox(height: 10),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '${s.kAllocatedSurface}: ${allocatedSurface.toStringAsFixed(2)} $surfaceUnit (${(allocationRatio * 100).toStringAsFixed(0)}%)',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2E7D32),
+                Expanded(
+                  child: Text(
+                    '${s.kAllocatedSurface}: ${allocatedSurface.toStringAsFixed(2)} $surfaceUnit (${(allocationRatio * 100).toStringAsFixed(0)}%)',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2E7D32),
+                    ),
                   ),
                 ),
-                Text(
-                  '${s.kUnallocatedSurface}: ${unallocatedSurface.toStringAsFixed(2)} $surfaceUnit',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${s.kUnallocatedSurface}: ${unallocatedSurface.toStringAsFixed(2)} $surfaceUnit',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
               ],
@@ -525,25 +563,31 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                           size: 22,
                         ),
                         const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              s.kTotalLots,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade700,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.kTotalLots,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey.shade700,
+                                ),
                               ),
-                            ),
-                            Text(
-                              totalLots.toString(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1B2E1C),
+                              Text(
+                                totalLots.toString(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B2E1C),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -567,25 +611,31 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                           size: 22,
                         ),
                         const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              s.kTotalSubplots,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade700,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.kTotalSubplots,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey.shade700,
+                                ),
                               ),
-                            ),
-                            Text(
-                              totalSubplots.toString(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1B2E1C),
+                              Text(
+                                totalSubplots.toString(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B2E1C),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -762,6 +812,8 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
           const SizedBox(height: 6),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -770,6 +822,8 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
           ),
           Text(
             subtext,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 10,
               color: Colors.grey.shade600,

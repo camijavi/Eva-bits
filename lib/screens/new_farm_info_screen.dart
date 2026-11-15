@@ -145,11 +145,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
 
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const WelcomeScreen(checkExisting: false),
-        ),
-      );
+      setState(() => _isCheckingExistingFarm = false);
+      _getCurrentLocation(AppLanguage.strings);
     }
   }
 
@@ -690,111 +687,90 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentTheme = isDark ? AppColors.darkTheme : AppColors.lightTheme;
-
     if (_isCheckingExistingFarm) {
-      return Theme(
-        data: currentTheme,
-        child: Scaffold(
-          backgroundColor: AppColors.getBackground(context),
-          body: const Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primary,
-            ),
+      return Scaffold(
+        backgroundColor: AppColors.getBackground(context),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
           ),
         ),
       );
     }
 
-    return Theme(
-      data: currentTheme,
-      child: ValueListenableBuilder<AppLanguageType>(
-        valueListenable: AppLanguage.current,
-        builder: (context, currentLang, _) {
-          final s = AppLanguage.strings;
-          final unitShort = _getUnitShortName(_selectedUnit, s);
+    return ValueListenableBuilder<AppLanguageType>(
+      valueListenable: AppLanguage.current,
+      builder: (context, currentLang, _) {
+        final s = AppLanguage.strings;
+        final unitShort = _getUnitShortName(_selectedUnit, s);
 
-          return MediaQuery.withClampedTextScaling(
-            minScaleFactor: 0.9,
-            maxScaleFactor: 1.2,
-            child: Scaffold(
-              backgroundColor: AppColors.getBackground(context),
-              appBar: AppBar(
-                backgroundColor: AppColors.getHeaderBg(context),
-                foregroundColor: Colors.white,
-                elevation: 1,
-                title: Text(
-                  s.kFarmInfoTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 17,
-                  ),
-                ),
-                actions: [
-                  TextButton.icon(
-                    onPressed: AppLanguage.toggleLanguage,
-                    icon: const Icon(Icons.language,
-                        color: Colors.white, size: 18),
-                    label: Text(
-                      AppLanguage.isSpanish ? s.kEnglish : s.kSpanish,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
+        return Scaffold(
+          backgroundColor: AppColors.getBackground(context),
+          appBar: AppBar(
+            backgroundColor: AppColors.getHeaderBg(context),
+            foregroundColor: Colors.white,
+            elevation: 1,
+            title: Text(
+              s.kFarmInfoTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 17,
               ),
-              body: SafeArea(
-                bottom: false,
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 640),
-                    child: Column(
-                      children: [
-                        _buildStepIndicator(s),
-                        Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            children: [
-                              if (_currentStep == 0)
-                                _buildStep1FarmInfo(s, unitShort)
-                              else if (_currentStep == 1)
-                                _buildStep2LotsInfo(s, unitShort)
-                              else
-                                _buildStep3Summary(s, unitShort),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              floatingActionButton: _currentStep == 1
-                  ? FloatingActionButton(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 4,
-                      shape: const CircleBorder(),
-                      tooltip: s.kAddLot,
-                      onPressed: () => _addLot(s),
-                      child: const Icon(Icons.add_rounded, size: 28),
-                    )
-                  : null,
-              bottomNavigationBar: _buildBottomNavigationBar(s),
             ),
-          );
-        },
-      ),
+            actions: [
+              TextButton.icon(
+                onPressed: AppLanguage.toggleLanguage,
+                icon: const Icon(Icons.language,
+                    color: Colors.white, size: 18),
+                label: Text(
+                  AppLanguage.isSpanish ? s.kEnglish : s.kSpanish,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+          body: Column(
+            children: [
+              _buildStepIndicator(s),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  children: [
+                    if (_currentStep == 0)
+                      _buildStep1FarmInfo(s, unitShort)
+                    else if (_currentStep == 1)
+                      _buildStep2LotsInfo(s, unitShort)
+                    else
+                      _buildStep3Summary(s, unitShort),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: _currentStep == 1
+              ? FloatingActionButton(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: const CircleBorder(),
+                  tooltip: s.kAddLot,
+                  onPressed: () => _addLot(s),
+                  child: const Icon(Icons.add_rounded, size: 28),
+                )
+              : null,
+          bottomNavigationBar: _buildBottomNavigationBar(s),
+        );
+      },
     );
   }
 
@@ -804,7 +780,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: List.generate(steps.length, (index) {
           final isActive = _currentStep == index;
@@ -822,42 +798,42 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 10,
+                    radius: 12,
                     backgroundColor: isDone
                         ? AppColors.primary
                         : (isActive ? AppColors.primaryLight : Colors.grey.shade300),
                     child: isDone
-                        ? const Icon(Icons.check, size: 11, color: Colors.white)
+                        ? const Icon(Icons.check, size: 14, color: Colors.white)
                         : Text(
                             '${index + 1}',
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 12,
                               color: isActive ? Colors.white : Colors.black54,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       steps[index],
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 12,
                         fontWeight:
-                            isActive ? FontWeight.bold : FontWeight.w500,
+                            isActive ? FontWeight.bold : FontWeight.normal,
                         color: isActive
                             ? AppColors.primaryDark
-                            : (isDone ? Colors.black87 : Colors.grey.shade600),
+                            : (isDone ? Colors.black87 : Colors.grey),
                       ),
                     ),
                   ),
                   if (index < steps.length - 1)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 1),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(Icons.chevron_right,
-                          size: 13, color: Colors.grey.shade400),
+                          size: 16, color: Colors.grey.shade400),
                     ),
                 ],
               ),
@@ -922,83 +898,83 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  _SearchableLocationDropdown(
-                    controller: _countryController,
-                    selectedLocationId: _selectedLocationId,
-                    labelText: s.kCountryLabel,
-                    hintText: s.kCountryHint,
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return s.kFieldRequired;
-                      }
-                      return null;
-                    },
-                    onSelected: (loc) {
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedLocationId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: s.kCountryLabel,
+                      hintText: s.kCountryHint,
+                      prefixIcon: const Icon(Icons.public, color: AppColors.primary),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    items: [
+                      ...AgriculturalLocation.presets.map((loc) {
+                        return DropdownMenuItem<String>(
+                          value: loc.id,
+                          child: Text(
+                            loc.displayName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        );
+                      }),
+                      const DropdownMenuItem<String>(
+                        value: AgriculturalLocation.customId,
+                        child: Text(
+                          'Otra región / Coordenadas mundiales',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val == null) return;
                       setState(() {
-                        _selectedLocationId = loc.id;
-                        if (loc.id == AgriculturalLocation.customId) {
+                        _selectedLocationId = val;
+                        if (val == AgriculturalLocation.customId) {
                           _isCustomLocation = true;
                           _countryController.clear();
                         } else {
                           _isCustomLocation = false;
+                          final loc = AgriculturalLocation.presets
+                              .firstWhere((p) => p.id == val);
                           _countryController.text = loc.displayName;
                           _latitude = loc.latitude;
                           _longitude = loc.longitude;
                         }
                       });
                     },
-                    onChanged: (text) {
-                      final match = AgriculturalLocation.findByText(text);
-                      setState(() {
-                        if (match != null) {
-                          _selectedLocationId = match.id;
-                          _latitude = match.latitude;
-                          _longitude = match.longitude;
-                          _isCustomLocation = false;
-                        } else {
-                          _selectedLocationId = AgriculturalLocation.customId;
-                          _isCustomLocation = true;
-                        }
-                      });
-                    },
-                    onCleared: () {
-                      setState(() {
-                        _selectedLocationId = null;
-                        _isCustomLocation = true;
-                      });
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return s.kFieldRequired;
+                      }
+                      return null;
                     },
                   ),
                   if (_isCustomLocation) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _countryController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        labelText: s.kCountryLabel,
+                        hintText: 'Ej. Nicaragua, Estelí / Costa Rica, Alajuela',
+                        prefixIcon: const Icon(Icons.edit_location_alt_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFBBF7D0)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.info_outline,
-                            size: 16,
-                            color: Color(0xFF16A34A),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Región personalizada seleccionada. Escribe su nombre y utiliza el botón GPS abajo para capturar coordenadas exactas.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.green.shade900,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return s.kFieldRequired;
+                        }
+                        return null;
+                      },
                     ),
                   ],
                   const SizedBox(height: 16),
@@ -1199,13 +1175,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     ),
                     onPressed: () => _bypassAsSingleLot(s),
                     icon: const Icon(Icons.fast_forward),
-                    label: Flexible(
-                      child: Text(
-                        s.kQuickStartWholeFarm,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    label: Text(
+                      s.kQuickStartWholeFarm,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1723,492 +1697,127 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // --- Bottom Navigation Bar ---
   Widget _buildBottomNavigationBar(AppStrings s) {
-    return SafeArea(
-      top: false,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                if (_currentStep > 0)
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 12),
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() => _currentStep--);
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.arrow_back, size: 18),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              s.kPreviousStep,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (_currentStep > 0) const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 12),
-                      minimumSize: const Size.fromHeight(48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () {
-                      if (_currentStep == 0) {
-                        if (_step1FormKey.currentState!.validate()) {
-                          if (_latitude == null || _longitude == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                backgroundColor: Colors.orange.shade900,
-                                content: Text(s.kLocationRequired),
-                              ),
-                            );
-                            _getCurrentLocation(s);
-                            return;
-                          }
-                          setState(() => _currentStep = 1);
-                        }
-                      } else if (_currentStep == 1) {
-                        setState(() => _currentStep = 2);
-                      } else {
-                        _saveFarmDataToDatabase(s);
-                      }
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_isSaving)
-                          const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        else ...[
-                          Flexible(
-                            child: Text(
-                              _currentStep == 2 ? s.kSave : s.kNextStep,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            _currentStep == 2
-                                ? Icons.save
-                                : Icons.arrow_forward,
-                            size: 18,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
           ),
-        ),
+        ],
       ),
-    );
-  }
-}
-
-/// Modern searchable dropdown field for agricultural zones & countries.
-/// Supports real-time text filtering (e.g. typing "ni" for Nicaragua),
-/// alphabetical sorting, custom region selection, and responsive layout without emojis.
-class _SearchableLocationDropdown extends StatefulWidget {
-  final TextEditingController controller;
-  final String? selectedLocationId;
-  final ValueChanged<AgriculturalLocation> onSelected;
-  final ValueChanged<String>? onChanged;
-  final VoidCallback? onCleared;
-  final String? Function(String?)? validator;
-  final String labelText;
-  final String hintText;
-
-  const _SearchableLocationDropdown({
-    required this.controller,
-    required this.selectedLocationId,
-    required this.onSelected,
-    this.onChanged,
-    this.onCleared,
-    this.validator,
-    required this.labelText,
-    required this.hintText,
-  });
-
-  @override
-  State<_SearchableLocationDropdown> createState() =>
-      _SearchableLocationDropdownState();
-}
-
-class _SearchableLocationDropdownState
-    extends State<_SearchableLocationDropdown> {
-  final OverlayPortalController _overlayController = OverlayPortalController();
-  final LayerLink _layerLink = LayerLink();
-  final FocusNode _focusNode = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.addListener(_handleFocusChange);
-  }
-
-  void _handleFocusChange() {
-    if (_focusNode.hasFocus) {
-      if (!_overlayController.isShowing) {
-        _overlayController.show();
-        setState(() {});
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_handleFocusChange);
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  List<AgriculturalLocation> _filterLocations(String query) {
-    final clean = query.trim().toLowerCase();
-
-    // If query is empty or matches currently selected preset, return all presets
-    final isCurrentSelectionMatch = widget.selectedLocationId != null &&
-        AgriculturalLocation.presets.any(
-          (loc) =>
-              loc.id == widget.selectedLocationId &&
-              loc.displayName.toLowerCase() == clean,
-        );
-
-    if (clean.isEmpty || isCurrentSelectionMatch) {
-      return [
-        ...AgriculturalLocation.presets,
-        AgriculturalLocation.customLocation,
-      ];
-    }
-
-    final matches = AgriculturalLocation.presets.where((loc) {
-      return loc.displayName.toLowerCase().contains(clean) ||
-          loc.country.toLowerCase().contains(clean) ||
-          loc.region.toLowerCase().contains(clean);
-    }).toList();
-
-    // Include custom location at bottom of filtered results
-    matches.add(AgriculturalLocation.customLocation);
-    return matches;
-  }
-
-  void _selectLocation(AgriculturalLocation loc) {
-    widget.onSelected(loc);
-    if (_overlayController.isShowing) {
-      _overlayController.hide();
-    }
-    _focusNode.unfocus();
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final filteredList = _filterLocations(widget.controller.text);
-
-        return OverlayPortal(
-          controller: _overlayController,
-          overlayChildBuilder: (context) {
-            return CompositedTransformFollower(
-              link: _layerLink,
-              targetAnchor: Alignment.bottomLeft,
-              followerAnchor: Alignment.topLeft,
-              offset: const Offset(0, 4),
-              child: TapRegion(
-                groupId: 'country_dropdown_group',
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: Material(
-                    elevation: 6,
-                    shadowColor: Colors.black38,
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.white,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 280),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                color: const Color(0xFFF8FAFC),
-                                child: Text(
-                                  filteredList.length <= 1
-                                      ? 'Sin zonas predefinidas coincidentes'
-                                      : '${filteredList.length - 1} zonas disponibles (A - Z)',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ),
-                              const Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: Color(0xFFE2E8F0),
-                              ),
-                              Flexible(
-                                child: ListView.separated(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  shrinkWrap: true,
-                                  itemCount: filteredList.length,
-                                  separatorBuilder: (_, __) => const Divider(
-                                    height: 1,
-                                    thickness: 1,
-                                    color: Color(0xFFF1F5F9),
-                                  ),
-                                  itemBuilder: (context, index) {
-                                    final loc = filteredList[index];
-                                    final isSelected =
-                                        loc.id == widget.selectedLocationId;
-                                    final isCustom =
-                                        loc.id == AgriculturalLocation.customId;
-
-                                    return InkWell(
-                                      onTap: () => _selectLocation(loc),
-                                      child: Container(
-                                        color: isSelected
-                                            ? const Color(0xFFE8F5E9)
-                                            : Colors.transparent,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 10,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              isCustom
-                                                  ? Icons.add_location_alt_outlined
-                                                  : (isSelected
-                                                      ? Icons.location_on
-                                                      : Icons.location_on_outlined),
-                                              size: 20,
-                                              color: isCustom
-                                                  ? const Color(0xFF0D9488)
-                                                  : (isSelected
-                                                      ? AppColors.primary
-                                                      : const Color(0xFF64748B)),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    loc.displayName,
-                                                    maxLines: 2,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          isSelected || isCustom
-                                                              ? FontWeight.w600
-                                                              : FontWeight.w500,
-                                                      color: isSelected
-                                                          ? AppColors.primaryDark
-                                                          : (isCustom
-                                                              ? const Color(0xFF0F766E)
-                                                              : const Color(0xFF1E293B)),
-                                                    ),
-                                                  ),
-                                                  if (!isCustom) ...[
-                                                    const SizedBox(height: 2),
-                                                    Text(
-                                                      '${loc.country} - Lat: ${loc.latitude.toStringAsFixed(2)}, Lon: ${loc.longitude.toStringAsFixed(2)}',
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        color: Colors
-                                                            .grey.shade600,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                            ),
-                                            if (isSelected)
-                                              const Icon(
-                                                Icons.check_rounded,
-                                                size: 18,
-                                                color: AppColors.primary,
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            if (_currentStep > 0)
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 12),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                ),
-              ),
-            );
-          },
-          child: CompositedTransformTarget(
-            link: _layerLink,
-            child: TapRegion(
-              groupId: 'country_dropdown_group',
-              onTapOutside: (_) {
-                if (_overlayController.isShowing) {
-                  _overlayController.hide();
-                  setState(() {});
-                }
-              },
-              child: TextFormField(
-                controller: widget.controller,
-                focusNode: _focusNode,
-                decoration: InputDecoration(
-                  labelText: widget.labelText,
-                  hintText: widget.hintText,
-                  prefixIcon:
-                      const Icon(Icons.public, color: AppColors.primary),
-                  suffixIcon: Row(
+                  onPressed: () {
+                    setState(() => _currentStep--);
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (widget.controller.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            size: 18,
-                            color: Color(0xFF94A3B8),
-                          ),
-                          onPressed: () {
-                            widget.controller.clear();
-                            widget.onCleared?.call();
-                            if (!_overlayController.isShowing) {
-                              _overlayController.show();
-                            }
-                            setState(() {});
-                          },
-                          tooltip: 'Borrar',
+                      const Icon(Icons.arrow_back, size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        s.kPreviousStep,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
                         ),
-                      IconButton(
-                        icon: Icon(
-                          _overlayController.isShowing
-                              ? Icons.arrow_drop_up_rounded
-                              : Icons.arrow_drop_down_rounded,
-                          size: 28,
-                          color: const Color(0xFF64748B),
-                        ),
-                        onPressed: () {
-                          if (_overlayController.isShowing) {
-                            _overlayController.hide();
-                          } else {
-                            _overlayController.show();
-                            _focusNode.requestFocus();
-                          }
-                          setState(() {});
-                        },
-                        tooltip: 'Opciones',
                       ),
                     ],
                   ),
-                  border: OutlineInputBorder(
+                ),
+              ),
+            if (_currentStep > 0) const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 12),
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.primary, width: 2),
                   ),
                 ),
-                onTap: () {
-                  if (!_overlayController.isShowing) {
-                    _overlayController.show();
-                    setState(() {});
+                onPressed: () {
+                  if (_currentStep == 0) {
+                    if (_step1FormKey.currentState!.validate()) {
+                      if (_latitude == null || _longitude == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: Colors.orange.shade900,
+                            content: Text(s.kLocationRequired),
+                          ),
+                        );
+                        _getCurrentLocation(s);
+                        return;
+                      }
+                      setState(() => _currentStep = 1);
+                    }
+                  } else if (_currentStep == 1) {
+                    setState(() => _currentStep = 2);
+                  } else {
+                    _saveFarmDataToDatabase(s);
                   }
                 },
-                onChanged: (text) {
-                  if (!_overlayController.isShowing) {
-                    _overlayController.show();
-                  }
-                  widget.onChanged?.call(text);
-                  setState(() {});
-                },
-                validator: widget.validator,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isSaving)
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    else ...[
+                      Text(
+                        _currentStep == 2 ? s.kSave : s.kNextStep,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        _currentStep == 2
+                            ? Icons.save
+                            : Icons.arrow_forward,
+                        size: 18,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }
