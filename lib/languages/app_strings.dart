@@ -129,6 +129,7 @@ abstract class AppStrings {
   String get kNavHome;
   String get kNavLots;
   String get kNavRotations;
+  String get kNavMap;
   String get kNavCommunity;
   String get kNavMore;
 
@@ -654,6 +655,8 @@ class EngStrings implements AppStrings {
   String get kNavLots => eng.kNavLots;
   @override
   String get kNavRotations => eng.kNavRotations;
+  @override
+  String get kNavMap => eng.kNavMap;
   @override
   String get kNavCommunity => eng.kNavCommunity;
   @override
@@ -1459,6 +1462,8 @@ class SpaStrings implements AppStrings {
   String get kNavLots => spa.kNavLots;
   @override
   String get kNavRotations => spa.kNavRotations;
+  @override
+  String get kNavMap => spa.kNavMap;
   @override
   String get kNavCommunity => spa.kNavCommunity;
   @override

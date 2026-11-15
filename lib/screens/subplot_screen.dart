@@ -237,7 +237,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
         final lotName = _currentLot['name']?.toString() ?? s.kLot;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FBF8),
+          backgroundColor: AppColors.getBackground(context),
           appBar: AppBar(
             backgroundColor: const Color(0xFF0F5A37),
             foregroundColor: Colors.white,
@@ -320,6 +320,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
   }
 
   Widget _buildLotHeroCard(AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final lotName = _currentLot['name']?.toString() ?? s.kLot;
     final totalAllocated = _totalAllocatedSurface;
     final unallocated = _unallocatedSurface;
@@ -327,9 +328,12 @@ class _SubplotScreenState extends State<SubplotScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFFE5E7EB),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -348,14 +352,14 @@ class _SubplotScreenState extends State<SubplotScreen> {
               Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF5EC),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E3324) : const Color(0xFFEAF5EC),
                   shape: BoxShape.circle,
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.eco_rounded,
-                    color: Color(0xFF2E7D32),
+                    color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
                     size: 26,
                   ),
                 ),
@@ -367,10 +371,10 @@ class _SubplotScreenState extends State<SubplotScreen> {
                   children: [
                     Text(
                       lotName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B2E1C),
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -378,7 +382,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
                       '${s.kTotalLotSurface}: ${_lotSurface.toStringAsFixed(2)} $_surfaceUnit',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey.shade700,
+                        color: AppColors.getTextMuted(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -397,18 +401,18 @@ class _SubplotScreenState extends State<SubplotScreen> {
             children: [
               Text(
                 s.kLotAllocation,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+                  color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
                 ),
               ),
               Text(
                 '${(ratio * 100).toStringAsFixed(0)}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F5A37),
+                  color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
                 ),
               ),
             ],
@@ -419,8 +423,10 @@ class _SubplotScreenState extends State<SubplotScreen> {
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 10,
-              backgroundColor: const Color(0xFFE8ECE8),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0F5A37)),
+              backgroundColor: isDark ? const Color(0xFF1F2F23) : const Color(0xFFE8ECE8),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -432,9 +438,11 @@ class _SubplotScreenState extends State<SubplotScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F8F2),
+                    color: isDark ? const Color(0xFF16251B) : const Color(0xFFF1F8F2),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFD4E8D6)),
+                    border: Border.all(
+                      color: isDark ? AppColors.borderDark : const Color(0xFFD4E8D6),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,17 +451,17 @@ class _SubplotScreenState extends State<SubplotScreen> {
                         s.kAllocatedToSubplots,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade700,
+                          color: AppColors.getTextMuted(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${totalAllocated.toStringAsFixed(2)} $_surfaceUnit',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F5A37),
+                          color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
                         ),
                       ),
                     ],
@@ -465,9 +473,11 @@ class _SubplotScreenState extends State<SubplotScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FA),
+                    color: isDark ? const Color(0xFF16251B) : const Color(0xFFF8F9FA),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(
+                      color: isDark ? AppColors.borderDark : const Color(0xFFE5E7EB),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,7 +486,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
                         s.kUnallocatedFromLot,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade700,
+                          color: AppColors.getTextMuted(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -486,7 +496,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
+                          color: AppColors.getTextPrimary(context),
                         ),
                       ),
                     ],
@@ -496,7 +506,10 @@ class _SubplotScreenState extends State<SubplotScreen> {
             ],
           ),
           if (_subplots.isNotEmpty && totalAllocated > 0) ...[
-            const Divider(height: 28, color: Color(0xFFE5E7EB)),
+            Divider(
+              height: 28,
+              color: isDark ? AppColors.borderDark : const Color(0xFFE5E7EB),
+            ),
             _buildSoilCompositionSection(s),
           ],
         ],
@@ -590,6 +603,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
   }
 
   Widget _buildSoilCompositionSection(AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final dist = _soilDistribution;
     final totalAllocated = _totalAllocatedSurface;
 
@@ -598,18 +612,18 @@ class _SubplotScreenState extends State<SubplotScreen> {
       children: [
         Row(
           children: [
-            const Icon(
+            Icon(
               Icons.terrain_rounded,
               size: 18,
-              color: AppColors.primary,
+              color: isDark ? AppColors.primaryLight : AppColors.primary,
             ),
             const SizedBox(width: 6),
             Text(
               s.kSoilComposition,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B2E1C),
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ],
@@ -650,9 +664,12 @@ class _SubplotScreenState extends State<SubplotScreen> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: soilDef.bgColor,
+                color: isDark ? AppColors.chipBgDark : soilDef.bgColor,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: soilDef.borderColor, width: 1),
+                border: Border.all(
+                  color: isDark ? AppColors.chipBorderDark : soilDef.borderColor,
+                  width: 1,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -671,7 +688,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: soilDef.textColor,
+                      color: isDark ? AppColors.textPrimaryDark : soilDef.textColor,
                     ),
                   ),
                 ],
@@ -684,6 +701,8 @@ class _SubplotScreenState extends State<SubplotScreen> {
   }
 
   Widget _buildSubplotsHeader(AppStrings s) {
+    final isDark = AppColors.isDark(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -691,25 +710,25 @@ class _SubplotScreenState extends State<SubplotScreen> {
           children: [
             Text(
               s.kSubplotsTitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B2E1C),
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF5EC),
+                color: isDark ? const Color(0xFF1E3324) : const Color(0xFFEAF5EC),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '${_subplots.length}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F5A37),
+                  color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
                 ),
               ),
             ),
@@ -720,6 +739,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
   }
 
   Widget _buildSubplotCard(AppStrings s, Map<String, dynamic> subplot) {
+    final isDark = AppColors.isDark(context);
     final name = subplot['name']?.toString() ?? s.kSubplot;
     final surface = (subplot['surface'] as num?)?.toDouble() ?? 0.0;
     final percentage = _lotSurface > 0 ? (surface / _lotSurface) * 100 : 0.0;
@@ -731,9 +751,12 @@ class _SubplotScreenState extends State<SubplotScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFFE5E7EB),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -756,14 +779,17 @@ class _SubplotScreenState extends State<SubplotScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: soilDef.bgColor,
+                    color: isDark ? const Color(0xFF1B2F21) : soilDef.bgColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: soilDef.borderColor, width: 1.2),
+                    border: Border.all(
+                      color: isDark ? AppColors.borderDark : soilDef.borderColor,
+                      width: 1.2,
+                    ),
                   ),
                   child: Center(
                     child: Icon(
                       soilDef.icon,
-                      color: soilDef.barColor,
+                      color: isDark ? AppColors.primaryLight : soilDef.barColor,
                       size: 22,
                     ),
                   ),
@@ -780,10 +806,10 @@ class _SubplotScreenState extends State<SubplotScreen> {
                           Expanded(
                             child: Text(
                               name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E2D24),
+                                color: AppColors.getTextPrimary(context),
                               ),
                             ),
                           ),
@@ -794,10 +820,10 @@ class _SubplotScreenState extends State<SubplotScreen> {
                               vertical: 2.5,
                             ),
                             decoration: BoxDecoration(
-                              color: soilDef.bgColor,
+                              color: isDark ? AppColors.chipBgDark : soilDef.bgColor,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: soilDef.borderColor,
+                                color: isDark ? AppColors.chipBorderDark : soilDef.borderColor,
                                 width: 1,
                               ),
                             ),
@@ -818,7 +844,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: soilDef.textColor,
+                                    color: isDark ? AppColors.textPrimaryDark : soilDef.textColor,
                                   ),
                                 ),
                               ],
@@ -833,7 +859,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
                         '${surface.toStringAsFixed(2)} $_surfaceUnit • ${percentage.toStringAsFixed(0)}% ${s.kTotalLotSurface.toLowerCase()}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: AppColors.getTextMuted(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -843,9 +869,9 @@ class _SubplotScreenState extends State<SubplotScreen> {
 
                 // Edit Pen Icon
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.edit_outlined,
-                    color: Color(0xFF0F5A37),
+                    color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
                     size: 20,
                   ),
                   tooltip: s.kEditSubplot,
@@ -990,36 +1016,40 @@ class _SubplotScreenState extends State<SubplotScreen> {
   }
 
   Widget _buildEmptyState(AppStrings s) {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBg(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFFE5E7EB),
+        ),
       ),
       child: Column(
         children: [
           Container(
             width: 60,
             height: 60,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEAF5EC),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E3324) : const Color(0xFFEAF5EC),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.grid_view_rounded,
               size: 30,
-              color: Color(0xFF0F5A37),
+              color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             s.kNoSubplotsYet,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1B2E1C),
+              color: AppColors.getTextPrimary(context),
             ),
             textAlign: TextAlign.center,
           ),
@@ -1028,7 +1058,7 @@ class _SubplotScreenState extends State<SubplotScreen> {
             s.kNoSubplotsSubtitle,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey.shade600,
+              color: AppColors.getTextMuted(context),
               height: 1.35,
             ),
             textAlign: TextAlign.center,

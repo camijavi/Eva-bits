@@ -1,10 +1,14 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../constants/agricultural_locations.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
+import '../services/app_settings.dart';
+import '../widgets/eve_animated_avatar.dart';
 import 'dashboard_screen.dart';
+import 'welcome_screen.dart';
 
 enum SurfaceUnit {
   hectares,
@@ -82,6 +86,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   bool _isCheckingExistingFarm = true;
   String? _selectedLocationId;
   bool _isCustomLocation = false;
+  String? _gpsPrioritizedMessage;
 
   SurfaceUnit _selectedUnit = SurfaceUnit.hectares;
   final List<LotItem> _lots = [];
@@ -90,7 +95,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   void initState() {
     super.initState();
     _farmNameController = TextEditingController();
-    final defaultPreset = AgriculturalLocation.presets.first;
+    final defaultPreset = AgriculturalLocation.presets.firstWhere(
+      (p) => p.id == 'nic_esteli',
+      orElse: () => AgriculturalLocation.presets.first,
+    );
     _selectedLocationId = defaultPreset.id;
     _countryController = TextEditingController(text: defaultPreset.displayName);
     _latitude = defaultPreset.latitude;
@@ -160,16 +168,77 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     try {
       final position = await _determinePosition(s);
       if (position != null && mounted) {
-        setState(() {
-          _latitude = position.latitude;
-          _longitude = position.longitude;
-        });
+        final prevPreset = _selectedLocationId != null &&
+                _selectedLocationId != AgriculturalLocation.customId
+            ? AgriculturalLocation.presets
+                .cast<AgriculturalLocation?>()
+                .firstWhere(
+                  (p) => p?.id == _selectedLocationId,
+                  orElse: () => null,
+                )
+            : null;
+
+        final nearest = AgriculturalLocation.findNearest(
+          position.latitude,
+          position.longitude,
+        );
+        final dLat = nearest.latitude - position.latitude;
+        final dLon = nearest.longitude - position.longitude;
+        final distDeg = math.sqrt(dLat * dLat + dLon * dLon);
+
+        String? noticeMsg;
+        String snackMsg;
+
+        if (distDeg < 4.5) {
+          final hasCountryMismatch = prevPreset != null &&
+              prevPreset.country.toLowerCase() !=
+                  nearest.country.toLowerCase();
+
+          setState(() {
+            _latitude = position.latitude;
+            _longitude = position.longitude;
+            _selectedLocationId = nearest.id;
+            _countryController.text = nearest.displayName;
+            _isCustomLocation = false;
+
+            if (hasCountryMismatch) {
+              noticeMsg = AppLanguage.isSpanish
+                  ? 'Coordenadas GPS priorizadas: Se detectó ${nearest.displayName} en lugar de ${prevPreset.country}. Los datos satelitales NASA se sincronizarán con estas coordenadas reales.'
+                  : 'GPS coordinates prioritized: Detected ${nearest.displayName} instead of ${prevPreset.country}. NASA and satellite telemetry will calculate using your exact coordinates.';
+            } else {
+              noticeMsg = AppLanguage.isSpanish
+                  ? 'Coordenadas GPS sincronizadas con ${nearest.displayName}. Prioridad activa para telemetría NASA.'
+                  : 'GPS coordinates synced with ${nearest.displayName}. Active priority for NASA telemetry.';
+            }
+            _gpsPrioritizedMessage = noticeMsg;
+          });
+
+          snackMsg = hasCountryMismatch
+              ? (AppLanguage.isSpanish
+                  ? 'Ubicación ajustada a ${nearest.displayName} según tus coordenadas GPS.'
+                  : 'Location adjusted to ${nearest.displayName} based on GPS.')
+              : '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+        } else {
+          setState(() {
+            _latitude = position.latitude;
+            _longitude = position.longitude;
+            _selectedLocationId = AgriculturalLocation.customId;
+            _isCustomLocation = true;
+            noticeMsg = AppLanguage.isSpanish
+                ? 'Coordenadas GPS personalizadas (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}). Prioridad activa para cálculos satelitales NASA.'
+                : 'Custom GPS coordinates (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}). Priority active for NASA satellite data.';
+            _gpsPrioritizedMessage = noticeMsg;
+          });
+
+          snackMsg =
+              '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.primary,
-            content: Text(
-              '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
-            ),
+            duration: const Duration(seconds: 4),
+            content: Text(snackMsg),
           ),
         );
       }
@@ -266,15 +335,225 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
   }
 
+  bool _isShowingGpsDialog = false;
+
+  void _showEveGpsPermissionDialog(
+    AppStrings s, {
+    bool isPermanentlyDenied = false,
+    bool isServiceDisabled = false,
+  }) {
+    if (!mounted || _isShowingGpsDialog) return;
+    _isShowingGpsDialog = true;
+
+    final isSpanish = AppLanguage.isSpanish;
+
+    final dialogTitle = isServiceDisabled
+        ? (isSpanish
+            ? 'Activa tu GPS para continuar'
+            : 'Enable your GPS to continue')
+        : (isSpanish
+            ? 'Eve necesita tu ubicación'
+            : 'Eve needs your location');
+
+    final dialogExplanation = isSpanish
+        ? 'Para calcular datos agroecológicos precisos y consultar la radiación solar, lluvia y humedad del suelo de la NASA, necesito conocer las coordenadas de tu finca.'
+        : 'To calculate accurate agroecological metrics and query NASA solar radiation, rainfall, and soil moisture, I need access to your farm coordinates.';
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        final isDark = AppColors.isDark(ctx);
+        return Dialog(
+          backgroundColor: AppColors.getCardBg(ctx),
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: AppColors.getBorder(ctx)),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDark ? const Color(0xFF1E2F23) : const Color(0xFFE8F5E9),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF2E4E39) : const Color(0xFFC8E6C9),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isDark ? const Color(0xFF101913) : const Color(0xFFC8E6C9)).withValues(alpha: 0.5),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: EveAnimatedAvatar(
+                        emote: EveEmote.alert,
+                        size: 88,
+                        isSpeaking: false,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    dialogTitle,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(ctx),
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    dialogExplanation,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.getTextSecondary(ctx),
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF13281C) : const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: isDark ? const Color(0xFF1D4A2D) : const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 18,
+                          color: Color(0xFF16A34A),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isSpanish
+                                    ? 'Tus datos son privados'
+                                    : 'Your data is private',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isSpanish
+                                    ? 'Las coordenadas se guardan únicamente en tu dispositivo para los cálculos locales y nunca se comparten con terceros.'
+                                    : 'Coordinates are saved only on your device for local calculations and are never shared with third parties.',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: isDark ? const Color(0xFFA7F3D0) : Colors.green.shade900,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isServiceDisabled
+                        ? (isSpanish
+                            ? 'Por favor, activa el servicio de ubicación en los ajustes de tu teléfono.'
+                            : 'Please turn on the location service in your phone settings.')
+                        : (isSpanish
+                            ? 'Ve a la Configuración de la aplicación para permitir el permiso de ubicación.'
+                            : 'Go to App Settings to enable location permission.'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? AppColors.textMutedDark : const Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        if (isServiceDisabled) {
+                          await Geolocator.openLocationSettings();
+                        } else {
+                          await Geolocator.openAppSettings();
+                        }
+                      },
+                      icon: const Icon(Icons.settings_outlined, size: 18),
+                      label: Text(
+                        isSpanish ? 'Ir a Configuración' : 'Open Settings',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(
+                      isSpanish
+                          ? 'Ahora no / Usar zona predefinida'
+                          : 'Not now / Use preset zone',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      _isShowingGpsDialog = false;
+    });
+  }
+
   Future<Position?> _determinePosition(AppStrings s) async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.orange.shade900,
-            content: Text(s.kGpsServiceDisabled),
-          ),
+        _showEveGpsPermissionDialog(
+          s,
+          isServiceDisabled: true,
         );
       }
       return null;
@@ -285,11 +564,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.orange.shade900,
-              content: Text(s.kGpsPermissionDenied),
-            ),
+          _showEveGpsPermissionDialog(
+            s,
+            isPermanentlyDenied: false,
           );
         }
         return null;
@@ -298,11 +575,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
     if (permission == LocationPermission.deniedForever) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.red.shade900,
-            content: Text(s.kGpsPermissionDeniedPermanently),
-          ),
+        _showEveGpsPermissionDialog(
+          s,
+          isPermanentlyDenied: true,
         );
       }
       return null;
@@ -476,9 +751,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isCheckingExistingFarm) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(
+      return Scaffold(
+        backgroundColor: AppColors.getBackground(context),
+        body: const Center(
           child: CircularProgressIndicator(
             color: AppColors.primary,
           ),
@@ -493,28 +768,35 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
         final unitShort = _getUnitShortName(_selectedUnit, s);
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.getBackground(context),
           appBar: AppBar(
-            backgroundColor: AppColors.primary,
+            backgroundColor: AppColors.getHeaderBg(context),
             foregroundColor: Colors.white,
             elevation: 1,
             title: Text(
               s.kFarmInfoTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 17,
+              ),
             ),
             actions: [
               TextButton.icon(
                 onPressed: AppLanguage.toggleLanguage,
-                icon: const Icon(Icons.language, color: Colors.white, size: 20),
+                icon: const Icon(Icons.language,
+                    color: Colors.white, size: 18),
                 label: Text(
                   AppLanguage.isSpanish ? s.kEnglish : s.kSpanish,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
             ],
           ),
           body: Column(
@@ -522,7 +804,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               _buildStepIndicator(s),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   children: [
                     if (_currentStep == 0)
                       _buildStep1FarmInfo(s, unitShort)
@@ -554,10 +839,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // --- Step Indicator ---
   Widget _buildStepIndicator(AppStrings s) {
+    final isDark = AppColors.isDark(context);
     final steps = [s.kStep1Title, s.kStep2Title, s.kStep3Title];
 
     return Container(
-      color: Colors.white,
+      color: AppColors.getCardBg(context),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: List.generate(steps.length, (index) {
@@ -579,14 +865,14 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     radius: 12,
                     backgroundColor: isDone
                         ? AppColors.primary
-                        : (isActive ? AppColors.primaryLight : Colors.grey.shade300),
+                        : (isActive ? AppColors.primaryLight : (isDark ? const Color(0xFF2E4235) : Colors.grey.shade300)),
                     child: isDone
                         ? const Icon(Icons.check, size: 14, color: Colors.white)
                         : Text(
                             '${index + 1}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isActive ? Colors.white : Colors.black54,
+                              color: isActive ? Colors.white : (isDark ? AppColors.textMutedDark : Colors.black54),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -602,8 +888,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                         fontWeight:
                             isActive ? FontWeight.bold : FontWeight.normal,
                         color: isActive
-                            ? AppColors.primaryDark
-                            : (isDone ? Colors.black87 : Colors.grey),
+                            ? (isDark ? AppColors.primaryLight : AppColors.primaryDark)
+                            : (isDone ? AppColors.getTextPrimary(context) : (isDark ? AppColors.textMutedDark : Colors.grey)),
                       ),
                     ),
                   ),
@@ -611,7 +897,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(Icons.chevron_right,
-                          size: 16, color: Colors.grey.shade400),
+                          size: 16, color: isDark ? AppColors.borderDark : Colors.grey.shade400),
                     ),
                 ],
               ),
@@ -624,6 +910,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // --- Step 1: Farm Info ---
   Widget _buildStep1FarmInfo(AppStrings s, String unitShort) {
+    final isDark = AppColors.isDark(context);
     return Form(
       key: _step1FormKey,
       child: Column(
@@ -631,9 +918,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
         children: [
           Card(
             elevation: 2,
-            color: AppColors.cardBg,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: AppColors.getCardBg(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.getBorder(context)),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -643,12 +932,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     children: [
                       const Icon(Icons.eco, color: AppColors.primary),
                       const SizedBox(width: 8),
-                      Text(
-                        s.kGeneralInfoSection,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                      Expanded(
+                        child: Text(
+                          s.kGeneralInfoSection,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.getTextPrimary(context),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -675,12 +968,33 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedLocationId,
                     isExpanded: true,
+                    menuMaxHeight: 280,
+                    borderRadius: BorderRadius.circular(16),
+                    elevation: 4,
+                    dropdownColor: AppColors.getCardBg(context),
+                    style: TextStyle(
+                      color: AppColors.getTextPrimary(context),
+                      fontSize: 13,
+                    ),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
                     decoration: InputDecoration(
                       labelText: s.kCountryLabel,
                       hintText: s.kCountryHint,
-                      prefixIcon: const Icon(Icons.public),
+                      prefixIcon: const Icon(Icons.public, color: AppColors.primary),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: AppColors.getBorder(context)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
                       ),
                     ),
                     items: [
@@ -690,18 +1004,22 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                           child: Text(
                             loc.displayName,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.getTextPrimary(context),
+                            ),
                           ),
                         );
                       }),
-                      const DropdownMenuItem<String>(
+                      DropdownMenuItem<String>(
                         value: AgriculturalLocation.customId,
                         child: Text(
-                          '🌐 Otra región / Coordenadas mundiales',
+                          'Otra región / Coordenadas mundiales',
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
+                            color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
                           ),
                         ),
                       ),
@@ -710,6 +1028,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       if (val == null) return;
                       setState(() {
                         _selectedLocationId = val;
+                        _gpsPrioritizedMessage = null;
                         if (val == AgriculturalLocation.customId) {
                           _isCustomLocation = true;
                           _countryController.clear();
@@ -723,14 +1042,21 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                         }
                       });
                     },
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return s.kFieldRequired;
+                      }
+                      return null;
+                    },
                   ),
                   if (_isCustomLocation) ...[
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _countryController,
+                      textCapitalization: TextCapitalization.words,
                       decoration: InputDecoration(
-                        labelText: 'Nombre de país / estado / región',
-                        hintText: 'Ej. USA, Iowa / España, Sevilla / Brasil',
+                        labelText: s.kCountryLabel,
+                        hintText: 'Ej. Nicaragua, Estelí / Costa Rica, Alajuela',
                         prefixIcon: const Icon(Icons.edit_location_alt_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -750,13 +1076,13 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: _latitude != null
-                          ? const Color(0xFFF1F8E9)
-                          : AppColors.lotCardBg,
+                          ? (isDark ? const Color(0xFF1B2F22) : const Color(0xFFF1F8E9))
+                          : AppColors.getLotCardBg(context),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: _latitude != null
-                            ? AppColors.primaryLight
-                            : AppColors.treeLine,
+                            ? (isDark ? const Color(0xFF2E4E39) : AppColors.primaryLight)
+                            : AppColors.getBorder(context),
                         width: 1.2,
                       ),
                     ),
@@ -771,17 +1097,17 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                                   : Icons.location_searching,
                               color: _latitude != null
                                   ? AppColors.primary
-                                  : Colors.grey.shade700,
+                                  : (isDark ? AppColors.textMutedDark : Colors.grey.shade700),
                               size: 22,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 s.kWhereIsYourFarm,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
-                                  color: AppColors.primaryDark,
+                                  color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
                                 ),
                               ),
                             ),
@@ -807,12 +1133,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                                     CircularProgressIndicator(strokeWidth: 2),
                               ),
                               const SizedBox(width: 10),
-                              Text(
-                                s.kGettingGpsLocation,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade700,
-                                  fontStyle: FontStyle.italic,
+                              Expanded(
+                                child: Text(
+                                  s.kGettingGpsLocation,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -823,9 +1153,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF142018) : Colors.white,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.treeLine),
+                              border: Border.all(color: AppColors.getBorder(context)),
                             ),
                             child: Row(
                               children: [
@@ -835,10 +1165,49 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                                 Expanded(
                                   child: Text(
                                     '${s.kLatitudeLabel}: ${_latitude!.toStringAsFixed(6)}   |   ${s.kLongitudeLabel}: ${_longitude!.toStringAsFixed(6)}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.getTextPrimary(context),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF13281C) : const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: isDark ? const Color(0xFF1D4A2D) : const Color(0xFFBBF7D0)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.gps_fixed,
+                                  size: 15,
+                                  color: Color(0xFF16A34A),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _gpsPrioritizedMessage ??
+                                        (AppLanguage.isSpanish
+                                            ? 'Coordenadas GPS activas con máxima prioridad para la telemetría climática NASA y datos del suelo.'
+                                            : 'GPS coordinates active with top priority for NASA climate telemetry and soil data.'),
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534),
+                                      height: 1.3,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
@@ -850,7 +1219,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                             s.kLocationNotCapturedYet,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade700,
+                              color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -876,18 +1245,52 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<SurfaceUnit>(
                     initialValue: _selectedUnit,
+                    isExpanded: true,
+                    menuMaxHeight: 220,
+                    borderRadius: BorderRadius.circular(16),
+                    elevation: 4,
+                    dropdownColor: AppColors.getCardBg(context),
+                    style: TextStyle(
+                      color: AppColors.getTextPrimary(context),
+                      fontSize: 13,
+                    ),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
                     decoration: InputDecoration(
                       labelText: s.kSurfaceUnitLabel,
                       hintText: s.kSurfaceUnitHint,
                       prefixIcon: const Icon(Icons.straighten),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: AppColors.getBorder(context)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
                       ),
                     ),
                     items: SurfaceUnit.values.map((unit) {
                       return DropdownMenuItem<SurfaceUnit>(
                         value: unit,
-                        child: Text(_getUnitFullName(unit, s)),
+                        child: Text(
+                          _getUnitFullName(unit, s),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: AppColors.getTextPrimary(context),
+                            fontSize: 13,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (SurfaceUnit? newUnit) {
@@ -926,16 +1329,22 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.accent,
-                      side: const BorderSide(color: AppColors.accent),
+                      foregroundColor: isDark ? AppColors.accentDark : AppColors.accent,
+                      side: BorderSide(color: isDark ? AppColors.accentDark : AppColors.accent),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       minimumSize: const Size.fromHeight(46),
                     ),
                     onPressed: () => _bypassAsSingleLot(s),
                     icon: const Icon(Icons.fast_forward),
-                    label: Text(s.kQuickStartWholeFarm),
+                    label: Text(
+                      s.kQuickStartWholeFarm,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -948,6 +1357,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // --- Step 2: Lots and Subplots ---
   Widget _buildStep2LotsInfo(AppStrings s, String unitShort) {
+    final isDark = AppColors.isDark(context);
     final farmSurface = _totalFarmSurface;
     final allocated = _totalLotsSurface;
     final isExceeded = allocated > farmSurface && farmSurface > 0;
@@ -958,11 +1368,13 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
         // Allocation progress bar
         Card(
           elevation: 1,
-          color: isExceeded ? Colors.orange.shade50 : AppColors.cardBg,
+          color: isExceeded
+              ? (isDark ? const Color(0xFF3B1E12) : Colors.orange.shade50)
+              : AppColors.getCardBg(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: BorderSide(
-              color: isExceeded ? Colors.orange : AppColors.treeLine,
+              color: isExceeded ? Colors.orange : AppColors.getBorder(context),
             ),
           ),
           child: Padding(
@@ -973,15 +1385,23 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      s.kAllocatedSurface,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        s.kAllocatedSurface,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getTextPrimary(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       '${allocated.toStringAsFixed(1)} / ${farmSurface.toStringAsFixed(1)} $unitShort',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isExceeded ? Colors.orange.shade900 : AppColors.primary,
+                        color: isExceeded ? Colors.orange.shade400 : AppColors.primary,
                       ),
                     ),
                   ],
@@ -991,7 +1411,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   value: farmSurface > 0
                       ? (allocated / farmSurface).clamp(0.0, 1.0)
                       : 0.0,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: isDark ? const Color(0xFF26382C) : Colors.grey.shade200,
                   color: isExceeded ? Colors.orange : AppColors.primary,
                 ),
                 if (isExceeded)
@@ -1001,7 +1421,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       s.kLotsSurfaceExceededWarning,
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.orange.shade900,
+                        color: isDark ? Colors.orange.shade300 : Colors.orange.shade900,
                       ),
                     ),
                   ),
@@ -1020,8 +1440,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   Widget _buildLotsHeaderCard(AppStrings s) {
     return Card(
       elevation: 2,
-      color: AppColors.cardBg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: AppColors.getCardBg(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.getBorder(context)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -1031,10 +1454,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             Expanded(
               child: Text(
                 s.kLotsSectionTitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
             ),
@@ -1045,15 +1468,19 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   }
 
   Widget _buildLotsList(AppStrings s, String unitShort) {
+    final isDark = AppColors.isDark(context);
     if (_lots.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
             children: [
-              Icon(Icons.layers_clear, size: 48, color: Colors.grey.shade400),
+              Icon(Icons.layers_clear, size: 48, color: isDark ? AppColors.textMutedDark : Colors.grey.shade400),
               const SizedBox(height: 8),
-              Text(s.kNoLotsAddedYet),
+              Text(
+                s.kNoLotsAddedYet,
+                style: TextStyle(color: AppColors.getTextSecondary(context)),
+              ),
               const SizedBox(height: 8),
               ElevatedButton.icon(
                 onPressed: () => _addLot(s),
@@ -1079,14 +1506,15 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   Widget _buildLotCard(
       LotItem lot, int index, AppStrings s, String unitShort) {
+    final isDark = AppColors.isDark(context);
     final lotNumberStr = '${s.kLot} ${index + 1}';
 
     return Card(
       elevation: 2,
-      color: AppColors.lotCardBg,
+      color: AppColors.getLotCardBg(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.treeLine, width: 1.2),
+        side: BorderSide(color: AppColors.getBorder(context), width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1097,15 +1525,18 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               children: [
                 const Icon(Icons.folder_outlined, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text(
-                  lotNumberStr,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryDark,
+                Expanded(
+                  child: Text(
+                    lotNumberStr,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 IconButton(
                   tooltip: s.kRemoveLot,
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -1120,7 +1551,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 labelText: s.kLotNameLabel,
                 hintText: s.kLotNameHint,
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.getInputBg(context),
                 prefixIcon: const Icon(Icons.label_outline),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1137,7 +1568,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 hintText: s.kLotSurfaceHint,
                 suffixText: unitShort,
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.getInputBg(context),
                 prefixIcon: const Icon(Icons.crop_square),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1145,7 +1576,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(),
+            Divider(color: AppColors.getBorder(context)),
             const SizedBox(height: 8),
             _buildSubplotsSection(lot, s, unitShort),
           ],
@@ -1156,28 +1587,38 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   Widget _buildSubplotsSection(
       LotItem lot, AppStrings s, String unitShort) {
+    final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             const Icon(Icons.subdirectory_arrow_right,
-                color: AppColors.accent, size: 20),
+                color: AppColors.accent, size: 18),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 s.kSubplotsSectionTitle,
-                style: const TextStyle(
-                  fontSize: 14,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.5,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
             ),
             TextButton.icon(
               onPressed: () => _addSubplot(lot, s),
-              icon: const Icon(Icons.add, size: 16),
-              label: Text(s.kAddSubplot),
+              icon: const Icon(Icons.add, size: 15),
+              label: Text(
+                s.kAddSubplot,
+                style: const TextStyle(fontSize: 12),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ],
         ),
@@ -1189,7 +1630,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
-                color: Colors.grey.shade600,
+                color: isDark ? AppColors.textMutedDark : Colors.grey.shade600,
               ),
             ),
           )
@@ -1204,15 +1645,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   Widget _buildSubplotCard(LotItem lot, SubplotItem subplot, int index,
       AppStrings s, String unitShort) {
+    final isDark = AppColors.isDark(context);
     final subplotNumberStr = '${s.kSubplot} ${index + 1}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.subplotCardBg,
+        color: isDark ? const Color(0xFF152219) : AppColors.subplotCardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1222,15 +1664,18 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               const Icon(Icons.layers_outlined,
                   size: 16, color: AppColors.accent),
               const SizedBox(width: 6),
-              Text(
-                subplotNumberStr,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  subplotNumberStr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppColors.getTextPrimary(context),
+                  ),
                 ),
               ),
-              const Spacer(),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: s.kRemoveSubplot,
@@ -1245,6 +1690,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             decoration: InputDecoration(
               isDense: true,
               labelText: s.kSubplotNameLabel,
+              filled: true,
+              fillColor: AppColors.getInputBg(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -1258,6 +1705,8 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             decoration: InputDecoration(
               isDense: true,
               labelText: '${s.kSubplotSurfaceLabel} ($unitShort)',
+              filled: true,
+              fillColor: AppColors.getInputBg(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -1270,16 +1719,17 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // --- Step 3: Summary ---
   Widget _buildStep3Summary(AppStrings s, String unitShort) {
+    final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Farm Summary Card
         Card(
           elevation: 2,
-          color: Colors.white,
+          color: AppColors.getCardBg(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.treeLine),
+            side: BorderSide(color: AppColors.getBorder(context)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -1290,17 +1740,21 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   children: [
                     const Icon(Icons.check_circle, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    Text(
-                      s.kSummaryTitle,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryDark,
+                    Expanded(
+                      child: Text(
+                        s.kSummaryTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const Divider(height: 20),
+                Divider(height: 20, color: AppColors.getBorder(context)),
                 _buildSummaryRow(
                   s.kFarm,
                   _farmNameController.text.isNotEmpty
@@ -1332,7 +1786,11 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   const SizedBox(height: 12),
                   Text(
                     '${s.kLotsDistribution}:',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppColors.getTextPrimary(context),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   for (final lot in _lots)
@@ -1340,7 +1798,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       padding: const EdgeInsets.only(left: 8, bottom: 2),
                       child: Text(
                         '• ${lot.nameController.text}: ${lot.surfaceController.text} $unitShort',
-                        style: const TextStyle(fontSize: 13),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.getTextPrimary(context),
+                        ),
                       ),
                     ),
                 ],
@@ -1353,10 +1814,12 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
         // NASA Environmental Card
         Card(
           elevation: 2,
-          color: const Color(0xFFF1F8E9),
+          color: isDark ? const Color(0xFF1B2F22) : const Color(0xFFF1F8E9),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.primaryLight),
+            side: BorderSide(
+              color: isDark ? const Color(0xFF2E4E39) : AppColors.primaryLight,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -1367,12 +1830,16 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   children: [
                     const Icon(Icons.public, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    Text(
-                      s.kNasaDataReady,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryDark,
+                    Expanded(
+                      child: Text(
+                        s.kNasaDataReady,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                        ),
                       ),
                     ),
                   ],
@@ -1380,7 +1847,10 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 const SizedBox(height: 8),
                 Text(
                   s.kNasaDataDescription,
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.getTextSecondary(context),
+                  ),
                 ),
               ],
             ),
@@ -1402,17 +1872,18 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               '$label:',
               style: TextStyle(
                 fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-                color: Colors.black87,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             flex: 3,
             child: Text(
               value,
               style: TextStyle(
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                color: Colors.black,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ),
@@ -1423,87 +1894,132 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   // --- Bottom Navigation Bar ---
   Widget _buildBottomNavigationBar(AppStrings s) {
+    final isDark = AppColors.isDark(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getNavBarBg(context),
+        border: Border(
+          top: BorderSide(color: AppColors.getBorder(context)),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          if (_currentStep > 0)
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            if (_currentStep > 0)
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.getTextPrimary(context),
+                    side: BorderSide(color: AppColors.getBorder(context)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 12),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    setState(() => _currentStep--);
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.arrow_back, size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        s.kPreviousStep,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (_currentStep > 0) const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 12),
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 onPressed: () {
-                  setState(() => _currentStep--);
+                  if (_currentStep == 0) {
+                    if (_step1FormKey.currentState!.validate()) {
+                      if (_latitude == null || _longitude == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: Colors.orange.shade900,
+                            content: Text(s.kLocationRequired),
+                          ),
+                        );
+                        _getCurrentLocation(s);
+                        return;
+                      }
+                      setState(() => _currentStep = 1);
+                    }
+                  } else if (_currentStep == 1) {
+                    setState(() => _currentStep = 2);
+                  } else {
+                    _saveFarmDataToDatabase(s);
+                  }
                 },
-                icon: const Icon(Icons.arrow_back),
-                label: Text(s.kPreviousStep),
-              ),
-            ),
-          if (_currentStep > 0) const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isSaving)
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    else ...[
+                      Text(
+                        _currentStep == 2 ? s.kSave : s.kNextStep,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        _currentStep == 2
+                            ? Icons.save
+                            : Icons.arrow_forward,
+                        size: 18,
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              onPressed: () {
-                if (_currentStep == 0) {
-                  if (_step1FormKey.currentState!.validate()) {
-                    if (_latitude == null || _longitude == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: Colors.orange.shade900,
-                          content: Text(s.kLocationRequired),
-                        ),
-                      );
-                      _getCurrentLocation(s);
-                      return;
-                    }
-                    setState(() => _currentStep = 1);
-                  }
-                } else if (_currentStep == 1) {
-                  setState(() => _currentStep = 2);
-                } else {
-                  _saveFarmDataToDatabase(s);
-                }
-              },
-              icon: _isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(
-                      _currentStep == 2 ? Icons.save : Icons.arrow_forward,
-                    ),
-              label: Text(
-                _currentStep == 2 ? s.kSave : s.kNextStep,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

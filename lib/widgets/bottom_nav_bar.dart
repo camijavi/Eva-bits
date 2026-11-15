@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../languages/app_strings.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/lots_screen.dart';
 import '../screens/predictions_screen.dart';
+import '../screens/lot_map_screen.dart';
 import '../screens/settings_screen.dart';
 
 /// Available animation styles for bottom navigation transitions.
@@ -113,6 +115,8 @@ class CustomBottomNavBar extends StatelessWidget {
       builder: (context, _, child) {
         final s = AppLanguage.strings;
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return CupertinoTabBar(
           currentIndex: currentIndex,
           onTap: (index) {
@@ -146,6 +150,14 @@ class CustomBottomNavBar extends StatelessWidget {
                   animationType: animationType,
                 ),
               );
+            } else if (index == 3) {
+              Navigator.of(context).pushReplacement(
+                createBottomNavPageRoute(
+                  const LotMapScreen(),
+                  fromLeft: index < currentIndex,
+                  animationType: animationType,
+                ),
+              );
             } else if (index == 4) {
               Navigator.of(context).push(
                 CupertinoPageRoute(
@@ -154,13 +166,13 @@ class CustomBottomNavBar extends StatelessWidget {
               );
             }
           },
-          backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
-          activeColor: AppColors.primary,
-          inactiveColor: CupertinoColors.systemGrey,
+          backgroundColor: AppColors.getNavBarBg(context),
+          activeColor: isDark ? AppColors.primaryLight : AppColors.primary,
+          inactiveColor: isDark ? Colors.white60 : CupertinoColors.systemGrey,
           iconSize: 24,
-          border: const Border(
+          border: Border(
             top: BorderSide(
-              color: Color(0x33000000),
+              color: isDark ? AppColors.borderDark : const Color(0x22000000),
               width: 0.5,
             ),
           ),
@@ -180,9 +192,9 @@ class CustomBottomNavBar extends StatelessWidget {
               label: s.kNavRotations,
             ),
             BottomNavigationBarItem(
-              icon: const Icon(CupertinoIcons.person_2),
-              activeIcon: const Icon(CupertinoIcons.person_2_fill),
-              label: s.kNavCommunity,
+              icon: const Icon(CupertinoIcons.map),
+              activeIcon: const Icon(CupertinoIcons.map_fill),
+              label: s.kNavMap,
             ),
             BottomNavigationBarItem(
               icon: const Icon(CupertinoIcons.ellipsis),

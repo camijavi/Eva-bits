@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/crop_types.dart';
 import '../database/database_manager.dart';
@@ -105,7 +106,6 @@ class _LotsScreenState extends State<LotsScreen> {
   List<Map<String, dynamic>> get _filteredAndSortedLots {
     var result = List<Map<String, dynamic>>.from(_allLots);
 
-    // Apply search filter
     if (_searchQuery.isNotEmpty) {
       result = result.where((lot) {
         final name = (lot['name'] ?? '').toString().toLowerCase();
@@ -123,7 +123,6 @@ class _LotsScreenState extends State<LotsScreen> {
       }).toList();
     }
 
-    // Apply priority / sort chips
     switch (_selectedPriority) {
       case LotFilterPriority.largestSurface:
         result.sort((a, b) {
@@ -146,7 +145,6 @@ class _LotsScreenState extends State<LotsScreen> {
         }).toList();
         break;
       case LotFilterPriority.all:
-      // Keep default order (by id)
         break;
     }
 
@@ -210,46 +208,57 @@ class _LotsScreenState extends State<LotsScreen> {
       builder: (context, _, child) {
         final s = AppLanguage.strings;
         final filteredLots = _filteredAndSortedLots;
+        final scaffoldBg = AppColors.getBackground(context);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFF9FBF8),
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          ),
+          child: Scaffold(
+          backgroundColor: scaffoldBg,
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: _loadLots,
               color: AppColors.primary,
               child: _isLoading
                   ? const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
-              )
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
                   : SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTitleAndSubtitle(s),
-                    const SizedBox(height: 16),
-                    _buildSearchField(s),
-                    const SizedBox(height: 20),
-                    _buildPriorityFilterSection(s),
-                    const SizedBox(height: 20),
-                    _buildQuickSummaryCard(s),
-                    const SizedBox(height: 24),
-                    _buildRegisteredLotsHeader(s, filteredLots.length),
-                    const SizedBox(height: 12),
-                    if (filteredLots.isEmpty)
-                      _buildEmptyState(s)
-                    else
-                      ...filteredLots.map((lot) => _buildLotCard(s, lot)),
-                    const SizedBox(height: 80),
-                  ],
-                ),
-              ),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTitleAndSubtitle(context, s),
+                          const SizedBox(height: 16),
+                          _buildSearchField(context, s),
+                          const SizedBox(height: 18),
+                          _buildPriorityFilterSection(context, s),
+                          const SizedBox(height: 20),
+                          _buildQuickSummaryCard(context, s),
+                          const SizedBox(height: 24),
+                          _buildRegisteredLotsHeader(
+                              context, s, filteredLots.length),
+                          const SizedBox(height: 14),
+                          if (filteredLots.isEmpty)
+                            _buildEmptyState(context, s)
+                          else
+                            ...filteredLots.map(
+                              (lot) => _buildLotCard(context, s, lot),
+                            ),
+                          const SizedBox(height: 80),
+                        ],
+                      ),
+                    ),
             ),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -259,30 +268,78 @@ class _LotsScreenState extends State<LotsScreen> {
             addTooltip: s.kAddLot,
           ),
           bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 
-  Widget _buildTitleAndSubtitle(AppStrings s) {
+  Widget _buildTitleAndSubtitle(BuildContext context, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final subtextColor = AppColors.getTextMuted(context);
+    final isSpanish = AppLanguage.isSpanish;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1B2B20)
+                    : const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF2E7D32)
+                      : const Color(0xFFA5D6A7),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.layers_rounded,
+                    size: 13,
+                    color: isDark
+                        ? AppColors.primaryLight
+                        : const Color(0xFF2E7D32),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isSpanish ? 'Zonificación de Campo' : 'Field Zoning',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.primaryLight
+                          : const Color(0xFF2E7D32),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
         Text(
           s.kLotsScreenTitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F5A37),
+            color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           s.kLotsScreenSubtitle,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey.shade700,
+            color: subtextColor,
             height: 1.35,
           ),
         ),
@@ -290,15 +347,25 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildSearchField(AppStrings s) {
+  Widget _buildSearchField(BuildContext context, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderCol = AppColors.getBorder(context);
+    final textCol = AppColors.getTextPrimary(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+        border: Border.all(
+          color: _searchQuery.isNotEmpty
+              ? (isDark ? AppColors.primaryLight : const Color(0xFF0F5A37))
+              : borderCol,
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -307,10 +374,10 @@ class _LotsScreenState extends State<LotsScreen> {
       child: TextField(
         controller: _searchController,
         focusNode: _searchFocusNode,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF1B2E1C),
+          color: textCol,
         ),
         decoration: InputDecoration(
           hintText: s.kSearchLotsHint,
@@ -319,19 +386,19 @@ class _LotsScreenState extends State<LotsScreen> {
             fontWeight: FontWeight.normal,
             color: Colors.grey.shade500,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
-            color: Color(0xFF0F5A37),
+            color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             size: 24,
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.clear_rounded, color: Colors.grey),
-            onPressed: () {
-              _searchController.clear();
-              _searchFocusNode.unfocus();
-            },
-          )
+                  icon: const Icon(Icons.clear_rounded, color: Colors.grey),
+                  onPressed: () {
+                    _searchController.clear();
+                    _searchFocusNode.unfocus();
+                  },
+                )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -343,16 +410,19 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildPriorityFilterSection(AppStrings s) {
+  Widget _buildPriorityFilterSection(BuildContext context, AppStrings s) {
+    final textColor = AppColors.getTextPrimary(context);
+    final isSpanish = AppLanguage.isSpanish;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           s.kFilterPriorityTitle,
-          style: const TextStyle(
-            fontSize: 16,
+          style: TextStyle(
+            fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B2E1C),
+            color: textColor,
           ),
         ),
         const SizedBox(height: 10),
@@ -361,28 +431,42 @@ class _LotsScreenState extends State<LotsScreen> {
           child: Row(
             children: [
               _buildFilterChip(
+                context: context,
                 label: s.kFilterAll,
+                icon: Icons.tune_rounded,
                 isSelected: _selectedPriority == LotFilterPriority.all,
                 onTap: () =>
                     setState(() => _selectedPriority = LotFilterPriority.all),
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
+                context: context,
                 label: s.kFilterLargest,
-                isSelected: _selectedPriority ==
-                    LotFilterPriority.largestSurface,
-                onTap: () =>
-                    setState(() =>
-                _selectedPriority = LotFilterPriority.largestSurface),
+                icon: Icons.arrow_upward_rounded,
+                isSelected:
+                    _selectedPriority == LotFilterPriority.largestSurface,
+                onTap: () => setState(
+                    () => _selectedPriority = LotFilterPriority.largestSurface),
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
+                context: context,
                 label: s.kFilterSmallest,
-                isSelected: _selectedPriority ==
-                    LotFilterPriority.smallestSurface,
-                onTap: () =>
-                    setState(() =>
-                _selectedPriority = LotFilterPriority.smallestSurface),
+                icon: Icons.arrow_downward_rounded,
+                isSelected:
+                    _selectedPriority == LotFilterPriority.smallestSurface,
+                onTap: () => setState(
+                    () => _selectedPriority = LotFilterPriority.smallestSurface),
+              ),
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                context: context,
+                label: isSpanish ? 'Con parcelas' : 'With subplots',
+                icon: Icons.grid_view_rounded,
+                isSelected:
+                    _selectedPriority == LotFilterPriority.withSubplots,
+                onTap: () => setState(
+                    () => _selectedPriority = LotFilterPriority.withSubplots),
               ),
             ],
           ),
@@ -392,84 +476,127 @@ class _LotsScreenState extends State<LotsScreen> {
   }
 
   Widget _buildFilterChip({
+    required BuildContext context,
     required String label,
+    required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    // Style matches the image attached:
-    // Selected is solid dark green pill with white text.
-    // Inactive is light soft pill with dark text.
+    final isDark = AppColors.isDark(context);
+    final unselectedBg =
+        isDark ? const Color(0xFF1E2822) : const Color(0xFFF1F5F2);
+    final unselectedBorder =
+        isDark ? AppColors.borderDark : const Color(0xFFE2E8F0);
+    final unselectedText =
+        isDark ? Colors.grey.shade300 : const Color(0xFF4A5568);
+
     return InkWell(
       borderRadius: BorderRadius.circular(24),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0F5A37) : const Color(0xFFF1F5F2),
+          color: isSelected ? const Color(0xFF0F5A37) : unselectedBg,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F5A37) : const Color(
-                0xFFE2E8F0),
+            color: isSelected ? const Color(0xFF0F5A37) : unselectedBorder,
             width: 1.2,
           ),
           boxShadow: isSelected
               ? [
-            BoxShadow(
-              color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ]
+                  BoxShadow(
+                    color: const Color(0xFF0F5A37).withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
               : null,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF4A5568),
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : unselectedText,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : unselectedText,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickSummaryCard(AppStrings s) {
+  Widget _buildQuickSummaryCard(BuildContext context, AppStrings s) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = isDark ? const Color(0xFF16231A) : const Color(0xFFEAF5EC);
+    final borderCol =
+        isDark ? const Color(0xFF2C3E33) : const Color(0xFFC8E6C9);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF5EC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFC8E6C9)),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderCol, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildSummaryItem(
-            icon: Icons.layers_outlined,
-            title: '${_allLots.length}',
-            subtitle: s.kTotalLots,
+          Expanded(
+            child: _buildSummaryItem(
+              context: context,
+              icon: Icons.layers_rounded,
+              iconColor: const Color(0xFF2E7D32),
+              iconBgColor: const Color(0xFFE8F5E9),
+              title: '${_allLots.length}',
+              subtitle: s.kTotalLots,
+            ),
           ),
           Container(
-            height: 36,
+            height: 38,
             width: 1,
-            color: const Color(0xFFC8E6C9),
+            color: borderCol,
           ),
-          _buildSummaryItem(
-            icon: Icons.square_foot_rounded,
-            title: '${_totalSurface.toStringAsFixed(1)} $_surfaceUnit',
-            subtitle: s.kTotalSurfaceLabel,
+          Expanded(
+            child: _buildSummaryItem(
+              context: context,
+              icon: Icons.square_foot_rounded,
+              iconColor: const Color(0xFF00796B),
+              iconBgColor: const Color(0xFFE0F2F1),
+              title: '${_totalSurface.toStringAsFixed(1)} $_surfaceUnit',
+              subtitle: s.kTotalSurfaceLabel,
+            ),
           ),
           Container(
-            height: 36,
+            height: 38,
             width: 1,
-            color: const Color(0xFFC8E6C9),
+            color: borderCol,
           ),
-          _buildSummaryItem(
-            icon: Icons.grid_view_rounded,
-            title: '$_totalSubplotsCount',
-            subtitle: s.kTotalSubplots,
+          Expanded(
+            child: _buildSummaryItem(
+              context: context,
+              icon: Icons.grid_view_rounded,
+              iconColor: const Color(0xFFE65100),
+              iconBgColor: const Color(0xFFFFF3E0),
+              title: '$_totalSubplotsCount',
+              subtitle: s.kTotalSubplots,
+            ),
           ),
         ],
       ),
@@ -477,26 +604,47 @@ class _LotsScreenState extends State<LotsScreen> {
   }
 
   Widget _buildSummaryItem({
+    required BuildContext context,
     required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
     required String title,
     required String subtitle,
   }) {
+    final isDark = AppColors.isDark(context);
+    final brandColor =
+        isDark ? AppColors.primaryLight : const Color(0xFF0F5A37);
+    final subtextColor = AppColors.getTextMuted(context);
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: const Color(0xFF0F5A37)),
-            const SizedBox(width: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F5A37),
-              ),
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isDark ? iconBgColor.withValues(alpha: 0.2) : iconBgColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              size: 17,
+              color: isDark ? AppColors.primaryLight : iconColor,
             ),
-          ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: brandColor,
+            letterSpacing: -0.3,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
         Text(
@@ -504,37 +652,58 @@ class _LotsScreenState extends State<LotsScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
+            color: subtextColor,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
 
-  Widget _buildRegisteredLotsHeader(AppStrings s, int count) {
+  Widget _buildRegisteredLotsHeader(
+      BuildContext context, AppStrings s, int count) {
+    final isDark = AppColors.isDark(context);
+    final textColor = AppColors.getTextPrimary(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          s.kRegisteredLotsTitle,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1B2E1C),
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.format_list_bulleted_rounded,
+              size: 18,
+              color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              s.kRegisteredLotsTitle,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+          ],
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF5EC),
-            borderRadius: BorderRadius.circular(12),
+            color: isDark ? const Color(0xFF1E2822) : const Color(0xFFEAF5EC),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark
+                  ? const Color(0xFF2C3E33)
+                  : const Color(0xFFC8E6C9),
+            ),
           ),
           child: Text(
             '$count',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F5A37),
+              color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             ),
           ),
         ),
@@ -542,14 +711,20 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildLotCard(AppStrings s, Map<String, dynamic> lot) {
+  Widget _buildLotCard(
+      BuildContext context, AppStrings s, Map<String, dynamic> lot) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderCol = AppColors.getBorder(context);
+    final textCol = AppColors.getTextPrimary(context);
+    final subtextCol = AppColors.getTextMuted(context);
+
     final name = lot['name']?.toString() ?? s.kLot;
     final surface = lot['surface']?.toString() ?? '0';
     final subplots = (lot['subplots'] as List<dynamic>?) ?? [];
     final subplotsCount = subplots.length;
     final isSpanish = AppLanguage.isSpanish;
 
-    // Direct lot crop or collected from subplots
     final lotCrop = CropTypes.getByKey(lot['crop']?.toString());
     final subplotsCrops = <CropDefinition>[];
     for (final sub in subplots) {
@@ -559,113 +734,237 @@ class _LotsScreenState extends State<LotsScreen> {
       }
     }
 
+    final cropDef =
+        lotCrop ?? (subplotsCrops.isNotEmpty ? subplotsCrops.first : null);
     final cropBadgeText = lotCrop != null
         ? lotCrop.localizedName(isSpanish)
         : (subplotsCrops.isNotEmpty
             ? subplotsCrops.map((c) => c.localizedName(isSpanish)).join(', ')
             : null);
 
-    final subplotsInfo = subplotsCount > 0
-        ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s.kSubplotsCount}'
-        : null;
+    final IconData cropIcon = cropDef?.icon ?? Icons.park_rounded;
+    final Color cropColor = cropDef?.color ??
+        (isDark ? AppColors.primaryLight : const Color(0xFF2E7D32));
+    final Color cropBgColor = isDark
+        ? (cropDef?.color.withValues(alpha: 0.22) ?? const Color(0xFF233529))
+        : (cropDef?.bgColor ?? const Color(0xFFEAF5EC));
 
-    final parts = <String>['$surface $_surfaceUnit'];
-    if (cropBadgeText != null) {
-      parts.add(cropBadgeText);
-    }
-    if (subplotsInfo != null) {
-      parts.add(subplotsInfo);
-    }
-    final detailsText = parts.join(' • ');
-
-    // UI mirrors the image attached:
-    // White rounded rectangle card with subtle light gray border.
-    // Left: circular soft green background badge with green plant icon.
-    // Center: bold title + subtitle text.
-    // Right: pen icon for editing + chevron.
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: borderCol,
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           onTap: () => _navigateToSubplots(lot),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Soft green circular icon badge
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEAF5EC),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.eco_rounded,
-                      color: Color(0xFF2E7D32),
-                      size: 26,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: cropBgColor,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          cropIcon,
+                          color: cropColor,
+                          size: 26,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-                // Lot Name & Subtitle
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E2D24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: textCol,
+                              letterSpacing: -0.3,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (cropBadgeText != null) ...[
+                            const SizedBox(height: 3),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF243329)
+                                        : const Color(0xFFE8F5E9),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    cropBadgeText,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? AppColors.primaryLight
+                                          : const Color(0xFF2E7D32),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E2822)
+                            : const Color(0xFFF1F8F3),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF2C3E33)
+                              : const Color(0xFFC8E6C9),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        detailsText,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.square_foot_rounded,
+                            size: 13,
+                            color: isDark
+                                ? AppColors.primaryLight
+                                : const Color(0xFF2E7D32),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$surface $_surfaceUnit',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? AppColors.primaryLight
+                                  : const Color(0xFF2E7D32),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        color: isDark
+                            ? AppColors.primaryLight
+                            : const Color(0xFF0F5A37),
+                        size: 20,
+                      ),
+                      tooltip: s.kEditLot,
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _openEditLotModal(lot),
+                    ),
+                  ],
                 ),
-
-                // Pen icon to handle editing
-                IconButton(
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    color: Color(0xFF0F5A37),
-                    size: 22,
-                  ),
-                  tooltip: s.kEditLot,
-                  onPressed: () => _openEditLotModal(lot),
+                const SizedBox(height: 12),
+                Container(
+                  height: 1,
+                  color: borderCol.withValues(alpha: 0.6),
                 ),
-
-                // Chevron icon (as in the screenshot)
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF9E9E9E),
-                  size: 24,
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1B231D)
+                            : const Color(0xFFF4F6F4),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.grid_view_rounded,
+                            size: 13,
+                            color: subtextCol,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            subplotsCount > 0
+                                ? '$subplotsCount ${subplotsCount == 1 ? s.kSubplotSingular : s.kSubplotsCount}'
+                                : (isSpanish
+                                    ? 'Lote continuo'
+                                    : 'Continuous lot'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: subtextCol,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isSpanish ? 'Ver parcelas' : 'View subplots',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -675,57 +974,86 @@ class _LotsScreenState extends State<LotsScreen> {
     );
   }
 
-  Widget _buildEmptyState(AppStrings s) {
+  Widget _buildEmptyState(BuildContext context, AppStrings s) {
     final isSearching = _searchQuery.isNotEmpty;
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final borderCol = AppColors.getBorder(context);
+    final textCol = AppColors.getTextPrimary(context);
+    final subtextCol = AppColors.getTextMuted(context);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderCol, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEAF5EC),
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              color:
+                  isDark ? const Color(0xFF233529) : const Color(0xFFEAF5EC),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF2E7D32)
+                    : const Color(0xFFA5D6A7),
+                width: 1.5,
+              ),
             ),
             child: Icon(
-              isSearching ? Icons.search_off_rounded : Icons.landscape_outlined,
-              size: 34,
-              color: const Color(0xFF0F5A37),
+              isSearching ? Icons.search_off_rounded : Icons.landscape_rounded,
+              size: 36,
+              color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             isSearching ? s.kNoLotsFound : s.kNoLotsRegistered,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1B2E1C),
-            ),
             textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: textCol,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             isSearching
                 ? '${s.kNoLotsFound} "$_searchQuery"'
                 : s.kNoLotsYetSubtitle,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey.shade600,
+              color: subtextCol,
               height: 1.35,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           if (isSearching)
             OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                side: BorderSide(
+                  color: isDark
+                      ? AppColors.primaryLight
+                      : const Color(0xFF0F5A37),
+                ),
+              ),
               onPressed: () {
                 _searchController.clear();
                 _searchFocusNode.unfocus();
@@ -735,8 +1063,12 @@ class _LotsScreenState extends State<LotsScreen> {
           else
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F5A37),
+                backgroundColor:
+                    isDark ? AppColors.primary : const Color(0xFF0F5A37),
                 foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

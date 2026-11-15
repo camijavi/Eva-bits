@@ -157,20 +157,21 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.getCardBg(ctx),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           s.kDeleteLotConfirm,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B2E1C),
+            color: AppColors.getTextPrimary(ctx),
           ),
         ),
         content: Text(
           s.kDeleteLotWarning,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey.shade700,
+            color: AppColors.getTextMuted(ctx),
             height: 1.35,
           ),
         ),
@@ -180,7 +181,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
             child: Text(
               s.kCancel,
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: AppColors.getTextMuted(ctx),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -245,11 +246,17 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final s = AppLanguage.strings;
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.getCardBg(context);
+    final inputBg = AppColors.getInputBg(context);
+    final borderColor = AppColors.getBorder(context);
+    final textPrimary = AppColors.getTextPrimary(context);
+    final textMuted = AppColors.getTextMuted(context);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         left: 20,
@@ -270,7 +277,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? AppColors.borderDark : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -284,7 +291,9 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF5EC),
+                      color: isDark
+                          ? AppColors.primary.withValues(alpha: 0.22)
+                          : const Color(0xFFEAF5EC),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -292,7 +301,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                         widget.isEditing
                             ? Icons.edit_note_rounded
                             : Icons.add_location_alt_outlined,
-                        color: AppColors.primary,
+                        color: isDark ? AppColors.primaryLight : AppColors.primary,
                         size: 26,
                       ),
                     ),
@@ -304,10 +313,10 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                       children: [
                         Text(
                           widget.isEditing ? s.kEditLot : s.kAddNewLot,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B2E1C),
+                            color: textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -317,7 +326,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                               : s.kLotsScreenSubtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: textMuted,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -342,10 +351,10 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
               // Lot Name Field
               Text(
                 s.kLotNameLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -353,32 +362,33 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   hintText: s.kLotNameHint,
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: const Color(0xFFF9FBF8),
-                  prefixIcon: const Icon(
+                  fillColor: inputBg,
+                  prefixIcon: Icon(
                     Icons.tag_rounded,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.primaryLight : AppColors.primary,
                       width: 2,
                     ),
                   ),
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
@@ -392,10 +402,10 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
               // Surface Area Field
               Text(
                 '${s.kLotSurfaceLabel} (${widget.effectiveSurfaceUnit})',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -405,38 +415,39 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   hintText: s.kLotSurfaceHint,
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: const Color(0xFFF9FBF8),
-                  prefixIcon: const Icon(
+                  fillColor: inputBg,
+                  prefixIcon: Icon(
                     Icons.square_foot_rounded,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                   ),
                   suffixText: widget.effectiveSurfaceUnit,
-                  suffixStyle: const TextStyle(
+                  suffixStyle: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primaryLight : AppColors.primary,
                     fontSize: 15,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.primaryLight : AppColors.primary,
                       width: 2,
                     ),
                   ),
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
@@ -454,10 +465,10 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
               // Crop Selector
               Text(
                 s.kCropLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B2E1C),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -471,7 +482,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.grey.shade400),
+                        side: BorderSide(color: borderColor),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -482,7 +493,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
+                          color: textMuted,
                         ),
                       ),
                     ),
@@ -492,7 +503,9 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                     flex: 2,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F5A37),
+                        backgroundColor: isDark
+                            ? AppColors.primary
+                            : const Color(0xFF0F5A37),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 1,
@@ -543,6 +556,7 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
 
   Widget _buildCropSelector(AppStrings s) {
     final isSpanish = AppLanguage.isSpanish;
+    final isDark = AppColors.isDark(context);
     final crop = CropTypes.getByKey(_selectedCrop);
 
     return InkWell(
@@ -561,9 +575,9 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FBF8),
+          color: AppColors.getInputBg(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: AppColors.getBorder(context)),
         ),
         child: Row(
           children: [
@@ -572,14 +586,16 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: crop.bgColor,
+                  color: isDark
+                      ? crop.color.withValues(alpha: 0.24)
+                      : crop.bgColor,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Icon(
                     crop.icon,
                     size: 18,
-                    color: crop.textColor,
+                    color: isDark ? AppColors.primaryLight : crop.textColor,
                   ),
                 ),
               ),
@@ -587,32 +603,34 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
               Expanded(
                 child: Text(
                   crop.localizedName(isSpanish),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B2E1C),
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF5EC),
+                  color: isDark
+                      ? AppColors.primary.withValues(alpha: 0.22)
+                      : const Color(0xFFEAF5EC),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   s.kChangeCrop,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F5A37),
+                    color: isDark ? AppColors.primaryLight : const Color(0xFF0F5A37),
                   ),
                 ),
               ),
             ] else ...[
-              const Icon(
+              Icon(
                 Icons.eco_outlined,
-                color: AppColors.primary,
+                color: isDark ? AppColors.primaryLight : AppColors.primary,
                 size: 22,
               ),
               const SizedBox(width: 10),
@@ -621,13 +639,13 @@ class _NewEditPlotSheetState extends State<NewEditPlotSheet> {
                   s.kCropHint,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: AppColors.getTextMuted(context),
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: Colors.grey,
+                color: AppColors.getTextMuted(context),
                 size: 22,
               ),
             ],
