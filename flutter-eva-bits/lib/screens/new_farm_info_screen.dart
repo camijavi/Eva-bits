@@ -1,8 +1,7 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import '../constants/agricultural_locations.dart';
 import '../constants/app_colors.dart';
+import '../constants/responsive.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/eve_animated_avatar.dart';
@@ -79,12 +78,9 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
   double? _latitude;
   double? _longitude;
-  bool _isGettingLocation = false;
   bool _isSaving = false;
   bool _isCheckingExistingFarm = true;
   String? _selectedLocationId;
-  bool _isCustomLocation = false;
-  String? _gpsPrioritizedMessage;
 
   SurfaceUnit _selectedUnit = SurfaceUnit.hectares;
   final List<LotItem> _lots = [];
@@ -108,9 +104,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       _checkExistingFarm();
     } else {
       _isCheckingExistingFarm = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _getCurrentLocation(AppLanguage.strings);
-      });
     }
   }
 
@@ -144,7 +137,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
 
     if (mounted) {
       setState(() => _isCheckingExistingFarm = false);
-      _getCurrentLocation(AppLanguage.strings);
     }
   }
 
@@ -158,102 +150,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       lot.dispose();
     }
     super.dispose();
-  }
-
-  Future<void> _getCurrentLocation(AppStrings s) async {
-    setState(() => _isGettingLocation = true);
-
-    try {
-      final position = await _determinePosition(s);
-      if (position != null && mounted) {
-        final prevPreset = _selectedLocationId != null &&
-                _selectedLocationId != AgriculturalLocation.customId
-            ? AgriculturalLocation.presets
-                .cast<AgriculturalLocation?>()
-                .firstWhere(
-                  (p) => p?.id == _selectedLocationId,
-                  orElse: () => null,
-                )
-            : null;
-
-        final nearest = AgriculturalLocation.findNearest(
-          position.latitude,
-          position.longitude,
-        );
-        final dLat = nearest.latitude - position.latitude;
-        final dLon = nearest.longitude - position.longitude;
-        final distDeg = math.sqrt(dLat * dLat + dLon * dLon);
-
-        String? noticeMsg;
-        String snackMsg;
-
-        if (distDeg < 4.5) {
-          final hasCountryMismatch = prevPreset != null &&
-              prevPreset.country.toLowerCase() !=
-                  nearest.country.toLowerCase();
-
-          setState(() {
-            _latitude = position.latitude;
-            _longitude = position.longitude;
-            _selectedLocationId = nearest.id;
-            _countryController.text = nearest.displayName;
-            _isCustomLocation = false;
-
-            if (hasCountryMismatch) {
-              noticeMsg = AppLanguage.isSpanish
-                  ? 'Coordenadas GPS priorizadas: Se detectó ${nearest.displayName} en lugar de ${prevPreset.country}. Los datos satelitales NASA se sincronizarán con estas coordenadas reales.'
-                  : 'GPS coordinates prioritized: Detected ${nearest.displayName} instead of ${prevPreset.country}. NASA and satellite telemetry will calculate using your exact coordinates.';
-            } else {
-              noticeMsg = AppLanguage.isSpanish
-                  ? 'Coordenadas GPS sincronizadas con ${nearest.displayName}. Prioridad activa para telemetría NASA.'
-                  : 'GPS coordinates synced with ${nearest.displayName}. Active priority for NASA telemetry.';
-            }
-            _gpsPrioritizedMessage = noticeMsg;
-          });
-
-          snackMsg = hasCountryMismatch
-              ? (AppLanguage.isSpanish
-                  ? 'Ubicación ajustada a ${nearest.displayName} según tus coordenadas GPS.'
-                  : 'Location adjusted to ${nearest.displayName} based on GPS.')
-              : '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
-        } else {
-          setState(() {
-            _latitude = position.latitude;
-            _longitude = position.longitude;
-            _selectedLocationId = AgriculturalLocation.customId;
-            _isCustomLocation = true;
-            noticeMsg = AppLanguage.isSpanish
-                ? 'Coordenadas GPS personalizadas (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}). Prioridad activa para cálculos satelitales NASA.'
-                : 'Custom GPS coordinates (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}). Priority active for NASA satellite data.';
-            _gpsPrioritizedMessage = noticeMsg;
-          });
-
-          snackMsg =
-              '${s.kGpsSuccess}: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.primary,
-            duration: const Duration(seconds: 4),
-            content: Text(snackMsg),
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.red.shade800,
-            content: Text(s.kGpsError),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isGettingLocation = false);
-      }
-    }
   }
 
   Future<void> _saveFarmDataToDatabase(AppStrings s) async {
@@ -333,262 +229,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     }
   }
 
-  bool _isShowingGpsDialog = false;
-
-  void _showEveGpsPermissionDialog(
-    AppStrings s, {
-    bool isPermanentlyDenied = false,
-    bool isServiceDisabled = false,
-  }) {
-    if (!mounted || _isShowingGpsDialog) return;
-    _isShowingGpsDialog = true;
-
-    final isSpanish = AppLanguage.isSpanish;
-
-    final dialogTitle = isServiceDisabled
-        ? (isSpanish
-            ? 'Activa tu GPS para continuar'
-            : 'Enable your GPS to continue')
-        : (isSpanish
-            ? 'Eve necesita tu ubicación'
-            : 'Eve needs your location');
-
-    final dialogExplanation = isSpanish
-        ? 'Para calcular datos agroecológicos precisos y consultar la radiación solar, lluvia y humedad del suelo de la NASA, necesito conocer las coordenadas de tu finca.'
-        : 'To calculate accurate agroecological metrics and query NASA solar radiation, rainfall, and soil moisture, I need access to your farm coordinates.';
-
-    showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) {
-        final isDark = AppColors.isDark(ctx);
-        return Dialog(
-          backgroundColor: AppColors.getCardBg(ctx),
-          elevation: 6,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: BorderSide(color: AppColors.getBorder(ctx)),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 104,
-                    height: 104,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark ? const Color(0xFF1E2F23) : const Color(0xFFE8F5E9),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF2E4E39) : const Color(0xFFC8E6C9),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isDark ? const Color(0xFF101913) : const Color(0xFFC8E6C9)).withValues(alpha: 0.5),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: EveAnimatedAvatar(
-                        emote: EveEmote.alert,
-                        size: 88,
-                        isSpeaking: false,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    dialogTitle,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.getTextPrimary(ctx),
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    dialogExplanation,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      color: AppColors.getTextSecondary(ctx),
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF13281C) : const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isDark ? const Color(0xFF1D4A2D) : const Color(0xFFBBF7D0)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.lock_outline_rounded,
-                          size: 18,
-                          color: Color(0xFF16A34A),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isSpanish
-                                    ? 'Tus datos son privados'
-                                    : 'Your data is private',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isSpanish
-                                    ? 'Las coordenadas se guardan únicamente en tu dispositivo para los cálculos locales y nunca se comparten con terceros.'
-                                    : 'Coordinates are saved only on your device for local calculations and are never shared with third parties.',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: isDark ? const Color(0xFFA7F3D0) : Colors.green.shade900,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isServiceDisabled
-                        ? (isSpanish
-                            ? 'Por favor, activa el servicio de ubicación en los ajustes de tu teléfono.'
-                            : 'Please turn on the location service in your phone settings.')
-                        : (isSpanish
-                            ? 'Ve a la Configuración de la aplicación para permitir el permiso de ubicación.'
-                            : 'Go to App Settings to enable location permission.'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.textMutedDark : const Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () async {
-                        Navigator.of(ctx).pop();
-                        if (isServiceDisabled) {
-                          await Geolocator.openLocationSettings();
-                        } else {
-                          await Geolocator.openAppSettings();
-                        }
-                      },
-                      icon: const Icon(Icons.settings_outlined, size: 18),
-                      label: Text(
-                        isSpanish ? 'Ir a Configuración' : 'Open Settings',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: Text(
-                      isSpanish
-                          ? 'Ahora no / Usar zona predefinida'
-                          : 'Not now / Use preset zone',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    ).then((_) {
-      _isShowingGpsDialog = false;
-    });
-  }
-
-  Future<Position?> _determinePosition(AppStrings s) async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      if (mounted) {
-        _showEveGpsPermissionDialog(
-          s,
-          isServiceDisabled: true,
-        );
-      }
-      return null;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        if (mounted) {
-          _showEveGpsPermissionDialog(
-            s,
-            isPermanentlyDenied: false,
-          );
-        }
-        return null;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      if (mounted) {
-        _showEveGpsPermissionDialog(
-          s,
-          isPermanentlyDenied: true,
-        );
-      }
-      return null;
-    }
-
-    return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 15),
-      ),
-    );
-  }
-
   String _getUnitFullName(SurfaceUnit unit, AppStrings s) {
     switch (unit) {
       case SurfaceUnit.hectares:
@@ -627,7 +267,6 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
           content: Text(s.kLocationRequired),
         ),
       );
-      _getCurrentLocation(s);
       return;
     }
 
@@ -797,26 +436,66 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               const SizedBox(width: 4),
             ],
           ),
-          body: Column(
-            children: [
-              _buildStepIndicator(s),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // Spacing between AppBar header and the progress line
+                SizedBox(
+                  height: Responsive(context).value<double>(
+                    mobile: 14.0,
+                    tablet: 18.0,
                   ),
-                  children: [
-                    if (_currentStep == 0)
-                      _buildStep1FarmInfo(s, unitShort)
-                    else if (_currentStep == 1)
-                      _buildStep2LotsInfo(s, unitShort)
-                    else
-                      _buildStep3Summary(s, unitShort),
-                  ],
                 ),
-              ),
-            ],
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive(context).value<double>(
+                      mobile: 16.0,
+                      tablet: 18.0,
+                    ),
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: Responsive(context).maxContentWidth,
+                      ),
+                      child: _buildStepIndicator(s),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: Responsive(context).value<double>(
+                    mobile: 10.0,
+                    tablet: 14.0,
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Responsive(context).value<double>(
+                        mobile: 16.0,
+                        tablet: 18.0,
+                      ),
+                      vertical: 6,
+                    ),
+                    children: [
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: Responsive(context).maxContentWidth,
+                          ),
+                          child: _currentStep == 0
+                              ? _buildStep1FarmInfo(s, unitShort)
+                              : (_currentStep == 1
+                                  ? _buildStep2LotsInfo(s, unitShort)
+                                  : _buildStep3Summary(s, unitShort)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           floatingActionButton: _currentStep == 1
               ? FloatingActionButton(
@@ -838,70 +517,712 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   // --- Step Indicator ---
   Widget _buildStepIndicator(AppStrings s) {
     final isDark = AppColors.isDark(context);
+    final isTablet = Responsive(context).isTabletOrDesktop;
     final steps = [s.kStep1Title, s.kStep2Title, s.kStep3Title];
 
     return Container(
-      color: AppColors.getCardBg(context),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: List.generate(steps.length, (index) {
-          final isActive = _currentStep == index;
-          final isDone = _currentStep > index;
+      decoration: BoxDecoration(
+        color: AppColors.getCardBg(context),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 16),
+        border: Border.all(color: AppColors.getBorder(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: isTablet ? 10 : 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 24 : 16,
+        vertical: isTablet ? 16 : 12,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: List.generate(steps.length, (index) {
+              final isActive = _currentStep == index;
+              final isDone = _currentStep > index;
 
-          return Expanded(
-            child: InkWell(
-              onTap: () {
-                // Allow tapping completed steps to jump back
-                if (index < _currentStep) {
-                  setState(() => _currentStep = index);
-                }
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: isDone
-                        ? AppColors.primary
-                        : (isActive ? AppColors.primaryLight : (isDark ? const Color(0xFF2E4235) : Colors.grey.shade300)),
-                    child: isDone
-                        ? const Icon(Icons.check, size: 14, color: Colors.white)
-                        : Text(
-                            '${index + 1}',
+              return Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    // Allow tapping completed steps to jump back
+                    if (index < _currentStep) {
+                      setState(() => _currentStep = index);
+                    }
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: isTablet ? 6 : 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: isTablet ? 15 : 12,
+                          backgroundColor: isDone
+                              ? AppColors.primary
+                              : (isActive
+                                  ? AppColors.primaryLight
+                                  : (isDark
+                                      ? const Color(0xFF2E4235)
+                                      : Colors.grey.shade300)),
+                          child: isDone
+                              ? Icon(Icons.check,
+                                  size: isTablet ? 18 : 14, color: Colors.white)
+                              : Text(
+                                  '${index + 1}',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 13.5 : 12,
+                                    color: isActive
+                                        ? Colors.white
+                                        : (isDark
+                                            ? AppColors.textMutedDark
+                                            : Colors.black54),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                        SizedBox(width: isTablet ? 8 : 6),
+                        Flexible(
+                          child: Text(
+                            steps[index],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 12,
-                              color: isActive ? Colors.white : (isDark ? AppColors.textMutedDark : Colors.black54),
-                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 14 : 12,
+                              fontWeight: isActive
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isActive
+                                  ? (isDark
+                                      ? AppColors.primaryLight
+                                      : AppColors.primaryDark)
+                                  : (isDone
+                                      ? AppColors.getTextPrimary(context)
+                                      : (isDark
+                                          ? AppColors.textMutedDark
+                                          : Colors.grey)),
                             ),
                           ),
+                        ),
+                        if (index < steps.length - 1)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: isTablet ? 8 : 4),
+                            child: Icon(
+                              Icons.chevron_right,
+                              size: isTablet ? 20 : 16,
+                              color: isDark
+                                  ? AppColors.borderDark
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      steps[index],
+                ),
+              );
+            }),
+          ),
+          SizedBox(height: isTablet ? 12 : 10),
+          // Línea de progreso (Progress line)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: (_currentStep + 1) / steps.length,
+              minHeight: isTablet ? 7 : 5,
+              backgroundColor:
+                  isDark ? const Color(0xFF26382C) : Colors.grey.shade200,
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          SizedBox(height: isTablet ? 8 : 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppLanguage.isSpanish
+                    ? 'Paso ${_currentStep + 1} de ${steps.length}'
+                    : 'Step ${_currentStep + 1} of ${steps.length}',
+                style: TextStyle(
+                  fontSize: isTablet ? 13 : 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.getTextSecondary(context),
+                ),
+              ),
+              Text(
+                '${((_currentStep + 1) / steps.length * 100).toInt()}%',
+                style: TextStyle(
+                  fontSize: isTablet ? 13 : 11,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.primaryLight : AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- NASA Location & Telemetry Card ---
+  Widget _buildNasaLocationCard(AppStrings s, bool isDark, {bool isTablet = false}) {
+    final currentPreset = AgriculturalLocation.presets.firstWhere(
+      (loc) => loc.id == _selectedLocationId,
+      orElse: () => AgriculturalLocation.presets.first,
+    );
+
+    return Container(
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF162B1D) : const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF264C32) : const Color(0xFFBBF7D0),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(isTablet ? 12 : 8),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF203F2A)
+                      : const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
+                ),
+                child: Icon(
+                  Icons.satellite_alt_rounded,
+                  color: AppColors.primary,
+                  size: isTablet ? 28 : 20,
+                ),
+              ),
+              SizedBox(width: isTablet ? 14 : 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLanguage.isSpanish
+                          ? 'Sincronización Satelital NASA'
+                          : 'NASA Satellite Synchronization',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isTablet ? 18 : 14.5,
+                        color: isDark
+                            ? AppColors.primaryLight
+                            : AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${currentPreset.region}, ${currentPreset.country}',
+                      style: TextStyle(
+                        fontSize: isTablet ? 14.5 : 12,
+                        color: AppColors.getTextSecondary(context),
+                        fontWeight: FontWeight.w500,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 12 : 8,
+                  vertical: isTablet ? 6 : 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF13281C)
+                      : const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF2E633B)
+                        : const Color(0xFF86EFAC),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle,
+                        size: isTablet ? 16 : 12, color: const Color(0xFF16A34A)),
+                    const SizedBox(width: 4),
+                    Text(
+                      'NASA POWER',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                            isActive ? FontWeight.bold : FontWeight.normal,
-                        color: isActive
-                            ? (isDark ? AppColors.primaryLight : AppColors.primaryDark)
-                            : (isDone ? AppColors.getTextPrimary(context) : (isDark ? AppColors.textMutedDark : Colors.grey)),
+                        fontSize: isTablet ? 12.5 : 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? const Color(0xFF86EFAC)
+                            : const Color(0xFF166534),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isTablet ? 16 : 12),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isTablet ? 16 : 12,
+              vertical: isTablet ? 14 : 10,
+            ),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F1D14) : Colors.white,
+              borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF203B29)
+                    : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.explore_outlined,
+                    size: isTablet ? 22 : 18, color: AppColors.primary),
+                SizedBox(width: isTablet ? 12 : 8),
+                Expanded(
+                  child: Text(
+                    '${s.kLatitudeLabel}: ${currentPreset.latitude.toStringAsFixed(4)}°   |   ${s.kLongitudeLabel}: ${currentPreset.longitude.toStringAsFixed(4)}°',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isTablet ? 14.5 : 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: isTablet ? 14 : 10),
+          Row(
+            children: [
+              _buildNasaTag(
+                Icons.wb_sunny_outlined,
+                AppLanguage.isSpanish ? 'Radiación Solar' : 'Solar Radiation',
+                isDark,
+                isTablet: isTablet,
+              ),
+              SizedBox(width: isTablet ? 8 : 6),
+              _buildNasaTag(
+                Icons.water_drop_outlined,
+                AppLanguage.isSpanish ? 'Precipitación' : 'Precipitation',
+                isDark,
+                isTablet: isTablet,
+              ),
+              SizedBox(width: isTablet ? 8 : 6),
+              _buildNasaTag(
+                Icons.grass_outlined,
+                AppLanguage.isSpanish ? 'Humedad Suelo' : 'Soil Moisture',
+                isDark,
+                isTablet: isTablet,
+              ),
+            ],
+          ),
+          if (isTablet) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF102417) : const Color(0xFFE8F5E9).withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.satellite_outlined, size: 18, color: AppColors.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      AppLanguage.isSpanish
+                          ? 'Malla satelital global de 0.5° × 0.5° (~50 km) con telemetría climática histórica y diaria.'
+                          : '0.5° × 0.5° global satellite grid (~50 km) with historical and daily climate telemetry.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF1B5E20),
+                        height: 1.35,
                       ),
                     ),
                   ),
-                  if (index < steps.length - 1)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(Icons.chevron_right,
-                          size: 16, color: isDark ? AppColors.borderDark : Colors.grey.shade400),
-                    ),
                 ],
               ),
             ),
-          );
-        }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNasaTag(IconData icon, String label, bool isDark, {bool isTablet = false}) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: isTablet ? 10 : 6,
+          horizontal: isTablet ? 8 : 4,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF13281C) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
+          border: Border.all(
+            color: isDark ? const Color(0xFF1E3A27) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: isTablet ? 17 : 13, color: AppColors.primary),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: isTablet ? 12.5 : 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.getTextPrimary(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Step 1: Sub-components ---
+  Widget _buildEveBanner(bool isDark, {bool isTablet = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 20 : 14,
+        vertical: isTablet ? 18 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF192A1E) : const Color(0xFFF1F8E9),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF264C32) : const Color(0xFFC8E6C9),
+        ),
+      ),
+      child: Row(
+        children: [
+          EveAnimatedAvatar(
+            size: isTablet ? 56 : 44,
+            emote: EveEmote.happy,
+            isSpeaking: false,
+          ),
+          SizedBox(width: isTablet ? 16 : 12),
+          Expanded(
+            child: Text(
+              AppLanguage.isSpanish
+                  ? '¡Hola! Configura los datos de tu finca y selecciona tu región para sincronizar la telemetría climática de la NASA.'
+                  : 'Hello! Set up your farm info and choose your region to sync NASA climate telemetry.',
+              style: TextStyle(
+                fontSize: isTablet ? 15 : 12.5,
+                color: isDark ? AppColors.textMutedDark : const Color(0xFF2E4E39),
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFarmNameField(AppStrings s, {bool isTablet = false}) {
+    return TextFormField(
+      controller: _farmNameController,
+      style: TextStyle(fontSize: isTablet ? 16 : 14),
+      decoration: InputDecoration(
+        labelText: s.kFarmNameLabel,
+        hintText: s.kFarmNameHint,
+        labelStyle: TextStyle(fontSize: isTablet ? 15.5 : 14),
+        hintStyle: TextStyle(fontSize: isTablet ? 15 : 14),
+        prefixIcon: Icon(Icons.business, size: isTablet ? 24 : 20),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 18 : 12,
+          vertical: isTablet ? 20 : 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: BorderSide(color: AppColors.getBorder(context)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      validator: (val) {
+        if (val == null || val.trim().isEmpty) {
+          return s.kFieldRequired;
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildNasaRegionDropdown(AppStrings s, {bool isTablet = false}) {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedLocationId,
+      isExpanded: true,
+      menuMaxHeight: 380,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 4,
+      dropdownColor: AppColors.getCardBg(context),
+      style: TextStyle(
+        color: AppColors.getTextPrimary(context),
+        fontSize: isTablet ? 15.5 : 13,
+      ),
+      icon: Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: AppColors.primary,
+        size: isTablet ? 28 : 24,
+      ),
+      decoration: InputDecoration(
+        labelText: AppLanguage.isSpanish
+            ? 'Región Agrícola (NASA)'
+            : 'Agricultural Region (NASA)',
+        hintText: s.kCountryHint,
+        labelStyle: TextStyle(fontSize: isTablet ? 15.5 : 14),
+        hintStyle: TextStyle(fontSize: isTablet ? 15 : 14),
+        prefixIcon: Icon(Icons.public, color: AppColors.primary, size: isTablet ? 24 : 20),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 18 : 12,
+          vertical: isTablet ? 20 : 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: BorderSide(color: AppColors.getBorder(context)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      items: AgriculturalLocation.presets.map((loc) {
+        return DropdownMenuItem<String>(
+          value: loc.id,
+          child: Text(
+            loc.displayName,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isTablet ? 15 : 13,
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
+        );
+      }).toList(),
+      onChanged: (val) {
+        if (val == null) return;
+        final loc = AgriculturalLocation.presets
+            .firstWhere((p) => p.id == val);
+        setState(() {
+          _selectedLocationId = val;
+          _countryController.text = loc.displayName;
+          _latitude = loc.latitude;
+          _longitude = loc.longitude;
+        });
+      },
+      validator: (val) {
+        if (val == null || val.trim().isEmpty) {
+          return s.kFieldRequired;
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildSurfaceUnitDropdown(AppStrings s, {bool isTablet = false}) {
+    return DropdownButtonFormField<SurfaceUnit>(
+      initialValue: _selectedUnit,
+      isExpanded: true,
+      menuMaxHeight: 260,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 4,
+      dropdownColor: AppColors.getCardBg(context),
+      style: TextStyle(
+        color: AppColors.getTextPrimary(context),
+        fontSize: isTablet ? 15.5 : 13,
+      ),
+      icon: Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: AppColors.primary,
+        size: isTablet ? 28 : 24,
+      ),
+      decoration: InputDecoration(
+        labelText: s.kSurfaceUnitLabel,
+        hintText: s.kSurfaceUnitHint,
+        labelStyle: TextStyle(fontSize: isTablet ? 15.5 : 14),
+        hintStyle: TextStyle(fontSize: isTablet ? 15 : 14),
+        prefixIcon: Icon(Icons.straighten, size: isTablet ? 24 : 20),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 18 : 12,
+          vertical: isTablet ? 20 : 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: BorderSide(color: AppColors.getBorder(context)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      items: SurfaceUnit.values.map((unit) {
+        return DropdownMenuItem<SurfaceUnit>(
+          value: unit,
+          child: Text(
+            _getUnitFullName(unit, s),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: TextStyle(
+              color: AppColors.getTextPrimary(context),
+              fontSize: isTablet ? 15 : 13,
+            ),
+          ),
+        );
+      }).toList(),
+      onChanged: (SurfaceUnit? newUnit) {
+        if (newUnit != null) {
+          setState(() {
+            _selectedUnit = newUnit;
+          });
+        }
+      },
+    );
+  }
+
+  Widget _buildTotalSurfaceField(AppStrings s, String unitShort, {bool isTablet = false}) {
+    return TextFormField(
+      controller: _totalSurfaceController,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: TextStyle(fontSize: isTablet ? 16 : 14),
+      decoration: InputDecoration(
+        labelText: '${s.kTotalSurfaceLabel} ($unitShort)',
+        hintText: s.kTotalSurfaceHint,
+        suffixText: unitShort,
+        labelStyle: TextStyle(fontSize: isTablet ? 15.5 : 14),
+        hintStyle: TextStyle(fontSize: isTablet ? 15 : 14),
+        suffixStyle: TextStyle(fontSize: isTablet ? 15 : 14, fontWeight: FontWeight.w600),
+        prefixIcon: Icon(Icons.square_foot, size: isTablet ? 24 : 20),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 18 : 12,
+          vertical: isTablet ? 20 : 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: BorderSide(color: AppColors.getBorder(context)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      validator: (val) {
+        if (val == null || val.trim().isEmpty) {
+          return s.kFieldRequired;
+        }
+        final numVal = double.tryParse(val);
+        if (numVal == null || numVal <= 0) {
+          return s.kInvalidNumber;
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildBypassButton(AppStrings s, bool isDark, {bool isTablet = false}) {
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: isDark ? AppColors.accentDark : AppColors.accent,
+        side: BorderSide(
+          color: isDark ? AppColors.accentDark : AppColors.accent,
+          width: isTablet ? 1.5 : 1.0,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 20 : 12,
+          vertical: isTablet ? 16 : 10,
+        ),
+        minimumSize: Size.fromHeight(isTablet ? 56 : 46),
+      ),
+      onPressed: () => _bypassAsSingleLot(s),
+      icon: Icon(Icons.fast_forward, size: isTablet ? 24 : 18),
+      label: Text(
+        s.kQuickStartWholeFarm,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: isTablet ? 15.5 : 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAgroecologicalTip(bool isDark, {bool isTablet = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 18 : 12,
+        vertical: isTablet ? 14 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF13281C) : const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(isTablet ? 14 : 10),
+        border: Border.all(
+          color: isDark ? const Color(0xFF1E462B) : const Color(0xFFBBF7D0),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lightbulb_outline_rounded,
+            size: isTablet ? 22 : 18,
+            color: const Color(0xFF16A34A),
+          ),
+          SizedBox(width: isTablet ? 10 : 8),
+          Expanded(
+            child: Text(
+              AppLanguage.isSpanish
+                  ? 'Consejo agroecológico: La superficie total permite a Eva Bits calcular balances hídricos y estimaciones satelitales NASA precisas para cada lote.'
+                  : 'Agroecological tip: Total farm surface allows Eva Bits to calculate water balances and precise NASA telemetry for each lot.',
+              style: TextStyle(
+                fontSize: isTablet ? 13.5 : 11.5,
+                color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534),
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -909,32 +1230,40 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   // --- Step 1: Farm Info ---
   Widget _buildStep1FarmInfo(AppStrings s, String unitShort) {
     final isDark = AppColors.isDark(context);
+    final isTablet = Responsive(context).isTabletOrDesktop;
+
     return Form(
       key: _step1FormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildEveBanner(isDark, isTablet: isTablet),
+          SizedBox(height: isTablet ? 18 : 14),
           Card(
             elevation: 2,
             color: AppColors.getCardBg(context),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
               side: BorderSide(color: AppColors.getBorder(context)),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(isTablet ? 28 : 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.eco, color: AppColors.primary),
-                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.eco,
+                        color: AppColors.primary,
+                        size: isTablet ? 26 : 22,
+                      ),
+                      SizedBox(width: isTablet ? 10 : 8),
                       Expanded(
                         child: Text(
                           s.kGeneralInfoSection,
                           style: TextStyle(
-                            fontSize: 17,
+                            fontSize: isTablet ? 20 : 17,
                             fontWeight: FontWeight.bold,
                             color: AppColors.getTextPrimary(context),
                           ),
@@ -944,406 +1273,22 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _farmNameController,
-                    decoration: InputDecoration(
-                      labelText: s.kFarmNameLabel,
-                      hintText: s.kFarmNameHint,
-                      prefixIcon: const Icon(Icons.business),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return s.kFieldRequired;
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedLocationId,
-                    isExpanded: true,
-                    menuMaxHeight: 280,
-                    borderRadius: BorderRadius.circular(16),
-                    elevation: 4,
-                    dropdownColor: AppColors.getCardBg(context),
-                    style: TextStyle(
-                      color: AppColors.getTextPrimary(context),
-                      fontSize: 13,
-                    ),
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: s.kCountryLabel,
-                      hintText: s.kCountryHint,
-                      prefixIcon: const Icon(Icons.public, color: AppColors.primary),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: AppColors.getBorder(context)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                    ),
-                    items: [
-                      ...AgriculturalLocation.presets.map((loc) {
-                        return DropdownMenuItem<String>(
-                          value: loc.id,
-                          child: Text(
-                            loc.displayName,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.getTextPrimary(context),
-                            ),
-                          ),
-                        );
-                      }),
-                      DropdownMenuItem<String>(
-                        value: AgriculturalLocation.customId,
-                        child: Text(
-                          'Otra región / Coordenadas mundiales',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
-                          ),
-                        ),
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val == null) return;
-                      setState(() {
-                        _selectedLocationId = val;
-                        _gpsPrioritizedMessage = null;
-                        if (val == AgriculturalLocation.customId) {
-                          _isCustomLocation = true;
-                          _countryController.clear();
-                        } else {
-                          _isCustomLocation = false;
-                          final loc = AgriculturalLocation.presets
-                              .firstWhere((p) => p.id == val);
-                          _countryController.text = loc.displayName;
-                          _latitude = loc.latitude;
-                          _longitude = loc.longitude;
-                        }
-                      });
-                    },
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return s.kFieldRequired;
-                      }
-                      return null;
-                    },
-                  ),
-                  if (_isCustomLocation) ...[
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _countryController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: InputDecoration(
-                        labelText: s.kCountryLabel,
-                        hintText: 'Ej. Nicaragua, Estelí / Costa Rica, Alajuela',
-                        prefixIcon: const Icon(Icons.edit_location_alt_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return s.kFieldRequired;
-                        }
-                        return null;
-                      },
-                    ),
+                  SizedBox(height: isTablet ? 24 : 16),
+                  _buildFarmNameField(s, isTablet: isTablet),
+                  SizedBox(height: isTablet ? 22 : 16),
+                  _buildNasaRegionDropdown(s, isTablet: isTablet),
+                  SizedBox(height: isTablet ? 22 : 16),
+                  _buildNasaLocationCard(s, isDark, isTablet: isTablet),
+                  SizedBox(height: isTablet ? 22 : 16),
+                  _buildSurfaceUnitDropdown(s, isTablet: isTablet),
+                  SizedBox(height: isTablet ? 22 : 16),
+                  _buildTotalSurfaceField(s, unitShort, isTablet: isTablet),
+                  SizedBox(height: isTablet ? 24 : 16),
+                  _buildBypassButton(s, isDark, isTablet: isTablet),
+                  if (isTablet) ...[
+                    const SizedBox(height: 20),
+                    _buildAgroecologicalTip(isDark, isTablet: true),
                   ],
-                  const SizedBox(height: 16),
-                  // GPS Farm Location Card (Automatic & Current GPS)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: _latitude != null
-                          ? (isDark ? const Color(0xFF1B2F22) : const Color(0xFFF1F8E9))
-                          : AppColors.getLotCardBg(context),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _latitude != null
-                            ? (isDark ? const Color(0xFF2E4E39) : AppColors.primaryLight)
-                            : AppColors.getBorder(context),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              _latitude != null
-                                  ? Icons.location_on
-                                  : Icons.location_searching,
-                              color: _latitude != null
-                                  ? AppColors.primary
-                                  : (isDark ? AppColors.textMutedDark : Colors.grey.shade700),
-                              size: 22,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                s.kWhereIsYourFarm,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
-                                ),
-                              ),
-                            ),
-                            if (_latitude != null)
-                              IconButton.filledTonal(
-                                visualDensity: VisualDensity.compact,
-                                tooltip: s.kRefreshLocation,
-                                onPressed: _isGettingLocation
-                                    ? null
-                                    : () => _getCurrentLocation(s),
-                                icon: const Icon(Icons.refresh, size: 18),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        if (_isGettingLocation) ...[
-                          Row(
-                            children: [
-                              const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  s.kGettingGpsLocation,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ] else if (_latitude != null &&
-                            _longitude != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF142018) : Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.getBorder(context)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.satellite_alt,
-                                    size: 18, color: AppColors.primary),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${s.kLatitudeLabel}: ${_latitude!.toStringAsFixed(6)}   |   ${s.kLongitudeLabel}: ${_longitude!.toStringAsFixed(6)}',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.getTextPrimary(context),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF13281C) : const Color(0xFFF0FDF4),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: isDark ? const Color(0xFF1D4A2D) : const Color(0xFFBBF7D0)),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(
-                                  Icons.gps_fixed,
-                                  size: 15,
-                                  color: Color(0xFF16A34A),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    _gpsPrioritizedMessage ??
-                                        (AppLanguage.isSpanish
-                                            ? 'Coordenadas GPS activas con máxima prioridad para la telemetría climática NASA y datos del suelo.'
-                                            : 'GPS coordinates active with top priority for NASA climate telemetry and soil data.'),
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534),
-                                      height: 1.3,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ] else ...[
-                          Text(
-                            s.kLocationNotCapturedYet,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? AppColors.textMutedDark : Colors.grey.shade700,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              onPressed: () => _getCurrentLocation(s),
-                              icon: const Icon(Icons.my_location, size: 18),
-                              label: Text(s.kGetGpsLocationButton),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<SurfaceUnit>(
-                    initialValue: _selectedUnit,
-                    isExpanded: true,
-                    menuMaxHeight: 220,
-                    borderRadius: BorderRadius.circular(16),
-                    elevation: 4,
-                    dropdownColor: AppColors.getCardBg(context),
-                    style: TextStyle(
-                      color: AppColors.getTextPrimary(context),
-                      fontSize: 13,
-                    ),
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: s.kSurfaceUnitLabel,
-                      hintText: s.kSurfaceUnitHint,
-                      prefixIcon: const Icon(Icons.straighten),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: AppColors.getBorder(context)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                    ),
-                    items: SurfaceUnit.values.map((unit) {
-                      return DropdownMenuItem<SurfaceUnit>(
-                        value: unit,
-                        child: Text(
-                          _getUnitFullName(unit, s),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: AppColors.getTextPrimary(context),
-                            fontSize: 13,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (SurfaceUnit? newUnit) {
-                      if (newUnit != null) {
-                        setState(() {
-                          _selectedUnit = newUnit;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _totalSurfaceController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: '${s.kTotalSurfaceLabel} ($unitShort)',
-                      hintText: s.kTotalSurfaceHint,
-                      suffixText: unitShort,
-                      prefixIcon: const Icon(Icons.square_foot),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return s.kFieldRequired;
-                      }
-                      final numVal = double.tryParse(val);
-                      if (numVal == null || numVal <= 0) {
-                        return s.kInvalidNumber;
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: isDark ? AppColors.accentDark : AppColors.accent,
-                      side: BorderSide(color: isDark ? AppColors.accentDark : AppColors.accent),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      minimumSize: const Size.fromHeight(46),
-                    ),
-                    onPressed: () => _bypassAsSingleLot(s),
-                    icon: const Icon(Icons.fast_forward),
-                    label: Text(
-                      s.kQuickStartWholeFarm,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1356,6 +1301,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   // --- Step 2: Lots and Subplots ---
   Widget _buildStep2LotsInfo(AppStrings s, String unitShort) {
     final isDark = AppColors.isDark(context);
+    final isTablet = Responsive(context).isTabletOrDesktop;
     final farmSurface = _totalFarmSurface;
     final allocated = _totalLotsSurface;
     final isExceeded = allocated > farmSurface && farmSurface > 0;
@@ -1363,99 +1309,159 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Allocation progress bar
-        Card(
-          elevation: 1,
-          color: isExceeded
-              ? (isDark ? const Color(0xFF3B1E12) : Colors.orange.shade50)
-              : AppColors.getCardBg(context),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(
-              color: isExceeded ? Colors.orange : AppColors.getBorder(context),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        s.kAllocatedSurface,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.getTextPrimary(context),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${allocated.toStringAsFixed(1)} / ${farmSurface.toStringAsFixed(1)} $unitShort',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isExceeded ? Colors.orange.shade400 : AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: farmSurface > 0
-                      ? (allocated / farmSurface).clamp(0.0, 1.0)
-                      : 0.0,
-                  backgroundColor: isDark ? const Color(0xFF26382C) : Colors.grey.shade200,
-                  color: isExceeded ? Colors.orange : AppColors.primary,
-                ),
-                if (isExceeded)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      s.kLotsSurfaceExceededWarning,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? Colors.orange.shade300 : Colors.orange.shade900,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildLotsHeaderCard(s),
-        const SizedBox(height: 12),
-        _buildLotsList(s, unitShort),
+        _buildAllocationCard(s, unitShort, farmSurface, allocated, isExceeded, isDark, isTablet: isTablet),
+        SizedBox(height: isTablet ? 20 : 16),
+        _buildLotsHeaderCard(s, isTablet: isTablet),
+        SizedBox(height: isTablet ? 16 : 12),
+        _buildLotsList(s, unitShort, isTablet: isTablet),
       ],
     );
   }
 
-  Widget _buildLotsHeaderCard(AppStrings s) {
+  Widget _buildAllocationCard(
+    AppStrings s,
+    String unitShort,
+    double farmSurface,
+    double allocated,
+    bool isExceeded,
+    bool isDark, {
+    bool isTablet = false,
+  }) {
+    final pct = farmSurface > 0 ? (allocated / farmSurface * 100).toInt() : 0;
+
+    return Card(
+      elevation: 2,
+      color: isExceeded
+          ? (isDark ? const Color(0xFF3B1E12) : Colors.orange.shade50)
+          : AppColors.getCardBg(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 14),
+        side: BorderSide(
+          color: isExceeded ? Colors.orange : AppColors.getBorder(context),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 20 : 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    s.kAllocatedSurface,
+                    style: TextStyle(
+                      fontSize: isTablet ? 16 : 13.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 12 : 8,
+                    vertical: isTablet ? 5 : 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isExceeded
+                        ? (isDark ? const Color(0xFF5A2A1A) : Colors.orange.shade100)
+                        : (isDark ? const Color(0xFF1F3D2A) : const Color(0xFFDCFCE7)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$pct%',
+                    style: TextStyle(
+                      fontSize: isTablet ? 14 : 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: isExceeded
+                          ? Colors.orange.shade900
+                          : (isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: isTablet ? 8 : 6),
+            Text(
+              '${allocated.toStringAsFixed(1)} / ${farmSurface.toStringAsFixed(1)} $unitShort',
+              style: TextStyle(
+                fontSize: isTablet ? 17 : 14,
+                fontWeight: FontWeight.bold,
+                color: isExceeded ? Colors.orange.shade400 : AppColors.primary,
+              ),
+            ),
+            SizedBox(height: isTablet ? 14 : 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: farmSurface > 0
+                    ? (allocated / farmSurface).clamp(0.0, 1.0)
+                    : 0.0,
+                minHeight: isTablet ? 9 : 6,
+                backgroundColor: isDark ? const Color(0xFF26382C) : Colors.grey.shade200,
+                color: isExceeded ? Colors.orange : AppColors.primary,
+              ),
+            ),
+            if (isExceeded)
+              Padding(
+                padding: EdgeInsets.only(top: isTablet ? 10 : 8),
+                child: Text(
+                  s.kLotsSurfaceExceededWarning,
+                  style: TextStyle(
+                    fontSize: isTablet ? 13 : 11,
+                    color: isDark ? Colors.orange.shade300 : Colors.orange.shade900,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLotsHeaderCard(AppStrings s, {bool isTablet = false}) {
     return Card(
       elevation: 2,
       color: AppColors.getCardBg(context),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 14),
         side: BorderSide(color: AppColors.getBorder(context)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isTablet ? 20 : 16),
         child: Row(
           children: [
-            const Icon(Icons.grid_view_rounded, color: AppColors.primary),
-            const SizedBox(width: 8),
+            Icon(Icons.grid_view_rounded, color: AppColors.primary, size: isTablet ? 24 : 20),
+            SizedBox(width: isTablet ? 10 : 8),
             Expanded(
               child: Text(
                 s.kLotsSectionTitle,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: isTablet ? 18 : 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.getTextPrimary(context),
+                ),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isTablet ? 12 : 8,
+                vertical: isTablet ? 5 : 3,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_lots.length}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                  fontSize: isTablet ? 13.5 : 12,
                 ),
               ),
             ),
@@ -1465,22 +1471,25 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
     );
   }
 
-  Widget _buildLotsList(AppStrings s, String unitShort) {
+  Widget _buildLotsList(AppStrings s, String unitShort, {bool isTablet = false}) {
     final isDark = AppColors.isDark(context);
     if (_lots.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(isTablet ? 40 : 32),
           child: Column(
             children: [
-              Icon(Icons.layers_clear, size: 48, color: isDark ? AppColors.textMutedDark : Colors.grey.shade400),
+              Icon(Icons.layers_clear, size: isTablet ? 56 : 48, color: isDark ? AppColors.textMutedDark : Colors.grey.shade400),
               const SizedBox(height: 8),
               Text(
                 s.kNoLotsAddedYet,
-                style: TextStyle(color: AppColors.getTextSecondary(context)),
+                style: TextStyle(fontSize: isTablet ? 15 : 13, color: AppColors.getTextSecondary(context)),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isTablet ? 14 : 10),
               ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(isTablet ? 160 : 130, isTablet ? 48 : 40),
+                ),
                 onPressed: () => _addLot(s),
                 icon: const Icon(Icons.add),
                 label: Text(s.kAddLot),
@@ -1495,15 +1504,15 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _lots.length,
-      separatorBuilder: (_, index) => const SizedBox(height: 16),
+      separatorBuilder: (_, index) => SizedBox(height: isTablet ? 20 : 16),
       itemBuilder: (ctx, index) {
-        return _buildLotCard(_lots[index], index, s, unitShort);
+        return _buildLotCard(_lots[index], index, s, unitShort, isTablet: isTablet);
       },
     );
   }
 
   Widget _buildLotCard(
-      LotItem lot, int index, AppStrings s, String unitShort) {
+      LotItem lot, int index, AppStrings s, String unitShort, {bool isTablet = false}) {
     final isDark = AppColors.isDark(context);
     final lotNumberStr = '${s.kLot} ${index + 1}';
 
@@ -1511,25 +1520,25 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       elevation: 2,
       color: AppColors.getLotCardBg(context),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 16),
         side: BorderSide(color: AppColors.getBorder(context), width: 1.2),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isTablet ? 22 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.folder_outlined, color: AppColors.primary),
-                const SizedBox(width: 8),
+                Icon(Icons.folder_outlined, color: AppColors.primary, size: isTablet ? 24 : 20),
+                SizedBox(width: isTablet ? 10 : 8),
                 Expanded(
                   child: Text(
                     lotNumberStr,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: isTablet ? 18 : 16,
                       fontWeight: FontWeight.bold,
                       color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
                     ),
@@ -1537,46 +1546,58 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 ),
                 IconButton(
                   tooltip: s.kRemoveLot,
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: Icon(Icons.delete_outline, color: Colors.red, size: isTablet ? 24 : 20),
                   onPressed: () => _removeLotAt(index),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isTablet ? 18 : 12),
             TextFormField(
               controller: lot.nameController,
+              style: TextStyle(fontSize: isTablet ? 15.5 : 14),
               decoration: InputDecoration(
                 labelText: s.kLotNameLabel,
                 hintText: s.kLotNameHint,
+                labelStyle: TextStyle(fontSize: isTablet ? 15 : 14),
                 filled: true,
                 fillColor: AppColors.getInputBg(context),
-                prefixIcon: const Icon(Icons.label_outline),
+                prefixIcon: Icon(Icons.label_outline, size: isTablet ? 24 : 20),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 18 : 12,
+                  vertical: isTablet ? 18 : 14,
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isTablet ? 18 : 12),
             TextFormField(
               controller: lot.surfaceController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: TextStyle(fontSize: isTablet ? 15.5 : 14),
               decoration: InputDecoration(
                 labelText: '${s.kLotSurfaceLabel} ($unitShort)',
                 hintText: s.kLotSurfaceHint,
                 suffixText: unitShort,
+                labelStyle: TextStyle(fontSize: isTablet ? 15 : 14),
+                suffixStyle: TextStyle(fontSize: isTablet ? 15 : 14, fontWeight: FontWeight.w600),
                 filled: true,
                 fillColor: AppColors.getInputBg(context),
-                prefixIcon: const Icon(Icons.crop_square),
+                prefixIcon: Icon(Icons.crop_square, size: isTablet ? 24 : 20),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 18 : 12,
+                  vertical: isTablet ? 18 : 14,
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isTablet ? 20 : 16),
             Divider(color: AppColors.getBorder(context)),
             const SizedBox(height: 8),
-            _buildSubplotsSection(lot, s, unitShort),
+            _buildSubplotsSection(lot, s, unitShort, isTablet: isTablet),
           ],
         ),
       ),
@@ -1584,15 +1605,15 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   }
 
   Widget _buildSubplotsSection(
-      LotItem lot, AppStrings s, String unitShort) {
+      LotItem lot, AppStrings s, String unitShort, {bool isTablet = false}) {
     final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.subdirectory_arrow_right,
-                color: AppColors.accent, size: 18),
+            Icon(Icons.subdirectory_arrow_right,
+                color: AppColors.accent, size: isTablet ? 20 : 18),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -1600,7 +1621,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: isTablet ? 15 : 13.5,
                   fontWeight: FontWeight.bold,
                   color: AppColors.getTextPrimary(context),
                 ),
@@ -1608,13 +1629,13 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             ),
             TextButton.icon(
               onPressed: () => _addSubplot(lot, s),
-              icon: const Icon(Icons.add, size: 15),
+              icon: Icon(Icons.add, size: isTablet ? 18 : 16),
               label: Text(
                 s.kAddSubplot,
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: isTablet ? 13.5 : 12),
               ),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: EdgeInsets.symmetric(horizontal: isTablet ? 10 : 8, vertical: 4),
                 visualDensity: VisualDensity.compact,
               ),
             ),
@@ -1626,7 +1647,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             child: Text(
               s.kNoSubplots,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: isTablet ? 13.5 : 12,
                 fontStyle: FontStyle.italic,
                 color: isDark ? AppColors.textMutedDark : Colors.grey.shade600,
               ),
@@ -1635,23 +1656,23 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
         else ...[
           const SizedBox(height: 12),
           for (var i = 0; i < lot.subplots.length; i++)
-            _buildSubplotCard(lot, lot.subplots[i], i, s, unitShort),
+            _buildSubplotCard(lot, lot.subplots[i], i, s, unitShort, isTablet: isTablet),
         ],
       ],
     );
   }
 
   Widget _buildSubplotCard(LotItem lot, SubplotItem subplot, int index,
-      AppStrings s, String unitShort) {
+      AppStrings s, String unitShort, {bool isTablet = false}) {
     final isDark = AppColors.isDark(context);
     final subplotNumberStr = '${s.kSubplot} ${index + 1}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isTablet ? 16 : 12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF152219) : AppColors.subplotCardBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isTablet ? 14 : 12),
         border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Column(
@@ -1659,8 +1680,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.layers_outlined,
-                  size: 16, color: AppColors.accent),
+              Icon(Icons.layers_outlined, size: isTablet ? 18 : 16, color: AppColors.accent),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1669,7 +1689,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    fontSize: isTablet ? 14 : 13,
                     color: AppColors.getTextPrimary(context),
                   ),
                 ),
@@ -1677,34 +1697,45 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: s.kRemoveSubplot,
-                icon: const Icon(Icons.close, size: 16, color: Colors.red),
+                icon: Icon(Icons.close, size: isTablet ? 18 : 16, color: Colors.red),
                 onPressed: () => _removeSubplotAt(lot, index),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isTablet ? 10 : 8),
           TextFormField(
             controller: subplot.nameController,
+            style: TextStyle(fontSize: isTablet ? 14.5 : 13.5),
             decoration: InputDecoration(
               isDense: true,
               labelText: s.kSubplotNameLabel,
+              labelStyle: TextStyle(fontSize: isTablet ? 14 : 13),
               filled: true,
               fillColor: AppColors.getInputBg(context),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: isTablet ? 14 : 10,
+                vertical: isTablet ? 14 : 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isTablet ? 10 : 8),
           TextFormField(
             controller: subplot.surfaceController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(fontSize: isTablet ? 14.5 : 13.5),
             decoration: InputDecoration(
               isDense: true,
               labelText: '${s.kSubplotSurfaceLabel} ($unitShort)',
+              labelStyle: TextStyle(fontSize: isTablet ? 14 : 13),
               filled: true,
               fillColor: AppColors.getInputBg(context),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: isTablet ? 14 : 10,
+                vertical: isTablet ? 14 : 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -1718,149 +1749,226 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   // --- Step 3: Summary ---
   Widget _buildStep3Summary(AppStrings s, String unitShort) {
     final isDark = AppColors.isDark(context);
+    final isTablet = Responsive(context).isTabletOrDesktop;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Farm Summary Card
-        Card(
-          elevation: 2,
-          color: AppColors.getCardBg(context),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: AppColors.getBorder(context)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        s.kSummaryTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Divider(height: 20, color: AppColors.getBorder(context)),
-                _buildSummaryRow(
-                  s.kFarm,
-                  _farmNameController.text.isNotEmpty
-                      ? _farmNameController.text
-                      : '-',
-                  isBold: true,
-                ),
-                _buildSummaryRow(
-                  s.kCountryLabel,
-                  _countryController.text.isNotEmpty
-                      ? _countryController.text
-                      : '-',
-                ),
-                if (_latitude != null && _longitude != null)
-                  _buildSummaryRow(
-                    s.kFarmLocationLabel,
-                    '${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}',
-                    isBold: true,
-                  ),
-                _buildSummaryRow(
-                  s.kTotalSurfaceLabel,
-                  '${_totalSurfaceController.text} $unitShort',
-                ),
-                _buildSummaryRow(
-                  s.kLotsCountLabel,
-                  '${_lots.length}',
-                ),
-                if (_lots.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    '${s.kLotsDistribution}:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  for (final lot in _lots)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8, bottom: 2),
-                      child: Text(
-                        '• ${lot.nameController.text}: ${lot.surfaceController.text} $unitShort',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.getTextPrimary(context),
-                        ),
-                      ),
-                    ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // NASA Environmental Card
-        Card(
-          elevation: 2,
-          color: isDark ? const Color(0xFF1B2F22) : const Color(0xFFF1F8E9),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: isDark ? const Color(0xFF2E4E39) : AppColors.primaryLight,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.public, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        s.kNasaDataReady,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  s.kNasaDataDescription,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.getTextSecondary(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        _buildFarmSummaryCard(s, unitShort, isDark, isTablet: isTablet),
+        SizedBox(height: isTablet ? 20 : 16),
+        _buildNasaSummaryCard(s, isDark, isTablet: isTablet),
       ],
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isBold = false}) {
+  Widget _buildFarmSummaryCard(AppStrings s, String unitShort, bool isDark, {bool isTablet = false}) {
+    return Card(
+      elevation: 2,
+      color: AppColors.getCardBg(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
+        side: BorderSide(color: AppColors.getBorder(context)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 24 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.primary, size: isTablet ? 26 : 20),
+                SizedBox(width: isTablet ? 10 : 8),
+                Expanded(
+                  child: Text(
+                    s.kSummaryTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isTablet ? 20 : 17,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Divider(height: isTablet ? 24 : 20, color: AppColors.getBorder(context)),
+            _buildSummaryRow(
+              s.kFarm,
+              _farmNameController.text.isNotEmpty
+                  ? _farmNameController.text
+                  : '-',
+              isBold: true,
+              isTablet: isTablet,
+            ),
+            _buildSummaryRow(
+              s.kCountryLabel,
+              _countryController.text.isNotEmpty
+                  ? _countryController.text
+                  : '-',
+              isTablet: isTablet,
+            ),
+            if (_latitude != null && _longitude != null)
+              _buildSummaryRow(
+                s.kFarmLocationLabel,
+                '${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}',
+                isBold: true,
+                isTablet: isTablet,
+              ),
+            _buildSummaryRow(
+              s.kTotalSurfaceLabel,
+              '${_totalSurfaceController.text} $unitShort',
+              isTablet: isTablet,
+            ),
+            _buildSummaryRow(
+              s.kLotsCountLabel,
+              '${_lots.length}',
+              isTablet: isTablet,
+            ),
+            if (_lots.isNotEmpty) ...[
+              SizedBox(height: isTablet ? 16 : 12),
+              Text(
+                '${s.kLotsDistribution}:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: isTablet ? 15.5 : 13,
+                  color: AppColors.getTextPrimary(context),
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (final lot in _lots)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 4),
+                  child: Text(
+                    '• ${lot.nameController.text}: ${lot.surfaceController.text} $unitShort',
+                    style: TextStyle(
+                      fontSize: isTablet ? 14.5 : 13,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNasaSummaryCard(AppStrings s, bool isDark, {bool isTablet = false}) {
+    final currentPreset = AgriculturalLocation.presets.firstWhere(
+      (loc) => loc.id == _selectedLocationId,
+      orElse: () => AgriculturalLocation.presets.first,
+    );
+
+    return Card(
+      elevation: 2,
+      color: isDark ? const Color(0xFF1B2F22) : const Color(0xFFF1F8E9),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2E4E39) : AppColors.primaryLight,
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 24 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.public, color: AppColors.primary, size: isTablet ? 26 : 20),
+                SizedBox(width: isTablet ? 10 : 8),
+                Expanded(
+                  child: Text(
+                    s.kNasaDataReady,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isTablet ? 18 : 15.5,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 12 : 8,
+                    vertical: isTablet ? 5 : 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF142B1C) : const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF275C35) : const Color(0xFF86EFAC),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle, size: isTablet ? 16 : 12, color: const Color(0xFF16A34A)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'NASA POWER',
+                        style: TextStyle(
+                          fontSize: isTablet ? 12 : 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: isTablet ? 14 : 8),
+            Text(
+              s.kNasaDataDescription,
+              style: TextStyle(
+                fontSize: isTablet ? 14 : 12,
+                color: AppColors.getTextSecondary(context),
+                height: 1.4,
+              ),
+            ),
+            SizedBox(height: isTablet ? 18 : 12),
+            Container(
+              padding: EdgeInsets.all(isTablet ? 16 : 10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF122218) : Colors.white,
+                borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF203B29) : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Column(
+                children: [
+                  _buildSummaryRow(
+                    AppLanguage.isSpanish ? 'Región NASA' : 'NASA Region',
+                    '${currentPreset.region}, ${currentPreset.country}',
+                    isTablet: isTablet,
+                  ),
+                  _buildSummaryRow(
+                    AppLanguage.isSpanish ? 'Coordenadas' : 'Coordinates',
+                    '${currentPreset.latitude.toStringAsFixed(4)}°, ${currentPreset.longitude.toStringAsFixed(4)}°',
+                    isTablet: isTablet,
+                  ),
+                  _buildSummaryRow(
+                    AppLanguage.isSpanish ? 'Telemetría activa' : 'Active telemetry',
+                    AppLanguage.isSpanish ? 'Radiación, Lluvia, Humedad' : 'Radiation, Rain, Moisture',
+                    isBold: true,
+                    isTablet: isTablet,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, {bool isBold = false, bool isTablet = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: EdgeInsets.symmetric(vertical: isTablet ? 5 : 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1869,6 +1977,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             child: Text(
               '$label:',
               style: TextStyle(
+                fontSize: isTablet ? 15 : 12.5,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
                 color: AppColors.getTextSecondary(context),
               ),
@@ -1880,6 +1989,7 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
             child: Text(
               value,
               style: TextStyle(
+                fontSize: isTablet ? 15.5 : 13,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
                 color: AppColors.getTextPrimary(context),
               ),
@@ -1893,8 +2003,13 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
   // --- Bottom Navigation Bar ---
   Widget _buildBottomNavigationBar(AppStrings s) {
     final isDark = AppColors.isDark(context);
+    final isTablet = Responsive(context).isTabletOrDesktop;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 24 : 16,
+        vertical: isTablet ? 14 : 12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.getNavBarBg(context),
         border: Border(
@@ -1910,113 +2025,124 @@ class _FarmInfoScreenState extends State<FarmInfoScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            if (_currentStep > 0)
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.getTextPrimary(context),
-                    side: BorderSide(color: AppColors.getBorder(context)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 12),
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+        child: Center(
+          heightFactor: 1.0,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: Responsive(context).maxContentWidth,
+            ),
+            child: Row(
+              children: [
+                if (_currentStep > 0)
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.getTextPrimary(context),
+                        side: BorderSide(color: AppColors.getBorder(context)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: isTablet ? 14 : 12,
+                        ),
+                        minimumSize: Size.fromHeight(isTablet ? 52 : 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() => _currentStep--);
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.arrow_back, size: isTablet ? 20 : 18),
+                          SizedBox(width: isTablet ? 8 : 6),
+                          Text(
+                            s.kPreviousStep,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: isTablet ? 15 : 13.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  onPressed: () {
-                    setState(() => _currentStep--);
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.arrow_back, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        s.kPreviousStep,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                        ),
+                if (_currentStep > 0) SizedBox(width: isTablet ? 16 : 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: isTablet ? 14 : 12,
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            if (_currentStep > 0) const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 12),
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  if (_currentStep == 0) {
-                    if (_step1FormKey.currentState!.validate()) {
-                      if (_latitude == null || _longitude == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: Colors.orange.shade900,
-                            content: Text(s.kLocationRequired),
-                          ),
-                        );
-                        _getCurrentLocation(s);
-                        return;
+                      minimumSize: Size.fromHeight(isTablet ? 52 : 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (_currentStep == 0) {
+                        if (_step1FormKey.currentState!.validate()) {
+                          if (_latitude == null || _longitude == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: Colors.orange.shade900,
+                                content: Text(s.kLocationRequired),
+                              ),
+                            );
+                            return;
+                          }
+                          setState(() => _currentStep = 1);
+                        }
+                      } else if (_currentStep == 1) {
+                        setState(() => _currentStep = 2);
+                      } else {
+                        _saveFarmDataToDatabase(s);
                       }
-                      setState(() => _currentStep = 1);
-                    }
-                  } else if (_currentStep == 1) {
-                    setState(() => _currentStep = 2);
-                  } else {
-                    _saveFarmDataToDatabase(s);
-                  }
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_isSaving)
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    else ...[
-                      Text(
-                        _currentStep == 2 ? s.kSave : s.kNextStep,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        _currentStep == 2
-                            ? Icons.save
-                            : Icons.arrow_forward,
-                        size: 18,
-                      ),
-                    ],
-                  ],
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isSaving)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        else ...[
+                          Text(
+                            _currentStep == 2 ? s.kSave : s.kNextStep,
+                            style: TextStyle(
+                              fontSize: isTablet ? 15 : 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(width: isTablet ? 8 : 6),
+                          Icon(
+                            _currentStep == 2
+                                ? Icons.save
+                                : Icons.arrow_forward,
+                            size: isTablet ? 20 : 18,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

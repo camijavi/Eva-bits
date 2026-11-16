@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/responsive.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import 'edit_farm_info.dart';
@@ -161,48 +162,85 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
         ? (totalAllocatedLotSurface / surface).clamp(0.0, 1.0)
         : 0.0;
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    final isTablet = Responsive(context).isTabletOrDesktop;
+
+    final heroCard = _buildHeroCard(
+      s: s,
+      name: name,
+      country: country,
+      surface: surface,
+      surfaceUnit: surfaceUnit,
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    final landAllocationCard = _buildLandAllocationCard(
+      s: s,
+      totalSurface: surface,
+      surfaceUnit: surfaceUnit,
+      allocatedSurface: totalAllocatedLotSurface,
+      allocationRatio: allocationRatio,
+      totalLots: lots.length,
+      totalSubplots: totalSubplotsCount,
+      lots: lots,
+    );
+
+    final environmentalCard = _buildEnvironmentalCard(
+      s: s,
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    Widget content;
+    if (isTablet) {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          heroCard,
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Hero Overview Card
-              _buildHeroCard(
-                s: s,
-                name: name,
-                country: country,
-                surface: surface,
-                surfaceUnit: surfaceUnit,
-                latitude: latitude,
-                longitude: longitude,
+              Expanded(
+                flex: 5,
+                child: landAllocationCard,
               ),
-              const SizedBox(height: 16),
-
-              // 2. Land Allocation Card
-              _buildLandAllocationCard(
-                s: s,
-                totalSurface: surface,
-                surfaceUnit: surfaceUnit,
-                allocatedSurface: totalAllocatedLotSurface,
-                allocationRatio: allocationRatio,
-                totalLots: lots.length,
-                totalSubplots: totalSubplotsCount,
+              const SizedBox(width: 18),
+              Expanded(
+                flex: 5,
+                child: environmentalCard,
               ),
-              const SizedBox(height: 16),
-
-              // 4. Agro-Climatic Intelligence Card
-              _buildEnvironmentalCard(
-                s: s,
-                latitude: latitude,
-                longitude: longitude,
-              ),
-              const SizedBox(height: 24),
             ],
           ),
+          const SizedBox(height: 28),
+        ],
+      );
+    } else {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          heroCard,
+          const SizedBox(height: 16),
+          landAllocationCard,
+          const SizedBox(height: 16),
+          environmentalCard,
+          const SizedBox(height: 24),
+        ],
+      );
+    }
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 24 : 16,
+        vertical: isTablet ? 20 : 16,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: Responsive(context).maxContentWidth,
+          ),
+          child: content,
         ),
       ),
     );
@@ -477,6 +515,7 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
     required double allocationRatio,
     required int totalLots,
     required int totalSubplots,
+    List<Map<String, dynamic>> lots = const [],
   }) {
     final isDark = AppColors.isDark(context);
     final unallocatedSurface = (totalSurface - allocatedSurface).clamp(0.0, totalSurface);
@@ -659,13 +698,81 @@ class _FarmInfoDetailScreenState extends State<FarmInfoDetailScreen> {
                 ),
               ],
             ),
+            if (lots.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Divider(
+                height: 1,
+                color: isDark ? AppColors.borderDark : const Color(0xFFE0E0E0),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                s.kLotsSectionTitle,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.getTextPrimary(context),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...lots.map((lot) {
+                final lotName = lot['name']?.toString() ?? 'Lote';
+                final lotSurface =
+                    (lot['surface'] as num?)?.toDouble() ?? 0.0;
+                final subplots =
+                    (lot['subplots'] as List<dynamic>?) ?? [];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF16251B)
+                        : const Color(0xFFF6FAF6),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.borderDark
+                          : const Color(0xFFDEEADE),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.grid_view_rounded,
+                        size: 15,
+                        color: isDark
+                            ? AppColors.primaryLight
+                            : AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          lotName,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.getTextPrimary(context),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${lotSurface.toStringAsFixed(1)} $surfaceUnit • ${subplots.length} ${s.kTotalSubplots.toLowerCase()}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.getTextMuted(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
           ],
         ),
       ),
     );
   }
-
-
 
   Widget _buildEnvironmentalCard({
     required AppStrings s,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/responsive.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../services/agro_prediction_engine.dart';
@@ -1568,10 +1569,14 @@ class EveFloatingLauncherButton extends StatelessWidget {
     String? activeSoil,
     String? initialQuery,
   }) {
+    final isTablet = Responsive(context).isTabletOrDesktop;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: BoxConstraints(
+        maxWidth: isTablet ? 860 : double.infinity,
+      ),
       builder: (ctx) {
         return EveUnifiedChatSheet(
           farmData: farmData,
@@ -2028,17 +2033,18 @@ class _EveDuolingoConversationStageState
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final isTablet = Responsive(context).isTabletOrDesktop;
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        16,
+        isTablet ? 20 : 16,
         4,
-        12,
+        isTablet ? 16 : 12,
         widget.showEveStage
             ? (widget.isNormalChatFolded
-                ? (isKeyboardOpen ? 8 : 16)
-                : 10)
+                ? (isKeyboardOpen ? 8 : (isTablet ? 20 : 16))
+                : (isTablet ? 14 : 10))
             : 6,
       ),
       decoration: BoxDecoration(
@@ -2062,8 +2068,8 @@ class _EveDuolingoConversationStageState
           Row(
             children: [
               Container(
-                width: 8,
-                height: 8,
+                width: isTablet ? 10 : 8,
+                height: isTablet ? 10 : 8,
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
                   shape: BoxShape.circle,
@@ -2079,7 +2085,7 @@ class _EveDuolingoConversationStageState
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14.5,
+                        fontSize: isTablet ? 17.0 : 14.5,
                         fontWeight: FontWeight.bold,
                         color: isDark ? AppColors.textPrimaryDark : const Color(0xFF1E2D24),
                       ),
@@ -2089,7 +2095,7 @@ class _EveDuolingoConversationStageState
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: isTablet ? 12.0 : 10.5,
                         color: isDark ? AppColors.textMutedDark : Colors.grey.shade600,
                       ),
                     ),
@@ -2103,9 +2109,9 @@ class _EveDuolingoConversationStageState
                     onTap: widget.onToggleFoldChat,
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 14 : 10,
+                        vertical: isTablet ? 7 : 5,
                       ),
                       decoration: BoxDecoration(
                         color: widget.isNormalChatFolded
@@ -2123,7 +2129,7 @@ class _EveDuolingoConversationStageState
                             widget.isNormalChatFolded
                                 ? Icons.unfold_more_rounded
                                 : Icons.unfold_less_rounded,
-                            size: 15,
+                            size: isTablet ? 17 : 15,
                             color: widget.isNormalChatFolded
                                 ? Colors.white
                                 : (isDark ? AppColors.primaryLight : const Color(0xFF1B5E20)),
@@ -2132,7 +2138,7 @@ class _EveDuolingoConversationStageState
                           Text(
                             foldBtnLabel,
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: isTablet ? 12.0 : 10.5,
                               fontWeight: FontWeight.bold,
                               color: widget.isNormalChatFolded
                                   ? Colors.white
@@ -2146,7 +2152,7 @@ class _EveDuolingoConversationStageState
                 ),
               IconButton(
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.close_rounded, size: 22),
+                icon: Icon(Icons.close_rounded, size: isTablet ? 26 : 22),
                 onPressed: widget.onClose,
               ),
             ],
@@ -2211,7 +2217,12 @@ class _EveDuolingoConversationStageState
                       curve: Curves.easeOutCubic,
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                        padding: EdgeInsets.fromLTRB(
+                          isTablet ? 20 : 16,
+                          isTablet ? 16 : 12,
+                          isTablet ? 20 : 16,
+                          isTablet ? 16 : 12,
+                        ),
                         decoration: BoxDecoration(
                           color: isDark ? const Color(0xFF1A261F) : Colors.white,
                           borderRadius: BorderRadius.circular(18),
@@ -2232,8 +2243,8 @@ class _EveDuolingoConversationStageState
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   SizedBox(
-                                    width: 16,
-                                    height: 16,
+                                    width: isTablet ? 20 : 16,
+                                    height: isTablet ? 20 : 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       color: isDark ? AppColors.primaryLight : const Color(0xFF2E7D32),
@@ -2244,7 +2255,7 @@ class _EveDuolingoConversationStageState
                                     child: Text(
                                       widget.loadingText,
                                       style: TextStyle(
-                                        fontSize: 12.5,
+                                        fontSize: isTablet ? 14.5 : 12.5,
                                         color: isDark ? AppColors.textPrimaryDark : Colors.grey.shade800,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -2259,22 +2270,22 @@ class _EveDuolingoConversationStageState
                                   ConstrainedBox(
                                     constraints: BoxConstraints(
                                       maxHeight: widget.isNormalChatFolded
-                                          ? (isKeyboardOpen ? 120 : 200)
-                                          : (isKeyboardOpen ? 80 : 145),
+                                          ? (isKeyboardOpen ? (isTablet ? 160 : 120) : (isTablet ? 300 : 200))
+                                          : (isKeyboardOpen ? (isTablet ? 110 : 80) : (isTablet ? 220 : 145)),
                                     ),
                                     child: SingleChildScrollView(
                                       child: Text(
                                         visibleChunkText,
                                         style: TextStyle(
-                                          fontSize: 13.5,
-                                          height: 1.4,
+                                          fontSize: isTablet ? 15.5 : 13.5,
+                                          height: 1.45,
                                           fontWeight: FontWeight.w600,
                                           color: isDark ? AppColors.textPrimaryDark : const Color(0xFF2C3E35),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
+                                  SizedBox(height: isTablet ? 12 : 10),
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -2285,10 +2296,9 @@ class _EveDuolingoConversationStageState
                                         children: [
                                           if (_chunks.length > 1) ...[
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 3,
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isTablet ? 10 : 8,
+                                                vertical: isTablet ? 4 : 3,
                                               ),
                                               decoration: BoxDecoration(
                                                 color: const Color(0xFFF1F8E9),
@@ -2297,19 +2307,19 @@ class _EveDuolingoConversationStageState
                                               ),
                                               child: Text(
                                                 '${_currentChunkIndex + 1} / ${_chunks.length}',
-                                                style: const TextStyle(
-                                                  fontSize: 10.5,
+                                                style: TextStyle(
+                                                  fontSize: isTablet ? 12.0 : 10.5,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF2E7D32),
+                                                  color: const Color(0xFF2E7D32),
                                                 ),
                                               ),
                                             ),
                                             const SizedBox(width: 6),
                                           ],
                                           Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 3,
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: isTablet ? 10 : 8,
+                                              vertical: isTablet ? 4 : 3,
                                             ),
                                             decoration: BoxDecoration(
                                               color: _getEmoteBadgeBg(
@@ -2320,7 +2330,7 @@ class _EveDuolingoConversationStageState
                                             child: Text(
                                               reactionLabel,
                                               style: TextStyle(
-                                                fontSize: 10.5,
+                                                fontSize: isTablet ? 12.0 : 10.5,
                                                 fontWeight: FontWeight.bold,
                                                 color: _getEmoteBadgeTextColor(
                                                     evaluatedEmote),
@@ -2340,30 +2350,27 @@ class _EveDuolingoConversationStageState
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: isTablet ? 10 : 8,
+                                                    vertical: isTablet ? 6 : 4,
                                                   ),
                                                   child: Row(
                                                     mainAxisSize:
                                                         MainAxisSize.min,
                                                     children: [
-                                                      const Icon(
+                                                      Icon(
                                                         Icons
                                                             .chevron_left_rounded,
-                                                        size: 16,
-                                                        color:
-                                                            Color(0xFF556B5D),
+                                                        size: isTablet ? 18 : 16,
+                                                        color: const Color(0xFF556B5D),
                                                       ),
                                                       Text(
                                                         prevLabel,
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
+                                                        style: TextStyle(
+                                                          fontSize: isTablet ? 12.5 : 11,
                                                           fontWeight:
                                                               FontWeight.w600,
-                                                          color:
-                                                              Color(0xFF556B5D),
+                                                          color: const Color(0xFF556B5D),
                                                         ),
                                                       ),
                                                     ],
@@ -2378,10 +2385,9 @@ class _EveDuolingoConversationStageState
                                                 borderRadius:
                                                     BorderRadius.circular(14),
                                                 child: Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 4,
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: isTablet ? 14 : 10,
+                                                    vertical: isTablet ? 6 : 4,
                                                   ),
                                                   decoration: BoxDecoration(
                                                     color:
@@ -2396,18 +2402,18 @@ class _EveDuolingoConversationStageState
                                                     children: [
                                                       Text(
                                                         nextLabel,
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
+                                                        style: TextStyle(
+                                                          fontSize: isTablet ? 12.5 : 11,
                                                           fontWeight:
                                                               FontWeight.bold,
                                                           color: Colors.white,
                                                         ),
                                                       ),
                                                       const SizedBox(width: 2),
-                                                      const Icon(
+                                                      Icon(
                                                         Icons
                                                             .chevron_right_rounded,
-                                                        size: 16,
+                                                        size: isTablet ? 18 : 16,
                                                         color: Colors.white,
                                                       ),
                                                     ],
@@ -2426,7 +2432,7 @@ class _EveDuolingoConversationStageState
                   ),
                   // Downward triangular tail pointing to Eve in the center
                   CustomPaint(
-                    size: const Size(22, 11),
+                    size: Size(isTablet ? 26 : 22, isTablet ? 13 : 11),
                     painter: _DuolingoBubbleTailPainter(
                       fillColor: Colors.white,
                       borderColor: const Color(0xFFE0E0E0),
@@ -2439,8 +2445,8 @@ class _EveDuolingoConversationStageState
             // Distance between speech bubble and Eve
             SizedBox(
               height: widget.isNormalChatFolded
-                  ? (isKeyboardOpen ? 8 : 16)
-                  : 4,
+                  ? (isKeyboardOpen ? (isTablet ? 10 : 8) : (isTablet ? 20 : 16))
+                  : (isTablet ? 8 : 4),
             ),
 
             // Centered Large Eve Walking In & Growing Larger (Elevated higher when chat is folded)
@@ -2449,15 +2455,15 @@ class _EveDuolingoConversationStageState
               builder: (context, _) {
                 final v = _walkCurve.value;
                 final isStillWalking = v < 0.94;
-                final dx = (1.0 - v) * 115.0;
-                final dy = (1.0 - v) * 18.0;
+                final dx = (1.0 - v) * (isTablet ? 140.0 : 115.0);
+                final dy = (1.0 - v) * (isTablet ? 24.0 : 18.0);
                 final scale = 0.45 + (0.55 * v);
                 final avatarHeight = isKeyboardOpen
-                    ? 60.0
-                    : (widget.isNormalChatFolded ? 124.0 : 98.0);
+                    ? (isTablet ? 76.0 : 60.0)
+                    : (widget.isNormalChatFolded ? (isTablet ? 156.0 : 124.0) : (isTablet ? 126.0 : 98.0));
                 final avatarSize = isKeyboardOpen
-                    ? 54.0
-                    : (widget.isNormalChatFolded ? 110.0 : 92.0);
+                    ? (isTablet ? 68.0 : 54.0)
+                    : (widget.isNormalChatFolded ? (isTablet ? 142.0 : 110.0) : (isTablet ? 116.0 : 92.0));
 
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 280),
@@ -2465,7 +2471,7 @@ class _EveDuolingoConversationStageState
                   height: avatarHeight,
                   margin: EdgeInsets.only(
                     bottom: (widget.isNormalChatFolded && !isKeyboardOpen)
-                        ? 16.0
+                        ? (isTablet ? 20.0 : 16.0)
                         : 0.0,
                   ),
                   child: Center(
@@ -2478,8 +2484,8 @@ class _EveDuolingoConversationStageState
                           children: [
                             // Subtle Duolingo-style floor shadow oval under Eve
                             Container(
-                              width: 62,
-                              height: 11,
+                              width: isTablet ? 82 : 62,
+                              height: isTablet ? 14 : 11,
                               margin: const EdgeInsets.only(bottom: 4),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.08 * v),
@@ -2939,9 +2945,15 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
     final s = AppLanguage.strings;
     final mediaQuery = MediaQuery.of(context);
     final bottomInset = mediaQuery.viewInsets.bottom;
+    final isKeyboardOpen = bottomInset > 0;
+    final screenH = mediaQuery.size.height;
+    final isTablet = Responsive(context).isTabletOrDesktop;
     final maxModalHeight =
-        (mediaQuery.size.height - mediaQuery.padding.top - bottomInset)
-            .clamp(320.0, mediaQuery.size.height * 0.92);
+        (screenH - mediaQuery.padding.top - bottomInset)
+            .clamp(380.0, screenH * 0.92);
+    // Ensure chat occupies ~60% of the screen height across all screens
+    final targetHeight =
+        ((screenH * 0.60) - bottomInset).clamp(380.0, maxModalHeight);
 
     final cropsSubtitle = (_selectedCropFilter == null &&
             _registeredCrops.length > 1)
@@ -2961,6 +2973,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
 
             return Container(
               constraints: BoxConstraints(
+                minHeight: isKeyboardOpen ? 300.0 : targetHeight,
                 maxHeight: maxModalHeight,
               ),
               margin: EdgeInsets.only(bottom: bottomInset),
@@ -2969,38 +2982,58 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
-                mainAxisSize:
-                    foldFactor < 0.99 ? MainAxisSize.min : MainAxisSize.max,
+                mainAxisSize: MainAxisSize.max,
                 children: [
                   Container(
                     margin: const EdgeInsets.only(top: 10, bottom: 4),
-                    width: 48,
-                    height: 5,
+                    width: isTablet ? 60 : 48,
+                    height: isTablet ? 6 : 5,
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.borderDark : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: SingleChildScrollView(
-                      physics: const ClampingScrollPhysics(),
-                      child: EveDuolingoConversationStage(
-                        title: s.kIvyCopilotTitle,
-                        subtitle: cropsSubtitle,
-                        speechBubbleText: _getLatestEveSpeechText(s),
-                        isLoading: _isLoading,
-                        loadingText: s.kIvyAnalyzingScenario,
-                        onClose: () => Navigator.pop(context),
-                        showEveStage: showEve,
-                        isNormalChatFolded: effectiveFolded,
-                        onToggleFoldChat: showEve ? _toggleFoldNormalChat : null,
-                        registeredCrops: _registeredCrops,
-                        selectedCropFilter: _selectedCropFilter,
-                        onCropFilterChanged: _onCropFilterSelected,
+                  if (foldFactor < 0.99)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: EveDuolingoConversationStage(
+                          title: s.kIvyCopilotTitle,
+                          subtitle: cropsSubtitle,
+                          speechBubbleText: _getLatestEveSpeechText(s),
+                          isLoading: _isLoading,
+                          loadingText: s.kIvyAnalyzingScenario,
+                          onClose: () => Navigator.pop(context),
+                          showEveStage: showEve,
+                          isNormalChatFolded: effectiveFolded,
+                          onToggleFoldChat: showEve ? _toggleFoldNormalChat : null,
+                          registeredCrops: _registeredCrops,
+                          selectedCropFilter: _selectedCropFilter,
+                          onCropFilterChanged: _onCropFilterSelected,
+                        ),
+                      ),
+                    )
+                  else
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: EveDuolingoConversationStage(
+                          title: s.kIvyCopilotTitle,
+                          subtitle: cropsSubtitle,
+                          speechBubbleText: _getLatestEveSpeechText(s),
+                          isLoading: _isLoading,
+                          loadingText: s.kIvyAnalyzingScenario,
+                          onClose: () => Navigator.pop(context),
+                          showEveStage: showEve,
+                          isNormalChatFolded: effectiveFolded,
+                          onToggleFoldChat: showEve ? _toggleFoldNormalChat : null,
+                          registeredCrops: _registeredCrops,
+                          selectedCropFilter: _selectedCropFilter,
+                          onCropFilterChanged: _onCropFilterSelected,
+                        ),
                       ),
                     ),
-                  ),
                   Divider(
                     height: 1,
                     color: isDark ? AppColors.borderDark : const Color(0xFFE0E0E0),
@@ -3008,8 +3041,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
 
                   // Foldable "Normal" Chat Section (3D paper fold animation)
                   if (foldFactor > 0.01)
-                    Flexible(
-                      fit: foldFactor < 0.99 ? FlexFit.loose : FlexFit.tight,
+                    Expanded(
                       child: ClipRect(
                         child: Align(
                           alignment: Alignment.topCenter,
@@ -3021,129 +3053,129 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                               transform: Matrix4.identity()
                                 ..setEntry(3, 2, 0.0018)
                                 ..rotateX((1.0 - foldFactor) * 1.15),
-                              child: SizedBox(
-                                height: maxModalHeight * 0.42,
-                                child: ListView.builder(
-                                  controller: _scrollController,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  itemCount:
-                                      _messages.length + (_isLoading ? 1 : 0),
-                                  itemBuilder: (ctx, index) {
-                                    if (index == _messages.length &&
-                                        _isLoading) {
-                                      return Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Container(
-                                          margin: const EdgeInsets.symmetric(
-                                              vertical: 8),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 12),
-                                          decoration: BoxDecoration(
-                                            color: isDark
-                                                ? const Color(0xFF1E2822)
-                                                : const Color(0xFFF1F8E9),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            border: Border.all(
-                                                color: isDark
-                                                    ? AppColors.borderDark
-                                                    : const Color(0xFFDCEDC8)),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: isDark
-                                                      ? AppColors.primaryLight
-                                                      : const Color(0xFF2E7D32),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Flexible(
-                                                child: Text(
-                                                  s.kIvyAnalyzingScenario,
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: isDark
-                                                        ? AppColors.textPrimaryDark
-                                                        : Colors.grey.shade800,
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }
-
-                                    final msg = _messages[index];
-                                    final isUser = msg['role'] == 'user';
-                                    final cleanMsgText =
-                                        _cleanText(msg['text'] ?? '');
-
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: isTablet ? 20 : 16,
+                                    vertical: 12),
+                                itemCount:
+                                    _messages.length + (_isLoading ? 1 : 0),
+                                itemBuilder: (ctx, index) {
+                                  if (index == _messages.length &&
+                                      _isLoading) {
                                     return Align(
-                                      alignment: isUser
-                                          ? Alignment.centerRight
-                                          : Alignment.centerLeft,
+                                      alignment: Alignment.centerLeft,
                                       child: Container(
                                         margin: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        constraints: BoxConstraints(
-                                          maxWidth: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.82,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16, vertical: 12),
+                                            vertical: 8),
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: isTablet ? 20 : 16,
+                                            vertical: isTablet ? 14 : 12),
                                         decoration: BoxDecoration(
-                                          color: isUser
-                                              ? (isDark
-                                                  ? AppColors.primary
-                                                  : const Color(0xFF1B5E20))
-                                              : (isDark
-                                                  ? const Color(0xFF1E2822)
-                                                  : const Color(0xFFF7FAF7)),
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: const Radius.circular(18),
-                                            topRight: const Radius.circular(18),
-                                            bottomLeft: isUser
-                                                ? const Radius.circular(18)
-                                                : const Radius.circular(4),
-                                            bottomRight: isUser
-                                                ? const Radius.circular(4)
-                                                : const Radius.circular(18),
-                                          ),
-                                          border: isUser
-                                              ? null
-                                              : Border.all(
-                                                  color: isDark
-                                                      ? AppColors.borderDark
-                                                      : const Color(0xFFE0E0E0)),
+                                          color: isDark
+                                              ? const Color(0xFF1E2822)
+                                              : const Color(0xFFF1F8E9),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          border: Border.all(
+                                              color: isDark
+                                                  ? AppColors.borderDark
+                                                  : const Color(0xFFDCEDC8)),
                                         ),
-                                        child: Text(
-                                          cleanMsgText,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            height: 1.4,
-                                            color: isUser
-                                                ? Colors.white
-                                                : (isDark
-                                                    ? AppColors.textPrimaryDark
-                                                    : const Color(0xFF1E2D24)),
-                                          ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            SizedBox(
+                                              width: isTablet ? 18 : 16,
+                                              height: isTablet ? 18 : 16,
+                                              child:
+                                                  CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: isDark
+                                                    ? AppColors.primaryLight
+                                                    : const Color(0xFF2E7D32),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Flexible(
+                                              child: Text(
+                                                s.kIvyAnalyzingScenario,
+                                                style: TextStyle(
+                                                  fontSize: isTablet ? 13.5 : 12,
+                                                  color: isDark
+                                                      ? AppColors.textPrimaryDark
+                                                      : Colors.grey.shade800,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     );
-                                  },
-                                ),
+                                  }
+
+                                  final msg = _messages[index];
+                                  final isUser = msg['role'] == 'user';
+                                  final cleanMsgText =
+                                      _cleanText(msg['text'] ?? '');
+
+                                  return Align(
+                                    alignment: isUser
+                                        ? Alignment.centerRight
+                                        : Alignment.centerLeft,
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 6),
+                                      constraints: BoxConstraints(
+                                        maxWidth: MediaQuery.of(context)
+                                                .size
+                                                .width *
+                                            (isTablet ? 0.70 : 0.82),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: isTablet ? 20 : 16,
+                                          vertical: isTablet ? 14 : 12),
+                                      decoration: BoxDecoration(
+                                        color: isUser
+                                            ? (isDark
+                                                ? AppColors.primary
+                                                : const Color(0xFF1B5E20))
+                                            : (isDark
+                                                ? const Color(0xFF1E2822)
+                                                : const Color(0xFFF7FAF7)),
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: const Radius.circular(18),
+                                          topRight: const Radius.circular(18),
+                                          bottomLeft: isUser
+                                              ? const Radius.circular(18)
+                                              : const Radius.circular(4),
+                                          bottomRight: isUser
+                                              ? const Radius.circular(4)
+                                              : const Radius.circular(18),
+                                        ),
+                                        border: isUser
+                                            ? null
+                                            : Border.all(
+                                                color: isDark
+                                                    ? AppColors.borderDark
+                                                    : const Color(0xFFE0E0E0)),
+                                      ),
+                                      child: Text(
+                                        cleanMsgText,
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 14.5 : 13,
+                                          height: 1.4,
+                                          color: isUser
+                                              ? Colors.white
+                                              : (isDark
+                                                  ? AppColors.textPrimaryDark
+                                                  : const Color(0xFF1E2D24)),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ),
@@ -3153,25 +3185,30 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
 
                   const SizedBox(height: 8),
                   SizedBox(
-                    height: 38,
+                    height: isTablet ? 44 : 38,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: isTablet ? 20 : 16),
                       children: [
                         _buildQuickChip(
-                            Icons.pest_control_rounded, s.kQuickPromptPests),
+                            Icons.pest_control_rounded, s.kQuickPromptPests, isTablet: isTablet),
                         _buildQuickChip(Icons.thunderstorm_rounded,
-                            s.kQuickPromptPhenomena),
+                            s.kQuickPromptPhenomena, isTablet: isTablet),
                         _buildQuickChip(
-                            Icons.date_range_rounded, s.kQuickPrompt3Weeks),
+                            Icons.date_range_rounded, s.kQuickPrompt3Weeks, isTablet: isTablet),
                         _buildQuickChip(Icons.water_drop_rounded,
-                            s.kQuickPromptIrrigation),
+                            s.kQuickPromptIrrigation, isTablet: isTablet),
                       ],
                     ),
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(16, 6, 8, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      isTablet ? 20 : 16,
+                      isTablet ? 8 : 6,
+                      isTablet ? 12 : 8,
+                      isTablet ? 20 : 16,
+                    ),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.modalBgDark : Colors.white,
                       border: Border(
@@ -3187,7 +3224,7 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                             controller: _controller,
                             textInputAction: TextInputAction.send,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: isTablet ? 15 : 13,
                               color: isDark
                                   ? AppColors.textPrimaryDark
                                   : Colors.black87,
@@ -3195,12 +3232,13 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                             decoration: InputDecoration(
                               hintText: s.kIvyInputHint,
                               hintStyle: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: isTablet ? 15 : 13,
                                   color: isDark
                                       ? AppColors.textMutedDark
                                       : Colors.grey.shade500),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isTablet ? 20 : 16,
+                                  vertical: isTablet ? 15 : 12),
                               filled: true,
                               fillColor: isDark
                                   ? AppColors.inputBgDark
@@ -3219,8 +3257,9 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
                             },
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         IconButton(
+                          iconSize: isTablet ? 26 : 22,
                           icon: Icon(Icons.send_rounded,
                               color: isDark
                                   ? AppColors.primaryLight
@@ -3245,24 +3284,25 @@ class _EveUnifiedChatSheetState extends State<EveUnifiedChatSheet>
     );
   }
 
-  Widget _buildQuickChip(IconData icon, String label) {
+  Widget _buildQuickChip(IconData icon, String label, {bool isTablet = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: EdgeInsets.only(right: isTablet ? 10 : 8),
       child: ActionChip(
         avatar: Icon(icon,
-            size: 15,
+            size: isTablet ? 17 : 15,
             color: isDark ? AppColors.primaryLight : const Color(0xFF1B5E20)),
         backgroundColor:
             isDark ? AppColors.chipBgDark : const Color(0xFFEAF5EC),
         side: BorderSide(
             color: isDark ? AppColors.chipBorderDark : const Color(0xFFC8E6C9)),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 12 : 8, vertical: isTablet ? 6 : 4),
         label: Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: isTablet ? 12.5 : 11,
             color: isDark ? AppColors.textPrimaryDark : const Color(0xFF1B5E20),
             fontWeight: FontWeight.w600,
           ),

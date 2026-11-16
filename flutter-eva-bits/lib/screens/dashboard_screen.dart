@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
+import '../constants/responsive.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -290,32 +291,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildHeader(context, s, displayFarmName, displayLocation),
                     Transform.translate(
                       offset: const Offset(0, -28),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildHeroWeatherCard(context, s),
-                            const SizedBox(height: 10),
-                            _buildNasaClimateSection(context, s),
-                            const SizedBox(height: 12),
-                            Text(
-                              AppLanguage.current.value == AppLanguageType.spanish
-                                  ? 'Gestiona tu campo'
-                                  : 'Manage your fields',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                                letterSpacing: -0.2,
-                              ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: Responsive(context).maxContentWidth,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeroWeatherCard(context, s),
+                                const SizedBox(height: 10),
+                                _buildNasaClimateSection(context, s),
+                                const SizedBox(height: 12),
+                                Text(
+                                  AppLanguage.current.value == AppLanguageType.spanish
+                                      ? 'Gestiona tu campo'
+                                      : 'Manage your fields',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildFieldsGrid(context, s, displaySurface),
+                                const SizedBox(height: 12),
+                                _buildPredictionsSection(context, s, report),
+                                const SizedBox(height: 20),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            _buildFieldsGrid(context, s, displaySurface),
-                            const SizedBox(height: 12),
-                            _buildPredictionsSection(context, s, report),
-                            const SizedBox(height: 20),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -1177,6 +1185,152 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isDark = AppColors.isDark(context);
     final textColor = AppColors.getTextPrimary(context);
     final subtextColor = AppColors.getTextMuted(context);
+    final isTablet = Responsive(context).isTabletOrDesktop;
+
+    final cardIrrigation = _buildPredictionCard(
+      context: context,
+      badgeText: report.irrigation.status == 'critical'
+          ? 'Atención'
+          : (report.irrigation.status == 'moderate' ? 'Moderado' : 'Óptimo'),
+      badgeColor: report.irrigation.status == 'critical'
+          ? const Color(0xFFC62828)
+          : (report.irrigation.status == 'moderate'
+              ? const Color(0xFFF57F17)
+              : const Color(0xFF2E7D32)),
+      badgeBgColor: report.irrigation.status == 'critical'
+          ? (isDark ? const Color(0xFF3E1E1E) : const Color(0xFFFFEBEE))
+          : (report.irrigation.status == 'moderate'
+              ? (isDark ? const Color(0xFF3E321E) : const Color(0xFFFFF8E1))
+              : (isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9))),
+      icon: Icons.water_drop_rounded,
+      title: 'Gestor de Riego a 7 Días',
+      subtitle: report.irrigation.actionTitle,
+      details: report.irrigation.actionRecommendation,
+      metricPill1:
+          'Déficit: ${report.irrigation.weeklyDeficitMm.toStringAsFixed(1)} mm',
+      metricPill2:
+          'Sin estrés: ${report.irrigation.daysUntilStress} días',
+      onTap: () {
+        Navigator.of(context).pushReplacement(
+          createBottomNavPageRoute(
+            const PredictionsScreen(initialTab: 0),
+          ),
+        );
+      },
+    );
+
+    final cardRotation = _buildPredictionCard(
+      context: context,
+      badgeText: '${report.rotation.score}% Compatibilidad',
+      badgeColor: const Color(0xFF2E7D32),
+      badgeBgColor:
+          isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9),
+      icon: Icons.sync_alt_rounded,
+      title: 'Rotación y Sucesión Botánica',
+      subtitle: 'Sucesión recomendada: ${report.rotation.suggestedCrop}',
+      details: report.rotation.explanation,
+      metricPill1: 'Nivel: ${report.rotation.compatibilityLevel}',
+      metricPill2: report.rotation.hasSpatialCorridorRisk
+          ? 'Alerta plagas'
+          : 'Bajo riesgo biológico',
+      onTap: () {
+        Navigator.of(context).pushReplacement(
+          createBottomNavPageRoute(
+            const PredictionsScreen(initialTab: 1),
+          ),
+        );
+      },
+    );
+
+    final cardCalendar = _buildPredictionCard(
+      context: context,
+      badgeText: report.calendar.windowStatus,
+      badgeColor: report.calendar.isWindowOpen
+          ? const Color(0xFF2E7D32)
+          : const Color(0xFFE65100),
+      badgeBgColor: report.calendar.isWindowOpen
+          ? (isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9))
+          : (isDark ? const Color(0xFF3E281E) : const Color(0xFFFFF3E0)),
+      icon: Icons.calendar_month_rounded,
+      title: 'Ventana de Siembra & GDD',
+      subtitle: 'Fechas ideales: ${report.calendar.recommendedDateRange}',
+      details: report.calendar.thermalAdvice,
+      metricPill1:
+          'GDD 7d: ${report.calendar.accumulatedGdd7d.toInt()} °C',
+      metricPill2:
+          'Floración: ~${report.calendar.estimatedDaysToFlowering} d',
+      onTap: () {
+        Navigator.of(context).pushReplacement(
+          createBottomNavPageRoute(
+            const PredictionsScreen(initialTab: 2),
+          ),
+        );
+      },
+    );
+
+    final cardNutrition = _buildPredictionCard(
+      context: context,
+      badgeText: '${report.nutrition.soilHealthScore}/100 Salud',
+      badgeColor: const Color(0xFF00796B),
+      badgeBgColor:
+          isDark ? const Color(0xFF1B3330) : const Color(0xFFE0F2F1),
+      icon: Icons.eco_rounded,
+      title: 'Salud del Suelo & Fijación Biológica',
+      subtitle: 'Vigor vegetal: ${report.health.vigorStatus}',
+      details:
+          'Fijación biológica estimada de nitrógeno: +${report.nutrition.projectedNitrogenGainKgPerHa.toStringAsFixed(1)} kg N/ha con cobertura vegetal.',
+      metricPill1:
+          '+${report.nutrition.projectedNitrogenGainKgPerHa.toStringAsFixed(1)} kg N/ha',
+      metricPill2:
+          'NDVI Proxy: ${(report.health.estimatedNdviProxy * 100).toInt()}%',
+      onTap: () {
+        Navigator.of(context).pushReplacement(
+          createBottomNavPageRoute(
+            const PredictionsScreen(initialTab: 5),
+          ),
+        );
+      },
+    );
+
+    Widget predictionsLayout;
+    if (isTablet) {
+      predictionsLayout = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                cardIrrigation,
+                const SizedBox(height: 10),
+                cardCalendar,
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              children: [
+                cardRotation,
+                const SizedBox(height: 10),
+                cardNutrition,
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      predictionsLayout = Column(
+        children: [
+          cardIrrigation,
+          const SizedBox(height: 6),
+          cardRotation,
+          const SizedBox(height: 6),
+          cardCalendar,
+          const SizedBox(height: 6),
+          cardNutrition,
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1229,110 +1383,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        _buildPredictionCard(
-          context: context,
-          badgeText: report.irrigation.status == 'critical'
-              ? 'Atención'
-              : (report.irrigation.status == 'moderate' ? 'Moderado' : 'Óptimo'),
-          badgeColor: report.irrigation.status == 'critical'
-              ? const Color(0xFFC62828)
-              : (report.irrigation.status == 'moderate'
-                  ? const Color(0xFFF57F17)
-                  : const Color(0xFF2E7D32)),
-          badgeBgColor: report.irrigation.status == 'critical'
-              ? (isDark ? const Color(0xFF3E1E1E) : const Color(0xFFFFEBEE))
-              : (report.irrigation.status == 'moderate'
-                  ? (isDark ? const Color(0xFF3E321E) : const Color(0xFFFFF8E1))
-                  : (isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9))),
-          icon: Icons.water_drop_rounded,
-          title: 'Gestor de Riego a 7 Días',
-          subtitle: report.irrigation.actionTitle,
-          details: report.irrigation.actionRecommendation,
-          metricPill1:
-              'Déficit: ${report.irrigation.weeklyDeficitMm.toStringAsFixed(1)} mm',
-          metricPill2:
-              'Sin estrés: ${report.irrigation.daysUntilStress} días',
-          onTap: () {
-            Navigator.of(context).pushReplacement(
-              createBottomNavPageRoute(
-                const PredictionsScreen(initialTab: 0),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 6),
-        _buildPredictionCard(
-          context: context,
-          badgeText: '${report.rotation.score}% Compatibilidad',
-          badgeColor: const Color(0xFF2E7D32),
-          badgeBgColor:
-              isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9),
-          icon: Icons.sync_alt_rounded,
-          title: 'Rotación y Sucesión Botánica',
-          subtitle: 'Sucesión recomendada: ${report.rotation.suggestedCrop}',
-          details: report.rotation.explanation,
-          metricPill1: 'Nivel: ${report.rotation.compatibilityLevel}',
-          metricPill2: report.rotation.hasSpatialCorridorRisk
-              ? 'Alerta plagas'
-              : 'Bajo riesgo biológico',
-          onTap: () {
-            Navigator.of(context).pushReplacement(
-              createBottomNavPageRoute(
-                const PredictionsScreen(initialTab: 1),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 6),
-        _buildPredictionCard(
-          context: context,
-          badgeText: report.calendar.windowStatus,
-          badgeColor: report.calendar.isWindowOpen
-              ? const Color(0xFF2E7D32)
-              : const Color(0xFFE65100),
-          badgeBgColor: report.calendar.isWindowOpen
-              ? (isDark ? const Color(0xFF1E3322) : const Color(0xFFE8F5E9))
-              : (isDark ? const Color(0xFF3E281E) : const Color(0xFFFFF3E0)),
-          icon: Icons.calendar_month_rounded,
-          title: 'Ventana de Siembra & GDD',
-          subtitle: 'Fechas ideales: ${report.calendar.recommendedDateRange}',
-          details: report.calendar.thermalAdvice,
-          metricPill1:
-              'GDD 7d: ${report.calendar.accumulatedGdd7d.toInt()} °C',
-          metricPill2:
-              'Floración: ~${report.calendar.estimatedDaysToFlowering} d',
-          onTap: () {
-            Navigator.of(context).pushReplacement(
-              createBottomNavPageRoute(
-                const PredictionsScreen(initialTab: 2),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 6),
-        _buildPredictionCard(
-          context: context,
-          badgeText: '${report.nutrition.soilHealthScore}/100 Salud',
-          badgeColor: const Color(0xFF00796B),
-          badgeBgColor:
-              isDark ? const Color(0xFF1B3330) : const Color(0xFFE0F2F1),
-          icon: Icons.eco_rounded,
-          title: 'Salud del Suelo & Fijación Biológica',
-          subtitle: 'Vigor vegetal: ${report.health.vigorStatus}',
-          details:
-              'Fijación biológica estimada de nitrógeno: +${report.nutrition.projectedNitrogenGainKgPerHa.toStringAsFixed(1)} kg N/ha con cobertura vegetal.',
-          metricPill1:
-              '+${report.nutrition.projectedNitrogenGainKgPerHa.toStringAsFixed(1)} kg N/ha',
-          metricPill2:
-              'NDVI Proxy: ${(report.health.estimatedNdviProxy * 100).toInt()}%',
-          onTap: () {
-            Navigator.of(context).pushReplacement(
-              createBottomNavPageRoute(
-                const PredictionsScreen(initialTab: 5),
-              ),
-            );
-          },
-        ),
+        predictionsLayout,
       ],
     );
   }
@@ -1416,22 +1467,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: badgeBgColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: badgeColor.withValues(alpha: 0.3),
+                  Flexible(
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: badgeBgColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: badgeColor.withValues(alpha: 0.3),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      badgeText,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: badgeColor,
+                      child: Text(
+                        badgeText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: badgeColor,
+                        ),
                       ),
                     ),
                   ),
@@ -1450,49 +1505,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 10),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF243329)
-                          : const Color(0xFFF1F8F3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      metricPill1,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.primaryLight
-                            : const Color(0xFF2E7D32),
-                      ),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF243329)
+                                : const Color(0xFFF1F8F3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            metricPill1,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.primaryLight
+                                  : const Color(0xFF2E7D32),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF243329)
+                                : const Color(0xFFF1F8F3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            metricPill2,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.primaryLight
+                                  : const Color(0xFF2E7D32),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF243329)
-                          : const Color(0xFFF1F8F3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      metricPill2,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.primaryLight
-                            : const Color(0xFF2E7D32),
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 13,
@@ -1512,14 +1575,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     AppStrings s,
     String surfaceText,
   ) {
+    final isTablet = Responsive(context).isTabletOrDesktop;
+
     return GridView.count(
       padding: EdgeInsets.zero,
-      crossAxisCount: 2,
+      crossAxisCount: isTablet ? 4 : 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
-      childAspectRatio: 1.25,
+      crossAxisSpacing: isTablet ? 12 : 8,
+      mainAxisSpacing: isTablet ? 12 : 8,
+      childAspectRatio: isTablet ? 1.35 : 1.25,
       children: [
         _buildGridCard(
           context: context,

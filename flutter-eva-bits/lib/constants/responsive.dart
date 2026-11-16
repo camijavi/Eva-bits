@@ -54,15 +54,15 @@ class Responsive {
 
   /// Max width constraint for content containers
   double get maxContentWidth {
-    if (isDesktop) return 840;
-    if (isTablet) return 680;
+    if (isDesktop) return 1080;
+    if (isTablet) return 960;
     return double.infinity;
   }
 
   /// Max width for cards / dialogs / sheets
   double get maxCardWidth {
-    if (isDesktop) return 720;
-    if (isTablet) return 640;
+    if (isDesktop) return 960;
+    if (isTablet) return 860;
     return double.infinity;
   }
 }
