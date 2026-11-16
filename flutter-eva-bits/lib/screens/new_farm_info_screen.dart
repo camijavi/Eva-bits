@@ -5,10 +5,8 @@ import '../constants/agricultural_locations.dart';
 import '../constants/app_colors.dart';
 import '../database/database_manager.dart';
 import '../languages/app_strings.dart';
-import '../services/app_settings.dart';
 import '../widgets/eve_animated_avatar.dart';
 import 'dashboard_screen.dart';
-import 'welcome_screen.dart';
 
 enum SurfaceUnit {
   hectares,

@@ -1,0 +1,128 @@
+# --------------------------------------------------
+# Flutter / Dart / Pub
+# --------------------------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+**/doc/api/
+
+# Symbol processing & Obfuscation
+app.*.symbols
+app.*.map.json
+
+# --------------------------------------------------
+# Android
+# --------------------------------------------------
+android/**/gradle-wrapper.jar
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/GeneratedPluginRegistrant.java
+android/.cxx/
+**/android/**/.gradle/
+
+# Keystores & Signing secrets
+key.properties
+**/*.keystore
+**/*.jks
+**/*.p12
+**/*.p8
+**/*.cer
+**/*.mobileprovision
+
+# --------------------------------------------------
+# iOS / macOS Flutter
+# --------------------------------------------------
+**/ios/**/frameworks/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+*.xcuserdatad/
+
+# --------------------------------------------------
+# macOS / Linux / Windows Ephemeral
+# --------------------------------------------------
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+
+# --------------------------------------------------
+# Flutter Web
+# --------------------------------------------------
+lib/generated_plugin_registrant.dart
+web/manifest.json.tmp
+
+# --------------------------------------------------
+# Testing & Code Coverage
+# --------------------------------------------------
+coverage/
+*.lcov
+.nyc_output/
+
+# --------------------------------------------------
+# IDEs & Editors
+# --------------------------------------------------
+# IntelliJ / Android Studio
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Visual Studio / Misc
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-workspace
+*.sublime-project
+
+# --------------------------------------------------
+# OS & System Files
+# --------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Icon?
+
+# --------------------------------------------------
+# Logs & Environment / Web dependencies
+# --------------------------------------------------
+logs/
+*.log
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+dist-ssr/
+out/
+.cache/
+.turbo/

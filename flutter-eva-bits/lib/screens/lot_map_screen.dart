@@ -8,7 +8,6 @@ import '../services/app_settings.dart';
 import '../services/nasa_power_service.dart';
 import '../services/agro_prediction_engine.dart';
 import '../services/eve_knowledge_base.dart';
-import '../services/subplot_graph_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/eve_animated_avatar.dart';
 import '../widgets/new_edit_subplot.dart';
